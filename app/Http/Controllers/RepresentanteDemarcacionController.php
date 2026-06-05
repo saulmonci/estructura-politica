@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+class RepresentanteDemarcacionController extends BaseCrudController
+{
+    protected string $modelClass = User::class;
+    protected string $indexView = 'Representantes/Index';
+    protected string $dataKey = 'representantes';
+
+    protected function checkAccess(Request $request): void
+    {
+        abort_if($request->user()->role !== 'presidente', 403, 'Acceso denegado. Solo el Presidente puede ver esto.');
+    }
+
+    protected function getBaseQuery(Request $request): Builder
+    {
+        // El filtrado por jerarquía (parent_id) ya se hereda de BaseCrudController
+        return parent::getBaseQuery($request)->where('role', 'rd');
+    }
+
+    protected function applySearch(Builder $query, string $search): void
+    {
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('telefono', 'like', "%{$search}%")
+              ->orWhere('curp', 'like', "%{$search}%");
+        });
+    }
+
+    protected function applyFilters(Builder $query, array $filters): void
+    {
+        foreach ($filters as $field => $value) {
+            // Ignoramos valores nulos o vacíos
+            if ($value === null || $value === '') continue;
+
+            // Filtros de texto
+            if (in_array($field, ['name', 'telefono', 'colonia'])) {
+                $query->where($field, 'like', "%{$value}%");
+            }
+
+            // Filtro de estado
+            if ($field === 'estado') {
+                $query->where('estado', $value);
+            }
+
+            // Filtro de fecha (Rango enviado por ProTable: ['2026-06-01', '2026-06-30'])
+            if ($field === 'created_at' && is_array($value) && count($value) === 2) {
+                $query->whereBetween('created_at', [$value[0] . ' 00:00:00', $value[1] . ' 23:59:59']);
+            }
+        }
+    }
+
+    protected function getValidationRules(Request $request, ?string $id = null): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
+            'sexo' => ['nullable', 'string', 'max:50'],
+            'calle' => ['nullable', 'string', 'max:255'],
+            'numero_exterior' => ['nullable', 'string', 'max:50'],
+            'numero_interior' => ['nullable', 'string', 'max:50'],
+            'colonia' => ['nullable', 'string', 'max:255'],
+            'demarcacion' => ['nullable', 'string', 'max:255'],
+            'clave_electoral' => ['nullable', 'string', 'max:50'],
+            'telefono' => ['nullable', 'string', 'max:50'],
+            'curp' => ['nullable', 'string', 'max:50'],
+            'apodo' => ['nullable', 'string', 'max:100'],
+            'foto' => ['nullable', 'image', 'max:5120'],
+            'password' => ['nullable', 'string', 'min:6'],
+            'estado' => ['nullable', 'boolean'],
+        ];
+    }
+    
+    public function store(Request $request)
+    {
+        // Si no mandan email (ya que no está en el form actual), generamos uno falso por convención o pedimos que lo llenen.
+        // Como el email es required en el migration original y unique, crearemos uno dummy basado en la curp o telefono.
+        if (!$request->has('email')) {
+            $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
+            $request->merge(['email' => $identificador . '@sistema.local']);
+        }
+        
+        if ($request->filled('password')) {
+            $request->merge(['password' => Hash::make($request->password)]);
+        } else {
+            $request->merge(['password' => Hash::make('secret')]);
+        }
+
+        return parent::store($request);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        if ($request->filled('password')) {
+            $request->merge(['password' => Hash::make($request->password)]);
+        } else {
+            $request->request->remove('password');
+        }
+
+        return parent::update($request, $id);
+    }
+
+    protected function handlePhotoUpload(Request $request, $item): void
+    {
+        if ($request->hasFile('foto')) {
+            $path = $request->file('foto')->store('fotos', 'public');
+            $item->foto = $path;
+            $item->save();
+        }
+    }
+
+    protected function afterStore(Request $request, $item): void
+    {
+        // Ejecutamos la lógica base (que ya asocia el parent_id al presidente)
+        parent::afterStore($request, $item);
+
+        // Forzar rol
+        $item->role = 'rd';
+        $item->save();
+
+        $this->handlePhotoUpload($request, $item);
+    }
+
+    protected function afterUpdate(Request $request, $item): void
+    {
+        parent::afterUpdate($request, $item);
+        $this->handlePhotoUpload($request, $item);
+    }
+}

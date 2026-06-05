@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+class OperadorController extends BaseCrudController
+{
+    protected string $modelClass = User::class;
+    protected string $indexView = 'Operadores/Index';
+    protected string $dataKey = 'operadores';
+
+    protected function checkAccess(Request $request): void
+    {
+        abort_if(!in_array($request->user()->role, ['presidente', 'rd']), 403, 'Acceso denegado.');
+    }
+
+    protected function getBaseQuery(Request $request): Builder
+    {
+        $query = $this->modelClass::query()->where('role', 'operador');
+        
+        $user = $request->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'rd') {
+                $query->where('parent_id', $user->id);
+            } elseif ($role === 'presidente') {
+                // Presidente ve todos los operadores
+            }
+        }
+
+        return $query;
+    }
+
+    public function index(Request $request)
+    {
+        $response = parent::index($request);
+
+        // Si estamos retornando la vista de Inertia, inyectamos los RDs disponibles
+        if ($response instanceof \Inertia\Response) {
+            $user = $request->user();
+            $rds = [];
+            
+            if ($user && strtolower($user->role) === 'presidente') {
+                $rds = User::where('role', 'rd')->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
+            }
+            
+            $response->with('availableRds', $rds);
+        }
+
+        return $response;
+    }
+
+    protected function applySearch(Builder $query, string $search): void
+    {
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('telefono', 'like', "%{$search}%")
+              ->orWhere('curp', 'like', "%{$search}%");
+        });
+    }
+
+    protected function applyFilters(Builder $query, array $filters): void
+    {
+        foreach ($filters as $field => $value) {
+            if ($value === null || $value === '') continue;
+
+            if (in_array($field, ['name', 'telefono', 'colonia'])) {
+                $query->where($field, 'like', "%{$value}%");
+            }
+
+            if ($field === 'estado') {
+                $query->where('estado', $value);
+            }
+
+            if ($field === 'created_at' && is_array($value) && count($value) === 2) {
+                $query->whereBetween('created_at', [$value[0] . ' 00:00:00', $value[1] . ' 23:59:59']);
+            }
+        }
+    }
+
+    protected function getValidationRules(Request $request, ?string $id = null): array
+    {
+        $user = $request->user();
+        $rules = [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
+            'sexo' => ['nullable', 'string', 'max:50'],
+            'calle' => ['nullable', 'string', 'max:255'],
+            'numero_exterior' => ['nullable', 'string', 'max:50'],
+            'numero_interior' => ['nullable', 'string', 'max:50'],
+            'colonia' => ['nullable', 'string', 'max:255'],
+            'demarcacion' => ['nullable', 'string', 'max:255'],
+            'clave_electoral' => ['nullable', 'string', 'max:50'],
+            'telefono' => ['nullable', 'string', 'max:50'],
+            'curp' => ['nullable', 'string', 'max:50'],
+            'apodo' => ['nullable', 'string', 'max:100'],
+            'password' => ['nullable', 'string', 'min:6'],
+            'estado' => ['nullable', 'boolean'],
+        ];
+
+        if ($user && strtolower($user->role) === 'presidente') {
+            $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', 'rd')];
+        }
+
+        return $rules;
+    }
+    
+    public function store(Request $request)
+    {
+        if (!$request->has('email')) {
+            $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
+            $request->merge(['email' => $identificador . '@sistema.local']);
+        }
+        
+        if ($request->filled('password')) {
+            $request->merge(['password' => Hash::make($request->password)]);
+        } else {
+            $request->merge(['password' => Hash::make('secret')]);
+        }
+
+        return parent::store($request);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        if ($request->filled('password')) {
+            $request->merge(['password' => Hash::make($request->password)]);
+        } else {
+            $request->request->remove('password');
+        }
+
+        return parent::update($request, $id);
+    }
+
+    protected function afterStore(Request $request, $item): void
+    {
+        $user = $request->user();
+        
+        if ($user && strtolower($user->role) === 'rd') {
+            $item->parent_id = $user->id;
+        } elseif ($user && strtolower($user->role) === 'presidente') {
+            if ($request->has('parent_id')) {
+                $item->parent_id = $request->input('parent_id');
+            }
+        }
+        
+        $item->role = 'operador';
+        $item->save();
+    }
+}
