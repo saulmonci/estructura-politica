@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
                 $promotores[] = User::create([
                     'name' => "Promotor Electoral $promotorCount",
                     'email' => "promotor$promotorCount@estructura.com",
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make('secret'),
                     'role' => 'promotor',
                     'parent_id' => $rd->id,
                 ]);
