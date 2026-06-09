@@ -129,7 +129,7 @@ class PromotorController extends BaseCrudController
             'notas' => ['nullable', 'string'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
-            'foto' => ['nullable', 'image', 'max:5120'],
+            'foto' => ['nullable', 'image', 'max:15360'],
             'role' => ['nullable', 'string'],
         ];
 
