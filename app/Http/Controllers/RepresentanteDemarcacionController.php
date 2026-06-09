@@ -80,6 +80,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             'foto' => ['nullable', 'image', 'max:5120'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
+            'role' => ['nullable', 'string'],
         ];
     }
     
@@ -101,6 +102,8 @@ class RepresentanteDemarcacionController extends BaseCrudController
         } else {
             $request->merge(['password' => Hash::make('secret')]);
         }
+
+        $request->merge(['role' => 'rd']);
 
         return parent::store($request);
     }
@@ -137,10 +140,6 @@ class RepresentanteDemarcacionController extends BaseCrudController
     {
         // Ejecutamos la lógica base (que ya asocia el parent_id al presidente)
         parent::afterStore($request, $item);
-
-        // Forzar rol
-        $item->role = 'rd';
-        $item->save();
 
         $this->handlePhotoUpload($request, $item);
     }

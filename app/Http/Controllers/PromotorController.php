@@ -129,6 +129,8 @@ class PromotorController extends BaseCrudController
             'notas' => ['nullable', 'string'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
+            'foto' => ['nullable', 'image', 'max:5120'],
+            'role' => ['nullable', 'string'],
         ];
 
         if ($user) {
@@ -163,6 +165,8 @@ class PromotorController extends BaseCrudController
             $request->merge(['password' => Hash::make('secret')]);
         }
 
+        $request->merge(['role' => 'promotor']);
+
         return parent::store($request);
     }
 
@@ -185,6 +189,15 @@ class PromotorController extends BaseCrudController
         return parent::update($request, $id);
     }
 
+    protected function handlePhotoUpload(Request $request, $item): void
+    {
+        if ($request->hasFile('foto')) {
+            $path = $request->file('foto')->store('fotos', 'public');
+            $item->foto = $path;
+            $item->save();
+        }
+    }
+
     protected function afterStore(Request $request, $item): void
     {
         $user = $request->user();
@@ -197,7 +210,13 @@ class PromotorController extends BaseCrudController
             }
         }
         
-        $item->role = 'promotor';
         $item->save();
+        $this->handlePhotoUpload($request, $item);
+    }
+
+    protected function afterUpdate(Request $request, $item): void
+    {
+        parent::afterUpdate($request, $item);
+        $this->handlePhotoUpload($request, $item);
     }
 }
