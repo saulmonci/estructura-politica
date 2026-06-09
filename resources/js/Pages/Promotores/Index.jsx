@@ -153,12 +153,12 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             <Head title="Promotores" />
 
             <Card bordered={false} className="shadow-sm">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-bold m-0">Promotores</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de promotores asignados a los operadores.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-orange-600 hover:bg-orange-500" onClick={handleCreate}>
+                    <Button type="primary" icon={<PlusOutlined />} className="bg-orange-600 hover:bg-orange-500 w-full sm:w-auto" onClick={handleCreate}>
                         Agregar Promotor
                     </Button>
                 </div>
@@ -171,7 +171,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                     search={true} 
                 />
 
-                <div className="mt-6 bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-100">
+                <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">
                     <p className="text-gray-600 text-sm m-0 flex-1">
                         <span className="text-blue-500 mr-2">ℹ️</span>
                         Como {auth?.user?.role}, puedes ver y administrar a los promotores en tu red. Cada promotor registrará promovidos.

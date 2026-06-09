@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, usePage } from '@inertiajs/react';
-import { Card, Col, Row, Statistic, Table, Tag, Button } from 'antd';
+import { Card, Col, Row, Statistic, Table, Tag, Button, Tabs } from 'antd';
 import { 
     UserOutlined, 
     TeamOutlined, 
     UsergroupAddOutlined, 
     EnvironmentOutlined,
-    PlusOutlined
+    PlusOutlined,
+    BarChartOutlined
 } from '@ant-design/icons';
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 
-export default function Dashboard({ stats, growthData, distribution, rds }) {
+export default function Dashboard({ stats, growthData, distribution, rds, reporteDemarcaciones }) {
     const { auth } = usePage().props;
     const user = auth?.user || { role: 'presidente' };
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,19 +33,54 @@ export default function Dashboard({ stats, growthData, distribution, rds }) {
         { title: 'ACCIÓN', key: 'action', render: () => <a className="text-blue-600">👁 Ver detalle</a> },
     ];
 
-    return (
-        <MainLayout>
-            <Head title={`Panel de ${user.role === 'presidente' ? 'Presidente' : (user.role === 'rd' ? 'Representante de Demarcación' : 'Promotor')}`} />
-            
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold mb-1">
-                    {user.role === 'presidente' && 'Panel del Presidente'}
-                    {user.role === 'rd' && 'Panel de Representante de Demarcación'}
-                    {user.role === 'promotor' && 'Panel de Promotor'}
-                </h1>
-                <p className="text-gray-500">Vista general de tu estructura</p>
-            </div>
+    const reportesColumns = [
+        { 
+            title: 'DEMARCACIÓN', 
+            dataIndex: 'demarcacion', 
+            key: 'demarcacion',
+            sorter: (a, b) => a.demarcacion.localeCompare(b.demarcacion),
+            render: (text) => <span className="font-semibold text-gray-700">{text}</span>
+        },
+        { 
+            title: 'RDs', 
+            dataIndex: 'rds', 
+            key: 'rds',
+            sorter: (a, b) => a.rds - b.rds,
+            align: 'center'
+        },
+        { 
+            title: 'OPERADORES', 
+            dataIndex: 'operadores', 
+            key: 'operadores',
+            sorter: (a, b) => a.operadores - b.operadores,
+            align: 'center'
+        },
+        { 
+            title: 'PROMOTORES', 
+            dataIndex: 'promotores', 
+            key: 'promotores',
+            sorter: (a, b) => a.promotores - b.promotores,
+            align: 'center'
+        },
+        { 
+            title: 'PROMOVIDOS', 
+            dataIndex: 'promovidos', 
+            key: 'promovidos',
+            sorter: (a, b) => a.promovidos - b.promovidos,
+            align: 'center'
+        },
+        { 
+            title: 'TOTAL EN ESTRUCTURA', 
+            dataIndex: 'total', 
+            key: 'total',
+            sorter: (a, b) => a.total - b.total,
+            align: 'center',
+            render: (total) => <span className="font-bold text-[#0f172a]">{total}</span>
+        },
+    ];
 
+    const vistaGeneralContent = (
+        <>
             <Row gutter={[16, 16]} className="mb-6">
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
@@ -172,6 +208,7 @@ export default function Dashboard({ stats, growthData, distribution, rds }) {
                         dataSource={rds} 
                         pagination={false} 
                         rowKey="id"
+                        scroll={{ x: 'max-content' }}
                         className="overflow-x-auto"
                     />
                     <div className="text-center mt-4">
@@ -179,6 +216,56 @@ export default function Dashboard({ stats, growthData, distribution, rds }) {
                     </div>
                 </Card>
             )}
+        </>
+    );
+
+    const reportesContent = (
+        <Card bordered={false} className="shadow-sm rounded-xl">
+            <div className="flex items-center gap-2 mb-4 text-[#0f172a]">
+                <BarChartOutlined className="text-blue-600 text-xl" /> 
+                <h2 className="text-lg font-bold m-0">Reportes por Demarcación</h2>
+            </div>
+            <p className="text-gray-500 mb-6">Resumen detallado de la estructura agrupada por Demarcación</p>
+            <Table 
+                columns={reportesColumns} 
+                dataSource={reporteDemarcaciones} 
+                rowKey="demarcacion"
+                pagination={{ pageSize: 15 }}
+                scroll={{ x: 'max-content' }}
+                className="overflow-x-auto"
+            />
+        </Card>
+    );
+
+    return (
+        <MainLayout>
+            <Head title={`Panel de ${user.role === 'presidente' ? 'Presidente' : (user.role === 'rd' ? 'Representante de Demarcación' : 'Promotor')}`} />
+            
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold mb-1">
+                    {user.role === 'presidente' && 'Panel del Presidente'}
+                    {user.role === 'rd' && 'Panel de Representante de Demarcación'}
+                    {user.role === 'promotor' && 'Panel de Promotor'}
+                </h1>
+                <p className="text-gray-500">Vista general de tu estructura</p>
+            </div>
+
+            <Tabs 
+                defaultActiveKey="1" 
+                className="dashboard-tabs"
+                items={[
+                    {
+                        key: '1',
+                        label: 'Vista General',
+                        children: vistaGeneralContent,
+                    },
+                    {
+                        key: '2',
+                        label: 'Reportes Estadísticos',
+                        children: reportesContent,
+                    }
+                ]}
+            />
 
             <PersonaFormModal 
                 open={isModalOpen} 

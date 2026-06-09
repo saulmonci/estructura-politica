@@ -88,6 +88,7 @@ class PromovidoController extends BaseCrudController
             'telefono' => ['nullable', 'string', 'max:50'],
             'seccion_electoral' => ['nullable', 'string', 'max:50'],
             'colonia' => ['nullable', 'string', 'max:255'],
+            'foto' => ['nullable', 'image', 'max:5120'],
         ];
 
         if ($user && in_array($user->role, ['presidente', 'rd', 'operador'])) {
@@ -95,6 +96,15 @@ class PromovidoController extends BaseCrudController
         }
 
         return $rules;
+    }
+
+    protected function handlePhotoUpload(Request $request, $item): void
+    {
+        if ($request->hasFile('foto')) {
+            $path = $request->file('foto')->store('fotos', 'public');
+            $item->foto = $path;
+            $item->save();
+        }
     }
 
     protected function afterStore(Request $request, $item): void
@@ -110,5 +120,13 @@ class PromovidoController extends BaseCrudController
                 $item->save();
             }
         }
+
+        $this->handlePhotoUpload($request, $item);
+    }
+
+    protected function afterUpdate(Request $request, $item): void
+    {
+        parent::afterUpdate($request, $item);
+        $this->handlePhotoUpload($request, $item);
     }
 }

@@ -141,7 +141,12 @@ export default function TableCrud({
                 debouncedSubmit();
             }
         },
-        search: search ? { defaultCollapsed: false, labelWidth: 'auto', ...search } : false,
+        search: search ? { 
+            defaultCollapsed: false, 
+            labelWidth: 'auto', 
+            span: { xs: 24, sm: 12, md: 8, lg: 6, xl: 6, xxl: 4 },
+            ...search 
+        } : false,
         headerTitle,
         toolBarRender,
         size: 'small',

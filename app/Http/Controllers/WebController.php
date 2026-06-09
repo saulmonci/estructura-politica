@@ -172,6 +172,52 @@ class WebController extends Controller
             }
         }
 
+        // Lógica de reportes por demarcación
+        $agrupados = User::whereNotNull('demarcacion')
+            ->select('demarcacion')
+            ->selectRaw("SUM(CASE WHEN role = 'rd' THEN 1 ELSE 0 END) as total_rds")
+            ->selectRaw("SUM(CASE WHEN role = 'operador' THEN 1 ELSE 0 END) as total_operadores")
+            ->selectRaw("SUM(CASE WHEN role = 'promotor' THEN 1 ELSE 0 END) as total_promotores")
+            ->groupBy('demarcacion')
+            ->get()
+            ->keyBy('demarcacion')
+            ->toArray();
+
+        $promovidosAgrupados = DB::table('promovidos')
+            ->join('users', 'promovidos.promotor_id', '=', 'users.id')
+            ->select('users.demarcacion')
+            ->selectRaw('COUNT(promovidos.id) as total_promovidos')
+            ->whereNotNull('users.demarcacion')
+            ->groupBy('users.demarcacion')
+            ->get();
+
+        $reporte = [];
+        foreach ($agrupados as $dem => $datos) {
+            $reporte[$dem] = [
+                'demarcacion' => "Demarcación " . $dem,
+                'rds' => (int)$datos['total_rds'],
+                'operadores' => (int)$datos['total_operadores'],
+                'promotores' => (int)$datos['total_promotores'],
+                'promovidos' => 0,
+            ];
+        }
+        foreach ($promovidosAgrupados as $prom) {
+            $dem = $prom->demarcacion;
+            if (!isset($reporte[$dem])) {
+                $reporte[$dem] = [
+                    'demarcacion' => "Demarcación " . $dem,
+                    'rds' => 0,
+                    'operadores' => 0,
+                    'promotores' => 0,
+                    'promovidos' => 0,
+                ];
+            }
+            $reporte[$dem]['promovidos'] = (int)$prom->total_promovidos;
+        }
+        foreach ($reporte as &$datos) {
+            $datos['total'] = $datos['rds'] + $datos['operadores'] + $datos['promotores'] + $datos['promovidos'];
+        }
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'rds' => $rdCount,
@@ -182,7 +228,8 @@ class WebController extends Controller
             ],
             'growthData' => $dates,
             'distribution' => $distribution,
-            'rds' => $rds
+            'rds' => $rds,
+            'reporteDemarcaciones' => array_values($reporte)
         ]);
     }
 
@@ -204,4 +251,5 @@ class WebController extends Controller
             'operadores' => $operadores
         ]);
     }
+
 }

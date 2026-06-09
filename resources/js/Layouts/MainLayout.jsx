@@ -11,7 +11,8 @@ import {
   SettingOutlined,
   LogoutOutlined,
   BellOutlined,
-  SearchOutlined
+  SearchOutlined,
+  MenuOutlined
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
@@ -20,6 +21,7 @@ export default function MainLayout({ children }) {
     const { auth } = usePage().props;
     const user = auth?.user || { name: 'Presidente', role: 'presidente', id: 'PRES-0001' };
     const [pathname, setPathname] = useState(window.location.pathname);
+    const [collapsed, setCollapsed] = useState(false);
 
     const handleLogout = () => {
         router.post('/logout');
@@ -34,6 +36,8 @@ export default function MainLayout({ children }) {
             >
                 <ProLayout
                     title="ORION Sistemas"
+                    collapsed={collapsed}
+                    onCollapse={setCollapsed}
                     logo={<div className="bg-white p-1 rounded"><img src="/images/orion-logo.png" alt="logo" style={{height: 32}} /></div>}
                     layout="side"
                     navTheme="dark"
@@ -121,11 +125,7 @@ export default function MainLayout({ children }) {
                                         name: 'Mapa Territorial',
                                         icon: <EnvironmentOutlined />,
                                     },
-                                    user.role === 'presidente' && {
-                                        path: '/reportes',
-                                        name: 'Reportes',
-                                        icon: <BarChartOutlined />,
-                                    },
+
                                     user.role === 'presidente' && {
                                         path: '/estadisticas',
                                         name: 'Estadísticas',
@@ -150,19 +150,30 @@ export default function MainLayout({ children }) {
                 >
                     <div className="flex flex-col h-[calc(100vh-64px)] w-full -m-6 relative">
                         {/* Custom Header that bypasses ProLayout header issues */}
-                        <div className="flex items-center justify-between w-full h-16 bg-white px-6 shadow-sm border-b border-gray-100 flex-shrink-0 relative z-10">
-                            <div className="flex items-center text-sm text-gray-500">
-                                <span className="font-semibold text-gray-700">Representantes de Demarcación (RD)</span>
+                        <div className="flex items-center justify-between w-full h-16 bg-white px-4 md:px-6 shadow-sm border-b border-gray-100 flex-shrink-0 relative z-10">
+                            <div className="hidden md:flex items-center text-sm text-gray-500 truncate mr-4">
+                                <span className="font-semibold text-gray-700 truncate">Representantes de Demarcación (RD)</span>
                                 <span className="mx-2 text-gray-400 font-bold">&gt;</span>
-                                <span>{user.id || 'RD-0001'} - Ana Gabriela Torres</span>
+                                <span className="truncate">{user.id || 'RD-0001'} - Ana Gabriela Torres</span>
                             </div>
-                            <div className="flex items-center gap-6">
+                            {/* Mobile title replacement & menu toggle */}
+                            <div className="md:hidden flex items-center gap-3 flex-1">
+                                <MenuOutlined 
+                                    className="text-xl text-gray-800 cursor-pointer" 
+                                    onClick={() => setCollapsed(!collapsed)} 
+                                />
+                                <span className="font-bold text-gray-800 text-lg truncate">
+                                    ORION
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 md:gap-6">
                                 <Input 
                                     prefix={<SearchOutlined className="text-gray-400" />} 
-                                    placeholder="Buscar personas, IDs, colonias..." 
-                                    className="w-64 md:w-80 rounded-md border-gray-200 hover:border-blue-400 focus:border-blue-500"
+                                    placeholder="Buscar..." 
+                                    className="w-32 sm:w-48 md:w-80 rounded-md border-gray-200 hover:border-blue-400 focus:border-blue-500"
                                 />
-                                <Badge count={5} size="small" className="cursor-pointer">
+                                <Badge count={5} size="small" className="cursor-pointer hidden sm:block">
                                     <BellOutlined className="text-xl text-gray-600 hover:text-blue-600" />
                                 </Badge>
                                 <Dropdown
@@ -177,13 +188,13 @@ export default function MainLayout({ children }) {
                                         ],
                                     }}
                                 >
-                                    <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1.5 rounded transition-colors">
+                                    <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 md:p-1.5 rounded transition-colors">
                                         <Avatar src="https://i.pravatar.cc/150?u=a042581f4e29026024d" />
-                                        <div className="flex flex-col leading-none text-left">
+                                        <div className="hidden sm:flex flex-col leading-none text-left">
                                             <span className="font-bold text-gray-800 text-sm">{user.id || 'PRES-0001'}</span>
                                             <span className="text-xs text-gray-500 capitalize">{user.role}</span>
                                         </div>
-                                        <span className="text-gray-400 text-xs ml-1 font-bold">v</span>
+                                        <span className="text-gray-400 text-xs font-bold hidden sm:block">v</span>
                                     </div>
                                 </Dropdown>
                             </div>

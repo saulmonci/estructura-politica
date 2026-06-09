@@ -145,12 +145,12 @@ export default function PromovidosIndex({ availablePromotores }) {
             <Head title="Promovidos" />
 
             <Card bordered={false} className="shadow-sm">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-bold m-0">Promovidos (Simpatizantes)</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de personas registradas por los promotores.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-gray-800 hover:bg-gray-700" onClick={handleCreate}>
+                    <Button type="primary" icon={<PlusOutlined />} className="bg-gray-800 hover:bg-gray-700 w-full sm:w-auto" onClick={handleCreate}>
                         Agregar Promovido
                     </Button>
                 </div>
@@ -163,7 +163,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     search={true} 
                 />
 
-                <div className="mt-6 bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-100">
+                <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">
                     <p className="text-gray-600 text-sm m-0 flex-1">
                         <span className="text-blue-500 mr-2">ℹ️</span>
                         Esta es la base principal de la estructura electoral. Los promovidos son registrados directamente por los promotores en el campo.

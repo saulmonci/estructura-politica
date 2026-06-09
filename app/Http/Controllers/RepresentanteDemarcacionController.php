@@ -61,18 +61,22 @@ class RepresentanteDemarcacionController extends BaseCrudController
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'nombre' => ['required', 'string', 'max:255'],
+            'apellidos' => ['required', 'string', 'max:255'],
+            'name' => ['nullable', 'string', 'max:510'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
             'sexo' => ['nullable', 'string', 'max:50'],
             'calle' => ['nullable', 'string', 'max:255'],
             'numero_exterior' => ['nullable', 'string', 'max:50'],
             'numero_interior' => ['nullable', 'string', 'max:50'],
             'colonia' => ['nullable', 'string', 'max:255'],
+            'codigo_postal' => ['nullable', 'digits:5'],
             'demarcacion' => ['nullable', 'string', 'max:255'],
-            'clave_electoral' => ['nullable', 'string', 'max:50'],
-            'telefono' => ['nullable', 'string', 'max:50'],
-            'curp' => ['nullable', 'string', 'max:50'],
+            'clave_electoral' => ['nullable', 'string', 'size:18'],
+            'telefono' => ['nullable', 'digits:10'],
+            'curp' => ['nullable', 'string', 'size:18'],
             'apodo' => ['nullable', 'string', 'max:100'],
+            'notas' => ['nullable', 'string'],
             'foto' => ['nullable', 'image', 'max:5120'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
@@ -81,9 +85,13 @@ class RepresentanteDemarcacionController extends BaseCrudController
     
     public function store(Request $request)
     {
+        if ($request->has('nombre') && $request->has('apellidos')) {
+            $request->merge(['name' => $request->nombre . ' ' . $request->apellidos]);
+        }
+
         // Si no mandan email (ya que no está en el form actual), generamos uno falso por convención o pedimos que lo llenen.
         // Como el email es required en el migration original y unique, crearemos uno dummy basado en la curp o telefono.
-        if (!$request->has('email')) {
+        if (!$request->filled('email')) {
             $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
             $request->merge(['email' => $identificador . '@sistema.local']);
         }
@@ -99,6 +107,14 @@ class RepresentanteDemarcacionController extends BaseCrudController
 
     public function update(Request $request, string $id)
     {
+        if ($request->has('nombre') && $request->has('apellidos')) {
+            $request->merge(['name' => $request->nombre . ' ' . $request->apellidos]);
+        }
+
+        if (!$request->filled('email')) {
+            $request->request->remove('email');
+        }
+
         if ($request->filled('password')) {
             $request->merge(['password' => Hash::make($request->password)]);
         } else {

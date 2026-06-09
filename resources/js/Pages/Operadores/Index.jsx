@@ -141,12 +141,12 @@ export default function OperadoresIndex({ availableRds }) {
             <Head title="Operadores Políticos" />
 
             <Card bordered={false} className="shadow-sm">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-bold m-0">Operadores Políticos</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de operadores políticos asignados a tu red.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-purple-700 hover:bg-purple-600" onClick={handleCreate}>
+                    <Button type="primary" icon={<PlusOutlined />} className="bg-purple-700 hover:bg-purple-600 w-full sm:w-auto" onClick={handleCreate}>
                         Agregar Operador
                     </Button>
                 </div>
@@ -159,7 +159,7 @@ export default function OperadoresIndex({ availableRds }) {
                     search={true} 
                 />
 
-                <div className="mt-6 bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-100">
+                <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">
                     <p className="text-gray-600 text-sm m-0 flex-1">
                         <span className="text-blue-500 mr-2">ℹ️</span>
                         Como {auth?.user?.role === 'presidente' ? 'Presidente' : 'RD'}, puedes ver y administrar a los operadores políticos de tu red. Cada operador registrará promotores.

@@ -140,13 +140,13 @@ export default function RepresentantesIndex({ representantes }) {
             <Head title="Representantes de Demarcación" />
 
             <Card bordered={false} className="shadow-sm">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
-                        <h2 className="text-xl font-bold m-0">Representantes de Demarcación (RD)</h2>
-                        <p className="text-gray-500 text-sm mt-1">Gestión de la estructura política principal.</p>
+                        <h2 className="text-xl font-bold m-0">Representantes de Demarcación</h2>
+                        <p className="text-gray-500 text-sm mt-1">Lista de todos los RD asignados en el sistema.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-blue-700" onClick={handleCreate}>
-                        Agregar RD
+                    <Button type="primary" icon={<PlusOutlined />} className="bg-[#0f172a] hover:bg-slate-800 w-full sm:w-auto" onClick={handleCreate}>
+                        Agregar Representante
                     </Button>
                 </div>
 

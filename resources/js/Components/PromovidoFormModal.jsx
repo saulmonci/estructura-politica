@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ModalForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
-import { Row, Col, message, Alert, Button, Divider } from 'antd';
+import { Row, Col, message, Alert, Button, Divider, Upload } from 'antd';
 import { 
     UserOutlined, 
     EnvironmentOutlined, 
@@ -11,19 +11,26 @@ import {
     SaveOutlined,
     CloseOutlined,
     BankOutlined,
-    UsergroupAddOutlined
+    UsergroupAddOutlined,
+    CameraOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
 
 export default function PromovidoFormModal({ open, onOpenChange, onSuccess, editId = null, fetchUrl = null, availablePromotores = [] }) {
+    const [fileList, setFileList] = useState([]);
+    const [existingFoto, setExistingFoto] = useState(null);
+
+    const handleUploadChange = (info) => {
+        setFileList(info.fileList.slice(-1));
+    };
 
     return (
         <ModalForm
             title={null}
             open={open}
             onOpenChange={onOpenChange}
-            width={800}
+            width={1000}
             modalProps={{
                 destroyOnClose: true,
                 maskClosable: false,
@@ -59,6 +66,10 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
             onFinish={async (values) => {
                 const endpoint = fetchUrl || (editId ? `/promovidos/${editId}` : '/promovidos');
 
+                if (fileList.length > 0 && fileList[0].originFileObj) {
+                    values.foto = fileList[0].originFileObj;
+                }
+
                 if (editId) {
                     values._method = 'put';
                     router.post(endpoint, values, {
@@ -85,11 +96,17 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
             }}
             request={async () => {
                 if (!editId) {
+                    setExistingFoto(null);
                     return {};
                 }
                 try {
                     const url = fetchUrl || `/api/promovidos/${editId}`;
                     const response = await axios.get(url);
+                    if (response.data.foto) {
+                        setExistingFoto(`/storage/${response.data.foto}`);
+                    } else {
+                        setExistingFoto(null);
+                    }
                     return response.data;
                 } catch (error) {
                     message.error('No se pudo cargar la información del registro');
@@ -116,92 +133,168 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
             </div>
 
             <div className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="bg-[#0f172a] text-white p-1 rounded">
-                        <UserOutlined />
-                    </div>
-                    <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">DATOS DEL PROMOVIDO</h3>
-                </div>
-                <Divider className="my-2 border-gray-300" />
+                <Row gutter={48}>
+                    <Col xs={24} md={15}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="bg-[#0f172a] text-white p-1 rounded">
+                                <UserOutlined />
+                            </div>
+                            <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">DATOS DEL PROMOVIDO</h3>
+                        </div>
+                        <Divider className="my-2 border-gray-300" />
 
-                <div className="mt-4">
-                    {availablePromotores.length > 0 && (
-                        <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
-                            <Col span={24}>
-                                <ProFormSelect
-                                    name="promotor_id"
-                                    label={<span className="font-bold text-blue-800">Asignar a Promotor</span>}
-                                    placeholder="Seleccionar el Promotor que trajo a este simpatizante"
-                                    rules={[{ required: true, message: 'Debe seleccionar un Promotor' }]}
-                                    options={availablePromotores.map(p => ({
-                                        label: p.apodo ? `${p.name} (${p.apodo})` : p.name,
-                                        value: p.id
-                                    }))}
-                                    fieldProps={{ prefix: <TeamOutlined className="text-blue-500 mr-2" />, showSearch: true }}
-                                />
-                            </Col>
-                        </Row>
-                    )}
-                    <Row gutter={16}>
-                        <Col span={24}>
-                            <ProFormText
-                                name="nombre_completo"
-                                label="Nombre completo"
-                                placeholder="Ingresar nombre completo"
-                                rules={[{ required: true, message: 'Requerido' }]}
-                                fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
-                            />
-                        </Col>
-                    </Row>
+                        <div className="mt-4">
+                            {availablePromotores.length > 0 && (
+                                <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
+                                    <Col span={24}>
+                                        <ProFormSelect
+                                            name="promotor_id"
+                                            label={<span className="font-bold text-blue-800">Asignar a Promotor</span>}
+                                            placeholder="Seleccionar el Promotor que trajo a este simpatizante"
+                                            rules={[{ required: true, message: 'Debe seleccionar un Promotor' }]}
+                                            options={availablePromotores.map(p => ({
+                                                label: p.apodo ? `${p.name} (${p.apodo})` : p.name,
+                                                value: p.id
+                                            }))}
+                                            fieldProps={{ prefix: <TeamOutlined className="text-blue-500 mr-2" />, showSearch: true }}
+                                        />
+                                    </Col>
+                                </Row>
+                            )}
+                            <Row gutter={16}>
+                                <Col span={24}>
+                                    <ProFormText
+                                        name="nombre_completo"
+                                        label="Nombre completo"
+                                        placeholder="Ingresar nombre completo"
+                                        rules={[{ required: true, message: 'Requerido' }]}
+                                        fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
+                                    />
+                                </Col>
+                            </Row>
 
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <ProFormText
-                                name="clave_elector"
-                                label="Clave de elector"
-                                placeholder="Ingresar clave de elector"
-                                rules={[{ required: true, message: 'Requerido' }]}
-                                fieldProps={{ prefix: <IdcardOutlined className="text-gray-400 mr-2" /> }}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <ProFormText
-                                name="telefono"
-                                label="Teléfono de contacto"
-                                placeholder="Ingresar teléfono"
-                                fieldProps={{ prefix: <PhoneOutlined className="text-gray-400 mr-2" /> }}
-                            />
-                        </Col>
-                    </Row>
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="clave_elector"
+                                        label="Clave de elector"
+                                        placeholder="Ingresar clave de elector"
+                                        rules={[{ required: true, message: 'Requerido' }]}
+                                        fieldProps={{ prefix: <IdcardOutlined className="text-gray-400 mr-2" /> }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="telefono"
+                                        label="Teléfono de contacto"
+                                        placeholder="Ingresar teléfono"
+                                        fieldProps={{ prefix: <PhoneOutlined className="text-gray-400 mr-2" /> }}
+                                    />
+                                </Col>
+                            </Row>
 
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <ProFormText
-                                name="colonia"
-                                label="Colonia"
-                                placeholder="Ingresar colonia"
-                                fieldProps={{ prefix: <BankOutlined className="text-gray-400 mr-2" /> }}
-                            />
-                        </Col>
-                        <Col span={12}>
-                            <ProFormText
-                                name="seccion_electoral"
-                                label="Sección Electoral"
-                                placeholder="Sección electoral"
-                                rules={[{ required: true, message: 'Requerido' }]}
-                                fieldProps={{ prefix: <EnvironmentOutlined className="text-gray-400 mr-2" /> }}
-                            />
-                        </Col>
-                    </Row>
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="colonia"
+                                        label="Colonia"
+                                        placeholder="Ingresar colonia"
+                                        fieldProps={{ prefix: <BankOutlined className="text-gray-400 mr-2" /> }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="seccion_electoral"
+                                        label="Sección Electoral"
+                                        placeholder="Sección electoral"
+                                        rules={[{ required: true, message: 'Requerido' }]}
+                                        fieldProps={{ prefix: <EnvironmentOutlined className="text-gray-400 mr-2" /> }}
+                                    />
+                                </Col>
+                            </Row>
 
-                    <Alert
-                        message={<span className="font-bold">Privacidad</span>}
-                        description="Los datos del promovido están protegidos y solo deben utilizarse para la estructura política y contacto."
-                        type="info"
-                        showIcon
-                        className="mt-4 bg-blue-50 border-blue-200"
-                    />
-                </div>
+                            <Alert
+                                message={<span className="font-bold">Privacidad</span>}
+                                description="Los datos del promovido están protegidos y solo deben utilizarse para la estructura política y contacto."
+                                type="info"
+                                showIcon
+                                className="mt-4 bg-blue-50 border-blue-200"
+                            />
+                        </div>
+                    </Col>
+                    
+                    <Col xs={24} md={9}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="bg-[#0f172a] text-white p-1 rounded">
+                                <CameraOutlined />
+                            </div>
+                            <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">FOTOGRAFÍA</h3>
+                        </div>
+                        <Divider className="my-2 border-gray-300" />
+                        
+                        <div className="mt-4">
+                            <Alert
+                                description={<span className="text-sm text-blue-800">Fotografía del promovido para identificarlo fácilmente en campo.</span>}
+                                type="info"
+                                showIcon
+                                className="mb-6 bg-blue-50 border-blue-100"
+                            />
+
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px]">
+                                {fileList.length > 0 ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                        <img 
+                                            src={URL.createObjectURL(fileList[0].originFileObj)} 
+                                            alt="avatar" 
+                                            className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-md mb-3"
+                                        />
+                                        <Button danger size="small" onClick={() => setFileList([])}>Eliminar foto</Button>
+                                    </div>
+                                ) : existingFoto ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                        <img 
+                                            src={existingFoto} 
+                                            alt="avatar" 
+                                            className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-md mb-3"
+                                        />
+                                        <Upload
+                                            beforeUpload={() => false}
+                                            onChange={handleUploadChange}
+                                            showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
+                                        >
+                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
+                                                Cambiar fotografía
+                                            </Button>
+                                        </Upload>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-28 h-28 bg-gray-200 rounded-full flex items-center justify-center mb-4 relative shadow-inner">
+                                            <UserOutlined className="text-6xl text-gray-400" />
+                                            <div className="absolute bottom-2 right-2 bg-[#0f172a] w-10 h-10 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
+                                                <CameraOutlined className="text-white text-lg" />
+                                            </div>
+                                        </div>
+                                        <Upload
+                                            beforeUpload={() => false}
+                                            onChange={handleUploadChange}
+                                            showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
+                                        >
+                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
+                                                Tomar fotografía
+                                            </Button>
+                                        </Upload>
+                                        <p className="text-gray-400 text-xs mt-2">Formatos permitidos: JPG, PNG (Max: 5MB)</p>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
             </div>
         </ModalForm>
     );

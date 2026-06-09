@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ModalForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
+import { ModalForm, ProFormText, ProFormSelect, ProFormTextArea } from '@ant-design/pro-components';
 import { Row, Col, Upload, message, Alert, Button, Divider } from 'antd';
 import { 
     UserOutlined, 
@@ -13,7 +13,8 @@ import {
     SaveOutlined,
     CloseOutlined,
     BankOutlined,
-    LockOutlined
+    LockOutlined,
+    MailOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
@@ -37,7 +38,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
             width={1000}
             modalProps={{
                 destroyOnClose: true,
-                maskClosable: false,
+                maskClosable: true,
                 keyboard: true,
                 bodyStyle: { padding: 0 },
                 closeIcon: null,
@@ -170,16 +171,25 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                 </Row>
                             ) : null}
                             <Row gutter={16}>
-                                <Col span={10}>
+                                <Col xs={24} md={8}>
                                     <ProFormText
-                                        name="name"
-                                        label="Nombre completo"
-                                        placeholder="Ingresar nombre"
+                                        name="nombre"
+                                        label="Nombre(s)"
+                                        placeholder="Ingresar nombre(s)"
                                         rules={[{ required: true, message: 'Requerido' }]}
                                         fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
-                                <Col span={8}>
+                                <Col xs={24} md={8}>
+                                    <ProFormText
+                                        name="apellidos"
+                                        label="Apellidos"
+                                        placeholder="Ingresar apellidos"
+                                        rules={[{ required: true, message: 'Requerido' }]}
+                                        fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={8}>
                                     <ProFormText
                                         name="apodo"
                                         label="Apodo (alias)"
@@ -188,7 +198,10 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
-                                <Col span={6}>
+                            </Row>
+
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
                                     <ProFormSelect
                                         name="sexo"
                                         label="Sexo"
@@ -200,7 +213,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         ]}
                                     />
                                 </Col>
-                                <Col span={10}>
+                                <Col xs={24} md={12}>
                                     <ProFormSelect
                                         name="estado"
                                         label="Estatus"
@@ -228,7 +241,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                             </Row>
 
                             <Row gutter={16}>
-                                <Col span={12}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="calle"
                                         label="Calle"
@@ -237,7 +250,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         fieldProps={{ prefix: <EnvironmentOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
-                                <Col span={6}>
+                                <Col xs={12} md={6}>
                                     <ProFormText
                                         name="numero_exterior"
                                         label="No. Ext"
@@ -246,7 +259,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         fieldProps={{ prefix: <span className="text-gray-400 font-bold mr-2">#</span> }}
                                     />
                                 </Col>
-                                <Col span={6}>
+                                <Col xs={12} md={6}>
                                     <ProFormText
                                         name="numero_interior"
                                         label="No. Int"
@@ -257,7 +270,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                             </Row>
 
                             <Row gutter={16}>
-                                <Col span={12}>
+                                <Col xs={24} md={8}>
                                     <ProFormText
                                         name="colonia"
                                         label="Colonia"
@@ -266,7 +279,27 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         fieldProps={{ prefix: <BankOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
-                                <Col span={12}>
+                                <Col xs={24} md={8}>
+                                    <ProFormText
+                                        name="codigo_postal"
+                                        label="Código Postal"
+                                        placeholder="Ingresar C.P."
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { pattern: /^[0-9]{5}$/, message: 'Debe contener exactamente 5 números' }
+                                        ]}
+                                        fieldProps={{ 
+                                            prefix: <span className="text-gray-400 font-bold mr-2">CP</span>,
+                                            maxLength: 5,
+                                            onKeyPress: (event) => {
+                                                if (!/[0-9]/.test(event.key)) {
+                                                    event.preventDefault();
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={8}>
                                     <ProFormSelect
                                         name="demarcacion"
                                         label="Demarcación"
@@ -289,34 +322,88 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                             </Row>
 
                             <Row gutter={16}>
-                                <Col span={8}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="curp"
                                         label="CURP"
                                         placeholder="Ingresar CURP"
-                                        rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <IdcardOutlined className="text-gray-400 mr-2" /> }}
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { len: 18, message: 'Debe contener exactamente 18 caracteres' }
+                                        ]}
+                                        fieldProps={{ 
+                                            prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 18,
+                                            style: { textTransform: 'uppercase' }
+                                        }}
+                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
-                                <Col span={8}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="clave_electoral"
                                         label="Clave electoral"
                                         placeholder="Clave electoral"
-                                        rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <IdcardOutlined className="text-gray-400 mr-2" /> }}
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { len: 18, message: 'Debe contener exactamente 18 caracteres' }
+                                        ]}
+                                        fieldProps={{ 
+                                            prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 18,
+                                            style: { textTransform: 'uppercase' }
+                                        }}
+                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
-                                <Col span={8}>
+                            </Row>
+
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="telefono"
                                         label="Teléfono"
                                         placeholder="Ingresar teléfono"
-                                        rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <PhoneOutlined className="text-gray-400 mr-2" /> }}
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { pattern: /^[0-9]{10}$/, message: 'Debe contener exactamente 10 números' }
+                                        ]}
+                                        fieldProps={{ 
+                                            prefix: <PhoneOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 10,
+                                            onKeyPress: (event) => {
+                                                if (!/[0-9]/.test(event.key)) {
+                                                    event.preventDefault();
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="email"
+                                        label="Correo electrónico"
+                                        placeholder="Ingresar correo (opcional)"
+                                        rules={[
+                                            { type: 'email', message: 'Correo no válido' }
+                                        ]}
+                                        fieldProps={{ prefix: <MailOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
                             </Row>
+
+                            {entityType === 'RD' && (
+                                <Row gutter={16}>
+                                    <Col span={24}>
+                                        <ProFormTextArea
+                                            name="notas"
+                                            label="Notas"
+                                            placeholder="Ingresar notas adicionales (opcional)"
+                                            fieldProps={{ rows: 6 }}
+                                        />
+                                    </Col>
+                                </Row>
+                            )}
 
                             <Alert
                                 message={<span className="font-bold">IMPORTANTE</span>}
@@ -367,6 +454,8 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                             beforeUpload={() => false}
                                             onChange={handleUploadChange}
                                             showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
                                         >
                                             <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
                                                 Cambiar fotografía
@@ -385,6 +474,8 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                             beforeUpload={() => false}
                                             onChange={handleUploadChange}
                                             showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
                                         >
                                             <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
                                                 Tomar fotografía
