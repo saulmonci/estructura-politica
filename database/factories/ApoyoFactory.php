@@ -20,11 +20,11 @@ class ApoyoFactory extends Factory
     {
         return [
             'promovido_id' => Promovido::factory(),
-            'fecha' => fake()->date(),
-            'tipo_apoyo' => fake()->randomElement(['Despensa', 'Silla de Ruedas', 'Láminas', 'Gestión Médica', 'Apoyo Económico', 'Material de Construcción']),
-            'descripcion' => fake()->optional()->sentence(),
-            'estado' => fake()->randomElement(['Entregado', 'Entregado', 'Pendiente', 'Cancelado']),
-            'cantidad_monetaria' => fake()->optional()->randomFloat(2, 500, 5000),
+            'fecha' => $this->faker->date(),
+            'tipo_apoyo' => $this->faker->randomElement(['Despensa', 'Silla de Ruedas', 'Láminas', 'Gestión Médica', 'Apoyo Económico', 'Material de Construcción']),
+            'descripcion' => $this->faker->optional()->sentence(),
+            'estado' => $this->faker->randomElement(['Entregado', 'Entregado', 'Pendiente', 'Cancelado']),
+            'cantidad_monetaria' => $this->faker->optional()->randomFloat(2, 500, 5000),
         ];
     }
 }

@@ -19,11 +19,11 @@ class PromovidoFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre_completo' => fake()->name(),
-            'clave_elector' => fake()->unique()->regexify('[A-Z]{6}[0-9]{8}[H,M][0-9]{3}'),
-            'telefono' => fake()->numerify('##########'),
-            'seccion_electoral' => fake()->numberBetween(1, 1000),
-            'colonia' => fake()->streetName(),
+            'nombre_completo' => $this->faker->name(),
+            'clave_elector' => $this->faker->unique()->regexify('[A-Z]{6}[0-9]{8}[H,M][0-9]{3}'),
+            'telefono' => $this->faker->numerify('##########'),
+            'seccion_electoral' => $this->faker->numberBetween(1, 1000),
+            'colonia' => $this->faker->streetName(),
             'promotor_id' => User::where('role', 'promotor')->inRandomOrder()->first()->id ?? User::factory()->create(['role' => 'promotor'])->id,
         ];
     }
