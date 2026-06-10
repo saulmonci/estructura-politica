@@ -18,12 +18,13 @@ class PromovidoFactory extends Factory
      */
     public function definition(): array
     {
+        $faker = \Faker\Factory::create();
         return [
-            'nombre_completo' => $this->faker->name(),
-            'clave_elector' => $this->faker->unique()->regexify('[A-Z]{6}[0-9]{8}[H,M][0-9]{3}'),
-            'telefono' => $this->faker->numerify('##########'),
-            'seccion_electoral' => $this->faker->numberBetween(1, 1000),
-            'colonia' => $this->faker->streetName(),
+            'nombre_completo' => $faker->name(),
+            'clave_elector' => $faker->unique()->regexify('[A-Z]{6}[0-9]{8}[H,M][0-9]{3}'),
+            'telefono' => $faker->numerify('##########'),
+            'seccion_electoral' => $faker->numberBetween(1, 1000),
+            'colonia' => $faker->streetName(),
             'promotor_id' => User::where('role', 'promotor')->inRandomOrder()->first()->id ?? User::factory()->create(['role' => 'promotor'])->id,
         ];
     }

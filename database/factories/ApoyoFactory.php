@@ -18,13 +18,14 @@ class ApoyoFactory extends Factory
      */
     public function definition(): array
     {
+        $faker = \Faker\Factory::create();
         return [
             'promovido_id' => Promovido::factory(),
-            'fecha' => $this->faker->date(),
-            'tipo_apoyo' => $this->faker->randomElement(['Despensa', 'Silla de Ruedas', 'Láminas', 'Gestión Médica', 'Apoyo Económico', 'Material de Construcción']),
-            'descripcion' => $this->faker->optional()->sentence(),
-            'estado' => $this->faker->randomElement(['Entregado', 'Entregado', 'Pendiente', 'Cancelado']),
-            'cantidad_monetaria' => $this->faker->optional()->randomFloat(2, 500, 5000),
+            'fecha' => $faker->date(),
+            'tipo_apoyo' => $faker->randomElement(['Despensa', 'Silla de Ruedas', 'Láminas', 'Gestión Médica', 'Apoyo Económico', 'Material de Construcción']),
+            'descripcion' => $faker->optional()->sentence(),
+            'estado' => $faker->randomElement(['Entregado', 'Entregado', 'Pendiente', 'Cancelado']),
+            'cantidad_monetaria' => $faker->optional()->randomFloat(2, 500, 5000),
         ];
     }
 }
