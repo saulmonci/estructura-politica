@@ -24,7 +24,7 @@ class PromovidoFactory extends Factory
             'telefono' => fake()->numerify('##########'),
             'seccion_electoral' => fake()->numberBetween(1, 1000),
             'colonia' => fake()->streetName(),
-            'promotor_id' => User::inRandomOrder()->first()->id ?? User::factory(),
+            'promotor_id' => User::where('role', 'promotor')->inRandomOrder()->first()->id ?? User::factory()->create(['role' => 'promotor'])->id,
         ];
     }
 }
