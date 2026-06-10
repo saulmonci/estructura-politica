@@ -140,6 +140,51 @@ export default function PromovidosIndex({ availablePromotores }) {
         }
     ];
 
+    const renderMobileCard = (record) => {
+        return (
+            <Card styles={{ body: { padding: '16px' } }} className="mb-4 shadow-sm rounded-lg border border-gray-200 w-full">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                        <Avatar size={48} icon={<UserOutlined />} className="bg-gray-100 text-gray-600" />
+                        <div>
+                            <div className="font-semibold text-base text-gray-800">{record.nombre_completo}</div>
+                            <div className="text-xs text-gray-500">Promovido (Simpatizante)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="space-y-2 mb-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                        <UserOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">ID:</span> 
+                        <span className="font-medium text-gray-800">#{String(record.id).padStart(5, '0')}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <IdcardOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">Clave:</span> 
+                        <span>{record.clave_elector || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <PhoneOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">Tel:</span> 
+                        <span>{record.telefono || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <EnvironmentOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">Zona:</span> 
+                        <span className="truncate">{record.colonia || 'Sin colonia'}{record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}</span>
+                    </div>
+                </div>
+                
+                <div className="pt-3 border-t border-gray-100 flex justify-between">
+                    <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                    <div className="w-px bg-gray-200 my-1"></div>
+                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                </div>
+            </Card>
+        );
+    };
+
     return (
         <MainLayout>
             <Head title="Promovidos" />
@@ -161,6 +206,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     endpoint="/promovidos"
                     rowKey="id"
                     search={true} 
+                    mobileCardRender={renderMobileCard}
                 />
 
                 <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">

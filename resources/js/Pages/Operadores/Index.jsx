@@ -136,6 +136,49 @@ export default function OperadoresIndex({ availableRds }) {
         }
     ];
 
+    const renderMobileCard = (record) => {
+        const isActive = record.estado === undefined || record.estado === 1 || record.estado === '1' || record.estado === true || record.estado === 'true';
+        
+        return (
+            <Card styles={{ body: { padding: '16px' } }} className="mb-4 shadow-sm rounded-lg border border-gray-200 w-full">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                        <Avatar size={48} src={record.foto_url} icon={<UserOutlined />} className="bg-purple-100 text-purple-600" />
+                        <div>
+                            <div className="font-semibold text-base text-gray-800">{record.name}</div>
+                            <div className="text-xs text-gray-500">{record.apodo ? `"${record.apodo}"` : 'Operador Político'}</div>
+                        </div>
+                    </div>
+                    <Badge status={isActive ? 'success' : 'error'} text={isActive ? 'Activo' : 'Inactivo'} className="bg-gray-50 px-2 py-1 rounded text-xs border border-gray-200" />
+                </div>
+                
+                <div className="space-y-2 mb-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                        <UserOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">ID:</span> 
+                        <span className="font-medium text-gray-800">OP-{String(record.id).padStart(4, '0')}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <PhoneOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">Tel:</span> 
+                        <span>{record.telefono || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <EnvironmentOutlined className="text-gray-400" /> 
+                        <span className="w-16 text-gray-400">Zona:</span> 
+                        <span className="truncate">{record.colonia || 'Sin colonia'}</span>
+                    </div>
+                </div>
+                
+                <div className="pt-3 border-t border-gray-100 flex justify-between">
+                    <Button type="text" icon={<EditOutlined />} className="text-purple-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                    <div className="w-px bg-gray-200 my-1"></div>
+                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                </div>
+            </Card>
+        );
+    };
+
     return (
         <MainLayout>
             <Head title="Operadores Políticos" />
@@ -157,6 +200,7 @@ export default function OperadoresIndex({ availableRds }) {
                     endpoint="/operadores"
                     rowKey="id"
                     search={true} 
+                    mobileCardRender={renderMobileCard}
                 />
 
                 <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">

@@ -3,6 +3,9 @@ import { ProTable } from '@ant-design/pro-components';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import { Grid } from 'antd';
+
+const { useBreakpoint } = Grid;
 
 export default function TableCrud({
     data, // Objeto de paginación de Laravel o un array simple (modo Inertia)
@@ -16,8 +19,10 @@ export default function TableCrud({
     url = null, // URL para peticiones Inertia
     ...props
 }) {
+    const { mobileCardRender, ...restProps } = props;
     const isAsync = !!endpoint;
     const formRef = React.useRef();
+    const screens = useBreakpoint();
 
     // Debounce de 500ms para enviar el formulario automáticamente
     const debouncedSubmit = React.useRef(
@@ -130,9 +135,34 @@ export default function TableCrud({
         );
     };
 
+    // Lógica para renderizado condicional en móviles
+    let finalColumns = columns;
+    let showHeader = true;
+
+    // Si la pantalla es pequeña (menor a md) y existe la propiedad, cambiamos la vista
+    if (mobileCardRender && screens.md === false) {
+        // En lugar de eliminar las columnas (lo cual rompe el buscador),
+        // las mantenemos pero las ocultamos de la tabla
+        finalColumns = columns.map(col => ({
+            ...col,
+            hideInTable: true,
+        }));
+        
+        // Agregamos nuestra única columna para la tarjeta móvil, pero la ocultamos del buscador
+        finalColumns.push({
+            title: '',
+            dataIndex: 'mobile_card_renderer',
+            hideInSearch: true,
+            render: (_, record) => mobileCardRender(record),
+        });
+        
+        showHeader = false;
+    }
+
     // Props comunes para ambos modos
     const baseProps = {
-        columns,
+        columns: finalColumns,
+        showHeader,
         rowKey,
         loading,
         formRef,
@@ -143,15 +173,15 @@ export default function TableCrud({
         },
         search: search ? { 
             defaultCollapsed: false, 
-            labelWidth: 'auto', 
-            span: { xs: 24, sm: 12, md: 8, lg: 6, xl: 6, xxl: 4 },
-            ...search 
+            labelWidth: 'auto',
+            span: { xs: 24, sm: 12, md: 12, lg: 8, xl: 6, xxl: 6 },
+            ...search
         } : false,
         headerTitle,
         toolBarRender,
         size: 'small',
         scroll: { x: 'max-content' },
-        ...props
+        ...restProps
     };
 
     // Modo 1: Asíncrono puro interno (delegado a ProTable mediante la prop 'request')
