@@ -108,7 +108,7 @@ export default function OperadoresIndex({ availableRds }) {
                 '0': { text: 'Inactivo', status: 'Error' },
             },
             render: (_, record) => {
-                const isActive = record.estado === undefined || record.estado === 1 || record.estado === '1';
+                const isActive = record.estado === undefined || record.estado === 1 || record.estado === '1' || record.estado === true || record.estado === 'true';
                 return <Badge status={isActive ? 'success' : 'error'} text={isActive ? 'Activo' : 'Inactivo'} />;
             }
         },
