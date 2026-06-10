@@ -20,6 +20,16 @@ class Apoyo extends Model
         'cantidad_monetaria',
     ];
 
+    /**
+     * Agrega la URL pública de la evidencia en todas las respuestas JSON.
+     */
+    protected $appends = ['evidencia_url'];
+
+    public function getEvidenciaUrlAttribute(): ?string
+    {
+        return $this->evidencia ? asset('storage/' . $this->evidencia) : null;
+    }
+
     public function promovido()
     {
         return $this->belongsTo(Promovido::class);

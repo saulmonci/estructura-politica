@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space } from 'antd';
-import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 
@@ -16,6 +16,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState(null);
+    const [currentEvidenciaUrl, setCurrentEvidenciaUrl] = useState(null);
 
     useEffect(() => {
         if (visible && resolvedBasePath) {
@@ -27,6 +28,8 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
             setEditingId(null);
         }
     }, [visible, resolvedBasePath]);
+
+    const isImageUrl = (url) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url);
 
     const fetchApoyos = async () => {
         setLoading(true);
@@ -89,35 +92,73 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
 
     const handleEdit = (record) => {
         setEditingId(record.id);
+        setCurrentEvidenciaUrl(record.evidencia_url || null);
         form.setFieldsValue({
             fecha: dayjs(record.fecha),
             tipo_apoyo: record.tipo_apoyo,
             descripcion: record.descripcion,
             estado: record.estado,
             cantidad_monetaria: record.cantidad_monetaria,
+            // No pre-llenamos el campo file — se muestra la URL debajo
         });
         setIsFormVisible(true);
     };
 
+    const handleCancelForm = () => {
+        setIsFormVisible(false);
+        setEditingId(null);
+        setCurrentEvidenciaUrl(null);
+        form.resetFields();
+    };
+
     const columns = [
-        { title: 'Fecha', dataIndex: 'fecha', key: 'fecha' },
+        { title: 'Fecha', dataIndex: 'fecha', key: 'fecha', width: 100 },
         { title: 'Tipo de Apoyo', dataIndex: 'tipo_apoyo', key: 'tipo_apoyo' },
-        { title: 'Cantidad ($)', dataIndex: 'cantidad_monetaria', key: 'cantidad_monetaria' },
+        { title: 'Cantidad ($)', dataIndex: 'cantidad_monetaria', key: 'cantidad_monetaria', width: 110,
+            render: (val) => val ? `$${Number(val).toLocaleString()}` : '-'
+        },
         { 
             title: 'Estado', 
             dataIndex: 'estado', 
             key: 'estado',
+            width: 100,
             render: (estado) => {
                 let color = estado === 'Entregado' ? 'green' : (estado === 'Pendiente' ? 'orange' : 'red');
                 return <Tag color={color}>{estado}</Tag>;
             }
         },
-        { title: 'Descripción', dataIndex: 'descripcion', key: 'descripcion' },
+        { title: 'Descripción', dataIndex: 'descripcion', key: 'descripcion',
+            render: (v) => v || <span className="text-gray-400">-</span>
+        },
+        {
+            title: 'Evidencia',
+            dataIndex: 'evidencia_url',
+            key: 'evidencia',
+            width: 90,
+            align: 'center',
+            render: (url) => {
+                if (!url) return <span className="text-gray-300">-</span>;
+                if (isImageUrl(url)) {
+                    return (
+                        <a href={url} target="_blank" rel="noopener noreferrer" title="Ver imagen">
+                            <img src={url} alt="evidencia" className="w-10 h-10 object-cover rounded border border-gray-200 hover:opacity-80 transition-opacity" />
+                        </a>
+                    );
+                }
+                return (
+                    <a href={url} target="_blank" rel="noopener noreferrer" title="Ver archivo">
+                        <Button size="small" icon={<PaperClipOutlined />} type="link">Ver</Button>
+                    </a>
+                );
+            }
+        },
         {
             title: 'Acciones',
             key: 'acciones',
+            width: 80,
+            align: 'center',
             render: (_, record) => (
-                <Space size="middle">
+                <Space size="small">
                     <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} size="small" />
                     <Popconfirm title="¿Eliminar apoyo?" onConfirm={() => handleDelete(record.id)}>
                         <Button danger icon={<DeleteOutlined />} size="small" />
@@ -184,6 +225,21 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     </Form.Item>
 
                     <Form.Item name="evidencia" label="Evidencia (Foto/Documento)">
+                        {/* Si estamos editando y hay evidencia guardada, la mostramos */}
+                        {editingId && currentEvidenciaUrl && (
+                            <div className="mb-2 p-2 bg-gray-50 border border-gray-200 rounded flex items-center gap-2">
+                                {isImageUrl(currentEvidenciaUrl) ? (
+                                    <a href={currentEvidenciaUrl} target="_blank" rel="noopener noreferrer">
+                                        <img src={currentEvidenciaUrl} alt="evidencia actual" className="w-14 h-14 object-cover rounded border" />
+                                    </a>
+                                ) : (
+                                    <a href={currentEvidenciaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600">
+                                        <PaperClipOutlined /> Ver archivo actual
+                                    </a>
+                                )}
+                                <span className="text-xs text-gray-500 ml-1">Sube un nuevo archivo para reemplazarla.</span>
+                            </div>
+                        )}
                         <Upload
                             beforeUpload={(file) => {
                                 const maxSizeMB = 5;
@@ -200,7 +256,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     </Form.Item>
 
                     <Space>
-                        <Button onClick={() => setIsFormVisible(false)}>Cancelar</Button>
+                        <Button onClick={handleCancelForm}>Cancelar</Button>
                         <Button type="primary" htmlType="submit">
                             {editingId ? 'Actualizar' : 'Guardar Apoyo'}
                         </Button>
