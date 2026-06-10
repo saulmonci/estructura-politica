@@ -49,18 +49,31 @@ export default function OperadoresIndex({ availableRds }) {
             ),
         },
         {
+            title: 'FOTO',
+            dataIndex: 'foto_url',
+            key: 'foto_url',
+            width: 70,
+            align: 'center',
+            search: false,
+            render: (fotoUrl) => (
+                <Avatar
+                    size={44}
+                    src={fotoUrl || undefined}
+                    icon={!fotoUrl ? <UserOutlined /> : undefined}
+                    className={fotoUrl ? 'border-2 border-purple-200' : 'bg-purple-100 text-purple-600'}
+                />
+            ),
+        },
+        {
             title: 'NOMBRE COMPLETO',
             dataIndex: 'name',
             key: 'name',
             sorter: true,
             render: (name, record) => (
-                <Space>
-                    <Avatar size="small" icon={<UserOutlined />} className="bg-purple-100 text-purple-600" />
-                    <div className="flex flex-col">
-                        <span className="font-semibold">{name}</span>
-                        {record.apodo && <span className="text-xs text-gray-500">"{record.apodo}"</span>}
-                    </div>
-                </Space>
+                <div className="flex flex-col">
+                    <span className="font-semibold">{name}</span>
+                    {record.apodo && <span className="text-xs text-gray-500">"{record.apodo}"</span>}
+                </div>
             )
         },
         {

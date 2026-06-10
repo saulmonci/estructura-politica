@@ -48,18 +48,31 @@ export default function RepresentantesIndex({ representantes }) {
             ),
         },
         {
+            title: 'FOTO',
+            dataIndex: 'foto_url',
+            key: 'foto_url',
+            width: 70,
+            align: 'center',
+            search: false,
+            render: (fotoUrl) => (
+                <Avatar
+                    size={44}
+                    src={fotoUrl || undefined}
+                    icon={!fotoUrl ? <UserOutlined /> : undefined}
+                    className={fotoUrl ? 'border-2 border-blue-200' : 'bg-blue-100 text-blue-600'}
+                />
+            ),
+        },
+        {
             title: 'NOMBRE COMPLETO',
             dataIndex: 'name',
             key: 'name',
             sorter: true,
             render: (name, record) => (
-                <Space>
-                    <Avatar size="small" src={record.foto_url} icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
-                    <div className="flex flex-col">
-                        <span className="font-semibold">{name}</span>
-                        {record.apodo && <span className="text-xs text-gray-500">"{record.apodo}"</span>}
-                    </div>
-                </Space>
+                <div className="flex flex-col">
+                    <span className="font-semibold">{name}</span>
+                    {record.apodo && <span className="text-xs text-gray-500">"{record.apodo}"</span>}
+                </div>
             )
         },
         {
