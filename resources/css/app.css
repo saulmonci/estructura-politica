@@ -10,4 +10,8 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-
+@media (max-width: 768px) {
+    .mobile-full-width-card > .ant-card-body {
+        padding: 16px 8px !important;
+    }
+}

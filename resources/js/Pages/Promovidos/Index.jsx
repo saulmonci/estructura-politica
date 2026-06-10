@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined, MailOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PromovidoFormModal from '@/Components/PromovidoFormModal';
 
@@ -155,24 +155,29 @@ export default function PromovidosIndex({ availablePromotores }) {
                 
                 <div className="space-y-2 mb-4 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                        <UserOutlined className="text-gray-400" /> 
-                        <span className="w-16 text-gray-400">ID:</span> 
-                        <span className="font-medium text-gray-800">#{String(record.id).padStart(5, '0')}</span>
+                        <UserOutlined className="text-gray-400 shrink-0" /> 
+                        <span className="w-14 text-gray-400 shrink-0">ID:</span> 
+                        <span className="font-medium text-gray-800 truncate flex-1">#{String(record.id).padStart(5, '0')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <IdcardOutlined className="text-gray-400" /> 
-                        <span className="w-16 text-gray-400">Clave:</span> 
-                        <span>{record.clave_elector || 'N/A'}</span>
+                        <IdcardOutlined className="text-gray-400 shrink-0" /> 
+                        <span className="w-14 text-gray-400 shrink-0">Clave:</span> 
+                        <span className="truncate flex-1">{record.clave_elector || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <PhoneOutlined className="text-gray-400" /> 
-                        <span className="w-16 text-gray-400">Tel:</span> 
-                        <span>{record.telefono || 'N/A'}</span>
+                        <PhoneOutlined className="text-gray-400 shrink-0" /> 
+                        <span className="w-14 text-gray-400 shrink-0">Tel:</span> 
+                        <span className="truncate flex-1">{record.telefono || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="text-gray-400" /> 
-                        <span className="w-16 text-gray-400">Zona:</span> 
-                        <span className="truncate">{record.colonia || 'Sin colonia'}{record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}</span>
+                        <MailOutlined className="text-gray-400 shrink-0" /> 
+                        <span className="w-14 text-gray-400 shrink-0">Email:</span> 
+                        <span className="truncate flex-1 text-xs sm:text-sm" title={record.email}>{record.email || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <EnvironmentOutlined className="text-gray-400 shrink-0" /> 
+                        <span className="w-14 text-gray-400 shrink-0">Zona:</span> 
+                        <span className="truncate flex-1">{record.colonia || 'Sin colonia'}{record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}</span>
                     </div>
                 </div>
                 
@@ -189,7 +194,7 @@ export default function PromovidosIndex({ availablePromotores }) {
         <MainLayout>
             <Head title="Promovidos" />
 
-            <Card bordered={false} className="shadow-sm">
+            <Card bordered={false} className="shadow-sm mobile-full-width-card">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-bold m-0">Promovidos (Simpatizantes)</h2>

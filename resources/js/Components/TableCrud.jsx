@@ -180,14 +180,49 @@ export default function TableCrud({
         headerTitle,
         toolBarRender,
         size: 'small',
-        scroll: { x: 'max-content' },
+        scroll: showHeader ? { x: 'max-content' } : undefined,
         ...restProps
     };
+
+    const containerClass = `table-crud-container ${!showHeader ? 'mobile-card-table' : ''}`;
 
     // Modo 1: Asíncrono puro interno (delegado a ProTable mediante la prop 'request')
     if (isAsync) {
         return (
-            <div className="table-crud-container">
+            <div className={containerClass}>
+                {!showHeader && (
+                    <style>{`
+                        .mobile-card-table .ant-table-cell {
+                            padding: 0 0 16px 0 !important;
+                            border: none !important;
+                        }
+                        .mobile-card-table .ant-table {
+                            background: transparent !important;
+                        }
+                        .mobile-card-table .ant-table-tbody > tr:hover > td {
+                            background: transparent !important;
+                        }
+                        .mobile-card-table table {
+                            width: 100% !important;
+                        }
+                        /* Quitar margin bottom del card porque ya le pusimos padding a la celda */
+                        .mobile-card-table .ant-card {
+                            margin-bottom: 0 !important;
+                            width: 100% !important;
+                        }
+                        /* Remover paddings internos de ProTable en mobile */
+                        .mobile-card-table .ant-pro-card-body {
+                            padding-inline: 0 !important;
+                        }
+                        .mobile-card-table .ant-pro-table-search {
+                            padding-inline: 0 !important;
+                            margin-bottom: 16px !important;
+                        }
+                        .mobile-card-table .ant-pro-table-list-toolbar {
+                            padding-inline: 0 !important;
+                        }
+                    `}</style>
+                )}
                 <ProTable
                     {...baseProps}
                     request={internalRequest}
@@ -209,7 +244,39 @@ export default function TableCrud({
 
     // Modo 2: Inertia (Sincrónico/Por Props con router.get)
     return (
-        <div className="table-crud-container">
+        <div className={containerClass}>
+            {!showHeader && (
+                <style>{`
+                    .mobile-card-table .ant-table-cell {
+                        padding: 0 0 16px 0 !important;
+                        border: none !important;
+                    }
+                    .mobile-card-table .ant-table {
+                        background: transparent !important;
+                    }
+                    .mobile-card-table .ant-table-tbody > tr:hover > td {
+                        background: transparent !important;
+                    }
+                    .mobile-card-table table {
+                        width: 100% !important;
+                        table-layout: fixed !important;
+                    }
+                    .mobile-card-table .ant-card {
+                        margin-bottom: 0 !important;
+                        width: 100% !important;
+                    }
+                    .mobile-card-table .ant-pro-card-body {
+                        padding-inline: 0 !important;
+                    }
+                    .mobile-card-table .ant-pro-table-search {
+                        padding-inline: 0 !important;
+                        margin-bottom: 16px !important;
+                    }
+                    .mobile-card-table .ant-pro-table-list-toolbar {
+                        padding-inline: 0 !important;
+                    }
+                `}</style>
+            )}
             <ProTable
                 {...baseProps}
                 dataSource={dataSource}
