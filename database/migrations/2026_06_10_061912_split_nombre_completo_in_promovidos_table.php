@@ -15,15 +15,18 @@ return new class extends Migration
             $table->string('apellidos', 100)->after('nombre')->default('');
         });
 
-        // Migrar datos existentes: partir nombre_completo en nombre y apellidos
-        // Primer token = nombre, el resto = apellidos
-        DB::statement("
-            UPDATE promovidos
-            SET
-                nombre   = TRIM(SUBSTRING_INDEX(nombre_completo, ' ', 1)),
-                apellidos = TRIM(SUBSTRING(nombre_completo, LOCATE(' ', nombre_completo) + 1))
-            WHERE nombre_completo IS NOT NULL AND nombre_completo != ''
-        ");
+        // Migrar datos existentes usando PHP para compatibilidad con MySQL y PostgreSQL
+        DB::table('promovidos')
+            ->whereNotNull('nombre_completo')
+            ->where('nombre_completo', '!=', '')
+            ->get(['id', 'nombre_completo'])
+            ->each(function ($row) {
+                $parts = explode(' ', trim($row->nombre_completo), 2);
+                DB::table('promovidos')->where('id', $row->id)->update([
+                    'nombre'    => $parts[0] ?? '',
+                    'apellidos' => $parts[1] ?? '',
+                ]);
+            });
 
         Schema::table('promovidos', function (Blueprint $table) {
             // Quitar el default temporal
