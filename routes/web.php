@@ -28,4 +28,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // CRUD para Promovidos (Todos)
     Route::resource('promovidos', PromovidoController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
+
+    // Rutas para Apoyos de Promovidos
+    Route::get('/promovidos/{promovido}/apoyos', [App\Http\Controllers\ApoyoController::class, 'index']);
+    Route::post('/promovidos/{promovido}/apoyos', [App\Http\Controllers\ApoyoController::class, 'store']);
+    Route::put('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'update']);
+    Route::delete('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'destroy']);
 });

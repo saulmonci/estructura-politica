@@ -25,4 +25,12 @@ class Promovido extends Model
     {
         return $this->belongsTo(User::class, 'promotor_id');
     }
+
+    /**
+     * Obtener los apoyos otorgados a este promovido.
+     */
+    public function apoyos()
+    {
+        return $this->hasMany(Apoyo::class);
+    }
 }

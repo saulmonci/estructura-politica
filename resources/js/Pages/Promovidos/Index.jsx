@@ -5,11 +5,15 @@ import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
 import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined, MailOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PromovidoFormModal from '@/Components/PromovidoFormModal';
+import ApoyosDrawer from '@/Components/ApoyosDrawer';
+import { GiftOutlined } from '@ant-design/icons';
 
 export default function PromovidosIndex({ availablePromotores }) {
     const { auth } = usePage().props;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [isApoyosOpen, setIsApoyosOpen] = useState(false);
+    const [selectedPromovido, setSelectedPromovido] = useState(null);
     const actionRef = React.useRef();
 
     const handleCreate = () => {
@@ -20,6 +24,11 @@ export default function PromovidosIndex({ availablePromotores }) {
     const handleEdit = (id) => {
         setEditingId(id);
         setIsModalOpen(true);
+    };
+
+    const handleOpenApoyos = (record) => {
+        setSelectedPromovido(record);
+        setIsApoyosOpen(true);
     };
 
     const handleDelete = (id) => {
@@ -108,20 +117,28 @@ export default function PromovidosIndex({ availablePromotores }) {
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 120,
+            width: 150,
             align: 'center',
             search: false,
             render: (_, record) => (
                 <Space size="middle">
                     <Button 
                         type="text" 
+                        icon={<GiftOutlined className="text-green-600" />} 
+                        title="Kardex de Apoyos"
+                        onClick={() => handleOpenApoyos(record)}
+                    />
+                    <Button 
+                        type="text" 
                         icon={<EditOutlined className="text-blue-600" />} 
+                        title="Editar"
                         onClick={() => handleEdit(record.id)}
                     />
                     <Button 
                         type="text" 
                         danger 
                         icon={<DeleteOutlined />} 
+                        title="Eliminar"
                         onClick={() => handleDelete(record.id)}
                     />
                 </Space>
@@ -181,10 +198,12 @@ export default function PromovidosIndex({ availablePromotores }) {
                     </div>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-100 flex justify-between">
-                    <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                <div className="pt-3 border-t border-gray-100 flex justify-between flex-wrap">
+                    <Button type="text" icon={<GiftOutlined />} className="text-green-600 w-1/3 flex justify-center items-center" onClick={() => handleOpenApoyos(record)}>Kardex</Button>
                     <div className="w-px bg-gray-200 my-1"></div>
-                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                    <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/3 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                    <div className="w-px bg-gray-200 my-1"></div>
+                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/3 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
                 </div>
             </Card>
         );
@@ -233,6 +252,12 @@ export default function PromovidosIndex({ availablePromotores }) {
                         actionRef.current.reload();
                     }
                 }}
+            />
+
+            <ApoyosDrawer 
+                visible={isApoyosOpen}
+                onClose={() => setIsApoyosOpen(false)}
+                promovido={selectedPromovido}
             />
         </MainLayout>
     );
