@@ -15,7 +15,7 @@ class PromovidoSeeder extends Seeder
         // Crear 15 promovidos, cada uno con entre 0 y 3 apoyos
         Promovido::factory()
             ->count(15)
-            ->has(Apoyo::factory()->count(fake()->numberBetween(0, 3)))
+            ->has(Apoyo::factory()->count(rand(0, 3)))
             ->create();
     }
 }
