@@ -120,7 +120,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                     }
                     
                     if (response.data.estado !== undefined && response.data.estado !== null) {
-                        response.data.estado = (response.data.estado === true || response.data.estado === 1 || response.data.estado === '1') ? 1 : 0;
+                        response.data.estado = (response.data.estado === true || response.data.estado === 1 || response.data.estado === '1');
                     }
 
                     return response.data;
@@ -232,7 +232,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                             { label: 'Activo', value: true },
                                             { label: 'Inactivo', value: false },
                                         ]}
-                                        initialValue={1}
+                                        initialValue={true}
                                     />
                                 </Col>
                             </Row>
