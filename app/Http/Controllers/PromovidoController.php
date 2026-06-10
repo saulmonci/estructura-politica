@@ -53,8 +53,9 @@ class PromovidoController extends BaseCrudController
 
     protected function applySearch(Builder $query, string $search): void
     {
-        $query->where(function($q) use ($search) {
-            $q->where('nombre_completo', 'like', "%{$search}%")
+        $searchLower = strtolower($search);
+        $query->where(function($q) use ($searchLower, $search) {
+            $q->whereRaw('LOWER(nombre_completo) LIKE ?', ["%{$searchLower}%"])
               ->orWhere('telefono', 'like', "%{$search}%")
               ->orWhere('clave_elector', 'like', "%{$search}%");
         });
@@ -65,7 +66,10 @@ class PromovidoController extends BaseCrudController
         foreach ($filters as $field => $value) {
             if ($value === null || $value === '') continue;
 
-            if (in_array($field, ['nombre_completo', 'telefono', 'colonia', 'seccion_electoral'])) {
+            if ($field === 'nombre_completo') {
+                $valLower = strtolower($value);
+                $query->whereRaw('LOWER(nombre_completo) LIKE ?', ["%{$valLower}%"]);
+            } elseif (in_array($field, ['telefono', 'colonia', 'seccion_electoral'])) {
                 $query->where($field, 'like', "%{$value}%");
             }
             

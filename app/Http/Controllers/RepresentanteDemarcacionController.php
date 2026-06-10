@@ -27,8 +27,10 @@ class RepresentanteDemarcacionController extends BaseCrudController
 
     protected function applySearch(Builder $query, string $search): void
     {
-        $query->where(function($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
+        $searchLower = strtolower($search);
+        $query->where(function($q) use ($searchLower, $search) {
+            $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$searchLower}%"])
+              ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
               ->orWhere('email', 'like', "%{$search}%")
               ->orWhere('telefono', 'like', "%{$search}%")
               ->orWhere('curp', 'like', "%{$search}%");
@@ -42,7 +44,13 @@ class RepresentanteDemarcacionController extends BaseCrudController
             if ($value === null || $value === '') continue;
 
             // Filtros de texto
-            if (in_array($field, ['name', 'telefono', 'colonia'])) {
+            if ($field === 'name') {
+                $valLower = strtolower($value);
+                $query->where(function($q) use ($valLower) {
+                    $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
+                      ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
+                });
+            } elseif (in_array($field, ['telefono', 'colonia'])) {
                 $query->where($field, 'like', "%{$value}%");
             }
 
