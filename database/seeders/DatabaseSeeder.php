@@ -19,24 +19,28 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Crear Presidente
-        $presidente = User::create([
-            'name' => 'Presidente Electoral',
-            'email' => 'presidente@estructura.com',
-            'password' => Hash::make('secret'),
-            'role' => 'presidente',
-            'parent_id' => null,
-        ]);
+        $presidente = User::updateOrCreate(
+            ['email' => 'presidente@estructura.com'],
+            [
+                'name' => 'Presidente Electoral',
+                'password' => Hash::make('secret'),
+                'role' => 'presidente',
+                'parent_id' => null,
+            ]
+        );
 
         // 2. Crear 2 RDs asignados a ese Presidente
         $rds = [];
         for ($i = 1; $i <= 2; $i++) {
-            $rds[] = User::create([
-                'name' => "Responsable de Distrito $i",
-                'email' => "rd$i@estructura.com",
-                'password' => Hash::make('secret'),
-                'role' => 'rd',
-                'parent_id' => $presidente->id,
-            ]);
+            $rds[] = User::updateOrCreate(
+                ['email' => "rd$i@estructura.com"],
+                [
+                    'name' => "Responsable de Distrito $i",
+                    'password' => Hash::make('secret'),
+                    'role' => 'rd',
+                    'parent_id' => $presidente->id,
+                ]
+            );
         }
 
         // 3. Crear 4 Promotores (2 por cada RD)
@@ -44,13 +48,15 @@ class DatabaseSeeder extends Seeder
         $promotorCount = 1;
         foreach ($rds as $rd) {
             for ($p = 1; $p <= 2; $p++) {
-                $promotores[] = User::create([
-                    'name' => "Promotor Electoral $promotorCount",
-                    'email' => "promotor$promotorCount@estructura.com",
-                    'password' => Hash::make('secret'),
-                    'role' => 'promotor',
-                    'parent_id' => $rd->id,
-                ]);
+                $promotores[] = User::updateOrCreate(
+                    ['email' => "promotor$promotorCount@estructura.com"],
+                    [
+                        'name' => "Promotor Electoral $promotorCount",
+                        'password' => Hash::make('secret'),
+                        'role' => 'promotor',
+                        'parent_id' => $rd->id,
+                    ]
+                );
                 $promotorCount++;
             }
         }
