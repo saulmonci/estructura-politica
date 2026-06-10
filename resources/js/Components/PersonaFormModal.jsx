@@ -76,6 +76,10 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                     values.foto = fileList[0].originFileObj;
                 }
 
+                if (values.estado !== undefined && values.estado !== null) {
+                    values.estado = (values.estado === true || values.estado === 1 || values.estado === '1') ? 1 : 0;
+                }
+
                 if (editId) {
                     values._method = 'put';
                     router.post(endpoint, values, {
@@ -114,6 +118,11 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                     } else {
                         setExistingFoto(null);
                     }
+                    
+                    if (response.data.estado !== undefined && response.data.estado !== null) {
+                        response.data.estado = (response.data.estado === true || response.data.estado === 1 || response.data.estado === '1') ? 1 : 0;
+                    }
+
                     return response.data;
                 } catch (error) {
                     message.error('No se pudo cargar la información del registro');
