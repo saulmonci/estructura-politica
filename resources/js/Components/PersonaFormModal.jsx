@@ -229,8 +229,6 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         placeholder="Seleccionar estatus"
                                         rules={[{ required: true, message: 'Requerido' }]}
                                         options={[
-                                            { label: 'Activo', value: 1 },
-                                            { label: 'Inactivo', value: 0 },
                                             { label: 'Activo', value: true },
                                             { label: 'Inactivo', value: false },
                                         ]}
