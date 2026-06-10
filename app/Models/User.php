@@ -115,22 +115,8 @@ class User extends Authenticatable
         }
 
         if ($this->role === 'presidente') {
-            return Promovido::whereIn('promotor_id', function ($query) {
-                $query->select('id')
-                    ->from('users')
-                    ->where('role', 'promotor')
-                    ->whereIn('parent_id', function ($subQuery) {
-                        $subQuery->select('id')
-                            ->from('users')
-                            ->where('role', 'operador')
-                            ->whereIn('parent_id', function ($rdQuery) {
-                                $rdQuery->select('id')
-                                    ->from('users')
-                                    ->where('role', 'rd')
-                                    ->where('parent_id', $this->id);
-                            });
-                    });
-            });
+            // El presidente tiene visibilidad global de todos los promovidos
+            return Promovido::query();
         }
 
         return Promovido::whereRaw('1 = 0');
