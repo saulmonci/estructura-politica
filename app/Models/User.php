@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Apoyo;
 
 #[Fillable([
     'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id',
@@ -120,5 +121,13 @@ class User extends Authenticatable
         }
 
         return Promovido::whereRaw('1 = 0');
+    }
+
+    /**
+     * Apoyos recibidos directamente por este usuario (promotor).
+     */
+    public function apoyos()
+    {
+        return $this->hasMany(Apoyo::class, 'user_id');
     }
 }

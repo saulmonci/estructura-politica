@@ -11,6 +11,7 @@ class Apoyo extends Model
 
     protected $fillable = [
         'promovido_id',
+        'user_id',
         'fecha',
         'tipo_apoyo',
         'descripcion',
@@ -22,5 +23,10 @@ class Apoyo extends Model
     public function promovido()
     {
         return $this->belongsTo(Promovido::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

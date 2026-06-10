@@ -68,6 +68,10 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
 
                 if (fileList.length > 0 && fileList[0].originFileObj) {
                     values.foto = fileList[0].originFileObj;
+                } else {
+                    // Si no hay archivo nuevo, eliminamos el campo foto para evitar que 
+                    // la cadena de texto (ruta de la BD) cause un error de validación 'image'
+                    delete values.foto;
                 }
 
                 if (editId) {

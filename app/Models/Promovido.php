@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['nombre_completo', 'clave_elector', 'telefono', 'seccion_electoral', 'colonia', 'promotor_id'])]
+#[Fillable(['nombre_completo', 'clave_elector', 'telefono', 'seccion_electoral', 'colonia', 'promotor_id', 'foto'])]
 class Promovido extends Model
 {
     use HasFactory;

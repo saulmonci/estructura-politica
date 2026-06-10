@@ -2,15 +2,23 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, GiftOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
+import ApoyosDrawer from '@/Components/ApoyosDrawer';
 
 export default function PromotoresIndex({ availableOperadores, availableRds }) {
     const { auth } = usePage().props;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [isApoyosOpen, setIsApoyosOpen] = useState(false);
+    const [selectedPromotor, setSelectedPromotor] = useState(null);
     const actionRef = React.useRef();
+
+    const handleOpenApoyos = (record) => {
+        setSelectedPromotor(record);
+        setIsApoyosOpen(true);
+    };
 
     const handleCreate = () => {
         setEditingId(null);
@@ -115,11 +123,17 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 120,
+            width: 150,
             align: 'center',
             search: false,
             render: (_, record) => (
                 <Space size="middle">
+                    <Button 
+                        type="text" 
+                        icon={<GiftOutlined className="text-green-600" />} 
+                        title="Kardex de Apoyos"
+                        onClick={() => handleOpenApoyos(record)}
+                    />
                     <Button 
                         type="text" 
                         icon={<EditOutlined className="text-orange-600" />} 
@@ -187,10 +201,12 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                     </div>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-100 flex justify-between">
-                    <Button type="text" icon={<EditOutlined />} className="text-orange-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                <div className="pt-3 border-t border-gray-100 flex justify-between flex-wrap">
+                    <Button type="text" icon={<GiftOutlined />} className="text-green-600 w-1/3 flex justify-center items-center" onClick={() => handleOpenApoyos(record)}>Kardex</Button>
                     <div className="w-px bg-gray-200 my-1"></div>
-                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                    <Button type="text" icon={<EditOutlined />} className="text-orange-600 w-1/3 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                    <div className="w-px bg-gray-200 my-1"></div>
+                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/3 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
                 </div>
             </Card>
         );
@@ -257,6 +273,13 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                         actionRef.current.reload();
                     }
                 }}
+            />
+
+            <ApoyosDrawer 
+                visible={isApoyosOpen}
+                onClose={() => setIsApoyosOpen(false)}
+                entity={selectedPromotor}
+                apiBasePath={selectedPromotor ? `/promotores/${selectedPromotor.id}` : null}
             />
         </MainLayout>
     );

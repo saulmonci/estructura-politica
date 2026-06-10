@@ -32,6 +32,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rutas para Apoyos de Promovidos
     Route::get('/promovidos/{promovido}/apoyos', [App\Http\Controllers\ApoyoController::class, 'index']);
     Route::post('/promovidos/{promovido}/apoyos', [App\Http\Controllers\ApoyoController::class, 'store']);
+
+    // Rutas para Apoyos de Promotores
+    Route::get('/promotores/{promotor}/apoyos', [App\Http\Controllers\ApoyoController::class, 'indexForUser']);
+    Route::post('/promotores/{promotor}/apoyos', [App\Http\Controllers\ApoyoController::class, 'storeForUser']);
+
+    // Actualizar y eliminar apoyos (compartido)
     Route::put('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'update']);
     Route::delete('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'destroy']);
 });

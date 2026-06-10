@@ -6,7 +6,11 @@ import dayjs from 'dayjs';
 
 const { Option } = Select;
 
-const ApoyosDrawer = ({ visible, onClose, promovido }) => {
+const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
+    // Soporte legacy: si se pasan promovido y no apiBasePath, construimos la ruta
+    const resolvedEntity = entity || promovido;
+    const resolvedBasePath = apiBasePath || (promovido ? `/promovidos/${promovido.id}` : null);
+    const resolvedTitle = resolvedEntity?.nombre_completo || resolvedEntity?.name || '';
     const [apoyos, setApoyos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -14,7 +18,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido }) => {
     const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
-        if (visible && promovido) {
+        if (visible && resolvedBasePath) {
             fetchApoyos();
         } else {
             setApoyos([]);
@@ -22,12 +26,12 @@ const ApoyosDrawer = ({ visible, onClose, promovido }) => {
             form.resetFields();
             setEditingId(null);
         }
-    }, [visible, promovido]);
+    }, [visible, resolvedBasePath]);
 
     const fetchApoyos = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`/promovidos/${promovido.id}/apoyos`);
+            const response = await axios.get(`${resolvedBasePath}/apoyos`);
             setApoyos(response.data);
         } catch (error) {
             message.error('Error al cargar los apoyos');
@@ -57,7 +61,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido }) => {
                 });
                 message.success('Apoyo actualizado correctamente');
             } else {
-                await axios.post(`/promovidos/${promovido.id}/apoyos`, formData, {
+                await axios.post(`${resolvedBasePath}/apoyos`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 message.success('Apoyo registrado correctamente');
@@ -125,7 +129,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido }) => {
 
     return (
         <Drawer
-            title={`Kardex de Apoyos: ${promovido?.nombre_completo || ''}`}
+            title={`Kardex de Apoyos: ${resolvedTitle}`}
             width={720}
             onClose={onClose}
             open={visible}
