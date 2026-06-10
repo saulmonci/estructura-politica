@@ -231,6 +231,8 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         options={[
                                             { label: 'Activo', value: 1 },
                                             { label: 'Inactivo', value: 0 },
+                                            { label: 'Activo', value: true },
+                                            { label: 'Inactivo', value: false },
                                         ]}
                                         initialValue={1}
                                     />
