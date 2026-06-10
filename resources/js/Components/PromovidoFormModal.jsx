@@ -25,6 +25,15 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
         setFileList(info.fileList.slice(-1));
     };
 
+    const handleBeforeUpload = (file) => {
+        const maxSizeMB = 5;
+        if (file.size / 1024 / 1024 > maxSizeMB) {
+            message.error(`❌ La foto es demasiado pesada. El tamaño máximo es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
+            return Upload.LIST_IGNORE;
+        }
+        return false; // Previene la subida automática, la manejamos manualmente
+    };
+
     return (
         <ModalForm
             title={null}
@@ -262,7 +271,7 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
                                             className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
-                                            beforeUpload={() => false}
+                                            beforeUpload={handleBeforeUpload}
                                             onChange={handleUploadChange}
                                             showUploadList={false}
                                             accept="image/*"
@@ -282,7 +291,7 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
                                             </div>
                                         </div>
                                         <Upload
-                                            beforeUpload={() => false}
+                                            beforeUpload={handleBeforeUpload}
                                             onChange={handleUploadChange}
                                             showUploadList={false}
                                             accept="image/*"
