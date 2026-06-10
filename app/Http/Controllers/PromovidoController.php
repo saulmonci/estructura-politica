@@ -55,7 +55,9 @@ class PromovidoController extends BaseCrudController
     {
         $searchLower = strtolower($search);
         $query->where(function($q) use ($searchLower, $search) {
-            $q->whereRaw('LOWER(nombre_completo) LIKE ?', ["%{$searchLower}%"])
+            $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$searchLower}%"])
+              ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
+              ->orWhereRaw("LOWER(CONCAT(nombre, ' ', apellidos)) LIKE ?", ["%{$searchLower}%"])
               ->orWhere('telefono', 'like', "%{$search}%")
               ->orWhere('clave_elector', 'like', "%{$search}%");
         });
@@ -66,9 +68,12 @@ class PromovidoController extends BaseCrudController
         foreach ($filters as $field => $value) {
             if ($value === null || $value === '') continue;
 
-            if ($field === 'nombre_completo') {
+            if ($field === 'nombre') {
                 $valLower = strtolower($value);
-                $query->whereRaw('LOWER(nombre_completo) LIKE ?', ["%{$valLower}%"]);
+                $query->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"]);
+            } elseif ($field === 'apellidos') {
+                $valLower = strtolower($value);
+                $query->whereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
             } elseif (in_array($field, ['telefono', 'colonia', 'seccion_electoral'])) {
                 $query->where($field, 'like', "%{$value}%");
             }
@@ -87,12 +92,13 @@ class PromovidoController extends BaseCrudController
     {
         $user = $request->user();
         $rules = [
-            'nombre_completo' => ['required', 'string', 'max:255'],
-            'clave_elector' => ['nullable', 'string', 'max:50'],
-            'telefono' => ['nullable', 'string', 'max:50'],
-            'seccion_electoral' => ['nullable', 'string', 'max:50'],
-            'colonia' => ['nullable', 'string', 'max:255'],
-            'foto' => ['nullable', 'image', 'max:15360'],
+            'nombre'    => ['required', 'string', 'max:100'],
+            'apellidos' => ['required', 'string', 'max:100'],
+            'clave_elector'     => ['nullable', 'string', 'max:18'],
+            'telefono'          => ['nullable', 'string', 'max:10'],
+            'seccion_electoral' => ['nullable', 'string', 'max:10'],
+            'colonia'           => ['nullable', 'string', 'max:255'],
+            'foto'              => ['nullable', 'image', 'max:5120'],
         ];
 
         if ($user && in_array($user->role, ['presidente', 'rd', 'operador'])) {

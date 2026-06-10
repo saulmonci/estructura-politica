@@ -58,16 +58,24 @@ export default function PromovidosIndex({ availablePromotores }) {
             ),
         },
         {
-            title: 'NOMBRE COMPLETO',
-            dataIndex: 'nombre_completo',
-            key: 'nombre_completo',
+            title: 'NOMBRE',
+            dataIndex: 'nombre',
+            key: 'nombre',
             sorter: true,
-            render: (name) => (
+            render: (nombre, record) => (
                 <Space>
                     <Avatar size="small" icon={<UserOutlined />} className="bg-gray-100 text-gray-600" />
-                    <span className="font-semibold">{name}</span>
+                    <div className="flex flex-col">
+                        <span className="font-semibold">{nombre} {record.apellidos}</span>
+                    </div>
                 </Space>
             )
+        },
+        {
+            title: 'APELLIDOS',
+            dataIndex: 'apellidos',
+            key: 'apellidos',
+            hideInTable: true, // Solo se usa en el buscador
         },
         {
             title: 'CLAVE ELECTOR',
@@ -164,7 +172,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     <div className="flex items-center gap-3">
                         <Avatar size={48} icon={<UserOutlined />} className="bg-gray-100 text-gray-600" />
                         <div>
-                            <div className="font-semibold text-base text-gray-800">{record.nombre_completo}</div>
+                            <div className="font-semibold text-base text-gray-800">{record.nombre} {record.apellidos}</div>
                             <div className="text-xs text-gray-500">Promovido (Simpatizante)</div>
                         </div>
                     </div>

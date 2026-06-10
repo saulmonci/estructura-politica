@@ -175,13 +175,36 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
                                 </Row>
                             )}
                             <Row gutter={16}>
-                                <Col span={24}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
-                                        name="nombre_completo"
-                                        label="Nombre completo"
-                                        placeholder="Ingresar nombre completo"
-                                        rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
+                                        name="nombre"
+                                        label="Nombre(s)"
+                                        placeholder="Ingresar nombre(s)"
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { max: 100, message: 'Máximo 100 caracteres' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <UserOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 100,
+                                            showCount: true,
+                                        }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="apellidos"
+                                        label="Apellidos"
+                                        placeholder="Ingresar apellidos"
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { max: 100, message: 'Máximo 100 caracteres' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <UserOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 100,
+                                            showCount: true,
+                                        }}
                                     />
                                 </Col>
                             </Row>
@@ -191,17 +214,31 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
                                     <ProFormText
                                         name="clave_elector"
                                         label="Clave de elector"
-                                        placeholder="Ingresar clave de elector"
-                                        rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <IdcardOutlined className="text-gray-400 mr-2" /> }}
+                                        placeholder="18 caracteres"
+                                        rules={[
+                                            { max: 18, message: 'Máximo 18 caracteres' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 18,
+                                            style: { textTransform: 'uppercase' }
+                                        }}
+                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <ProFormText
                                         name="telefono"
                                         label="Teléfono de contacto"
-                                        placeholder="Ingresar teléfono"
-                                        fieldProps={{ prefix: <PhoneOutlined className="text-gray-400 mr-2" /> }}
+                                        placeholder="10 dígitos"
+                                        rules={[
+                                            { pattern: /^[0-9]{10}$/, message: 'Debe contener exactamente 10 dígitos' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <PhoneOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 10,
+                                            onKeyPress: (e) => { if (!/[0-9]/.test(e.key)) e.preventDefault(); }
+                                        }}
                                     />
                                 </Col>
                             </Row>
@@ -212,16 +249,26 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
                                         name="colonia"
                                         label="Colonia"
                                         placeholder="Ingresar colonia"
-                                        fieldProps={{ prefix: <BankOutlined className="text-gray-400 mr-2" /> }}
+                                        rules={[{ max: 255, message: 'Máximo 255 caracteres' }]}
+                                        fieldProps={{
+                                            prefix: <BankOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 255,
+                                        }}
                                     />
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <ProFormText
                                         name="seccion_electoral"
                                         label="Sección Electoral"
-                                        placeholder="Sección electoral"
-                                        rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <EnvironmentOutlined className="text-gray-400 mr-2" /> }}
+                                        placeholder="Número de sección"
+                                        rules={[
+                                            { required: true, message: 'Requerido' },
+                                            { max: 10, message: 'Máximo 10 caracteres' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 10,
+                                        }}
                                     />
                                 </Col>
                             </Row>
