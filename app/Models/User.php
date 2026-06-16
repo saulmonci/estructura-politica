@@ -15,7 +15,7 @@ use App\Models\Apoyo;
 #[Fillable([
     'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
-    'colonia', 'codigo_postal', 'demarcacion', 'clave_electoral', 'telefono',
+    'colonia', 'codigo_postal', 'demarcacion', 'seccion_electoral', 'clave_electoral', 'telefono',
     'curp', 'apodo', 'foto', 'estado', 'notas'
 ])]
 #[Hidden(['password', 'remember_token'])]

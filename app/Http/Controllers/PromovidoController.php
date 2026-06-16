@@ -101,6 +101,7 @@ class PromovidoController extends BaseCrudController
             'apellidos' => ['required', 'string', 'max:100'],
             'clave_elector'     => ['nullable', 'string', 'max:18'],
             'telefono'          => ['nullable', 'string', 'max:10'],
+            'demarcacion'       => ['nullable', 'string', 'max:255'],
             'seccion_electoral' => ['nullable', 'string', 'max:10'],
             'colonia'           => ['nullable', 'string', 'max:255'],
             'foto'              => ['nullable', 'image', 'max:5120'],

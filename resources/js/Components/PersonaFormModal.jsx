@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModalForm, ProFormText, ProFormSelect, ProFormTextArea } from '@ant-design/pro-components';
-import { Row, Col, Upload, message, Alert, Button, Divider } from 'antd';
+import { Row, Col, Upload, message, Alert, Button, Divider, Form } from 'antd';
 import { 
     UserOutlined, 
     EnvironmentOutlined, 
@@ -26,6 +26,51 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
     const [fileList, setFileList] = useState([]);
     const [existingFoto, setExistingFoto] = useState(null);
 
+    const [form] = Form.useForm();
+    const [demarcaciones, setDemarcaciones] = useState([]);
+    const [secciones, setSecciones] = useState([]);
+    const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
+    const [loadingDemarcaciones, setLoadingDemarcaciones] = useState(false);
+    const [loadingSecciones, setLoadingSecciones] = useState(false);
+
+    const fetchSecciones = async (demarcacionId) => {
+        if (!demarcacionId) {
+            setSecciones([]);
+            return;
+        }
+        setLoadingSecciones(true);
+        try {
+            const res = await axios.get(`/catalogos/demarcaciones/${demarcacionId}/secciones`);
+            setSecciones(res.data || []);
+        } catch (err) {
+            message.error('Error al cargar las secciones electorales');
+        } finally {
+            setLoadingSecciones(false);
+        }
+    };
+
+    useEffect(() => {
+        if (open) {
+            const fetchDemarcaciones = async () => {
+                setLoadingDemarcaciones(true);
+                try {
+                    const res = await axios.get('/catalogos/demarcaciones');
+                    setDemarcaciones(res.data || []);
+                } catch (err) {
+                    message.error('Error al cargar las demarcaciones');
+                } finally {
+                    setLoadingDemarcaciones(false);
+                }
+            };
+            fetchDemarcaciones();
+            if (!editId) {
+                form.resetFields();
+                setSelectedDemarcacion(null);
+                setSecciones([]);
+            }
+        }
+    }, [open, editId]);
+
     const handleUploadChange = (info) => {
         setFileList(info.fileList.slice(-1));
     };
@@ -41,6 +86,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
 
     return (
         <ModalForm
+            form={form}
             title={null}
             open={open}
             onOpenChange={onOpenChange}
@@ -117,6 +163,8 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
             request={async () => {
                 if (!editId) {
                     setExistingFoto(null);
+                    setSelectedDemarcacion(null);
+                    setSecciones([]);
                     return {};
                 }
                 try {
@@ -130,6 +178,14 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                     
                     if (response.data.estado !== undefined && response.data.estado !== null) {
                         response.data.estado = (response.data.estado === true || response.data.estado === 1 || response.data.estado === '1');
+                    }
+
+                    if (response.data.demarcacion) {
+                        setSelectedDemarcacion(response.data.demarcacion);
+                        fetchSecciones(response.data.demarcacion);
+                    } else {
+                        setSelectedDemarcacion(null);
+                        setSecciones([]);
                     }
 
                     return response.data;
@@ -288,7 +344,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                             </Row>
 
                             <Row gutter={16}>
-                                <Col xs={24} md={8}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="colonia"
                                         label="Colonia"
@@ -297,7 +353,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         fieldProps={{ prefix: <BankOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
-                                <Col xs={24} md={8}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="codigo_postal"
                                         label="Código Postal"
@@ -317,24 +373,45 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         }}
                                     />
                                 </Col>
-                                <Col xs={24} md={8}>
+                            </Row>
+
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
                                     <ProFormSelect
                                         name="demarcacion"
                                         label="Demarcación"
                                         placeholder="Seleccionar demarcación"
                                         rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{ prefix: <EnvironmentOutlined className="text-gray-400 mr-2" /> }}
-                                        options={[
-                                            { label: 'Demarcación 1', value: '1' },
-                                            { label: 'Demarcación 2', value: '2' },
-                                            { label: 'Demarcación 3', value: '3' },
-                                            { label: 'Demarcación 4', value: '4' },
-                                            { label: 'Demarcación 5', value: '5' },
-                                            { label: 'Demarcación 6', value: '6' },
-                                            { label: 'Demarcación 7', value: '7' },
-                                            { label: 'Demarcación 8', value: '8' },
-                                            { label: 'Demarcación 9', value: '9' },
-                                        ]}
+                                        fieldProps={{
+                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
+                                            loading: loadingDemarcaciones,
+                                            onChange: (value) => {
+                                                setSelectedDemarcacion(value);
+                                                form.setFieldsValue({ seccion_electoral: undefined });
+                                                fetchSecciones(value);
+                                            }
+                                        }}
+                                        options={demarcaciones.map(d => ({
+                                            label: d.nombre,
+                                            value: String(d.id)
+                                        }))}
+                                    />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <ProFormSelect
+                                        name="seccion_electoral"
+                                        label="Sección Electoral"
+                                        placeholder="Seleccionar sección"
+                                        rules={[{ required: true, message: 'Requerido' }]}
+                                        disabled={!selectedDemarcacion}
+                                        fieldProps={{
+                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
+                                            loading: loadingSecciones,
+                                        }}
+                                        options={secciones.map(s => ({
+                                            label: `Sección ${s.numero}`,
+                                            value: String(s.numero)
+                                        }))}
                                     />
                                 </Col>
                             </Row>

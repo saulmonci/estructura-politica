@@ -40,4 +40,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Actualizar y eliminar apoyos (compartido)
     Route::put('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'update']);
     Route::delete('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'destroy']);
+
+    // Catálogos
+    Route::get('/catalogos/demarcaciones', [App\Http\Controllers\CatalogoController::class, 'getDemarcaciones']);
+    Route::get('/catalogos/demarcaciones/{demarcacion}/secciones', [App\Http\Controllers\CatalogoController::class, 'getSecciones']);
 });

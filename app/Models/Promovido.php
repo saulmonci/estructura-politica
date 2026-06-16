@@ -16,6 +16,7 @@ class Promovido extends Model
         'apellidos',
         'clave_elector',
         'telefono',
+        'demarcacion',
         'seccion_electoral',
         'colonia',
         'foto',

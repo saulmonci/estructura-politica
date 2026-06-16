@@ -80,6 +80,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             'colonia' => ['nullable', 'string', 'max:255'],
             'codigo_postal' => ['nullable', 'digits:5'],
             'demarcacion' => ['nullable', 'string', 'max:255'],
+            'seccion_electoral' => ['nullable', 'string', 'max:255'],
             'clave_electoral' => ['nullable', 'string', 'size:18'],
             'telefono' => ['nullable', 'digits:10'],
             'curp' => ['nullable', 'string', 'size:18'],

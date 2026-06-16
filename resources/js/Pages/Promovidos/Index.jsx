@@ -98,7 +98,7 @@ export default function PromovidosIndex({ availablePromotores }) {
             )
         },
         {
-            title: 'COLONIA / SECCIÓN',
+            title: 'COLONIA / DEMARCACIÓN / SECCIÓN',
             key: 'colonia',
             search: false,
             render: (_, record) => (
@@ -106,7 +106,10 @@ export default function PromovidosIndex({ availablePromotores }) {
                     <span className="text-gray-600 flex items-center">
                         <EnvironmentOutlined className="mr-2" /> {record.colonia || 'Sin colonia'}
                     </span>
-                    {record.seccion_electoral && <span className="text-xs text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
+                    <div className="flex gap-2 mt-0.5">
+                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion}</span>}
+                        {record.seccion_electoral && <span className="text-xs text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
+                    </div>
                 </div>
             )
         },
@@ -201,8 +204,12 @@ export default function PromovidosIndex({ availablePromotores }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <EnvironmentOutlined className="text-gray-400 shrink-0" /> 
-                        <span className="w-14 text-gray-400 shrink-0">Zona:</span> 
-                        <span className="truncate flex-1">{record.colonia || 'Sin colonia'}{record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}</span>
+                        <span className="w-18 text-gray-400 shrink-0">Ubicación:</span> 
+                        <span className="truncate flex-1">
+                            {record.colonia || 'Sin colonia'}
+                            {record.demarcacion ? ` (Dem: ${record.demarcacion})` : ''}
+                            {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
+                        </span>
                     </div>
                 </div>
                 

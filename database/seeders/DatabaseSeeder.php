@@ -18,6 +18,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 0. Sembrar Catálogos de Demarcación y Sección
+        $this->call([
+            CatalogoSeeder::class,
+        ]);
+
         // 1. Crear Presidente
         $presidente = User::updateOrCreate(
             ['email' => 'presidente@estructura.com'],

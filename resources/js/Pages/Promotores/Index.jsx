@@ -95,7 +95,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             )
         },
         {
-            title: 'COLONIA / DEMARCACIÓN',
+            title: 'COLONIA / DEMARCACIÓN / SECCIÓN',
             key: 'colonia',
             search: false,
             render: (_, record) => (
@@ -103,7 +103,10 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                     <span className="text-gray-600 flex items-center">
                         <EnvironmentOutlined className="mr-2" /> {record.colonia || 'Sin colonia'}
                     </span>
-                    {record.demarcacion && <span className="text-xs text-orange-500">{record.demarcacion}</span>}
+                    <div className="flex gap-2 mt-0.5">
+                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion}</span>}
+                        {record.seccion_electoral && <span className="text-xs text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
+                    </div>
                 </div>
             )
         },
@@ -209,8 +212,12 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <EnvironmentOutlined className="text-gray-400 shrink-0" /> 
-                        <span className="w-14 text-gray-400 shrink-0">Zona:</span> 
-                        <span className="truncate flex-1">{record.colonia || 'Sin colonia'}</span>
+                        <span className="w-18 text-gray-400 shrink-0">Ubicación:</span> 
+                        <span className="truncate flex-1">
+                            {record.colonia || 'Sin colonia'}
+                            {record.demarcacion ? ` (Dem: ${record.demarcacion})` : ''}
+                            {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
+                        </span>
                     </div>
                 </div>
                 
