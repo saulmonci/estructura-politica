@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
+import { Card, Button, Avatar, Space, Badge, Modal, Image } from 'antd';
 import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, MailOutlined, DownloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
@@ -53,12 +53,22 @@ export default function RepresentantesIndex({ representantes }) {
             align: 'center',
             search: false,
             render: (fotoUrl) => (
-                <Avatar
-                    size={44}
-                    src={fotoUrl || undefined}
-                    icon={!fotoUrl ? <UserOutlined /> : undefined}
-                    className={fotoUrl ? 'border-2 border-blue-200' : 'bg-blue-100 text-blue-600'}
-                />
+                fotoUrl ? (
+                    <Image
+                        src={fotoUrl}
+                        width={44}
+                        height={44}
+                        className="object-cover rounded-md border border-blue-200"
+                        style={{ borderRadius: '6px' }}
+                    />
+                ) : (
+                    <Avatar
+                        shape="square"
+                        size={44}
+                        icon={<UserOutlined />}
+                        className="bg-blue-100 text-blue-600 rounded-md"
+                    />
+                )
             ),
         },
         {
@@ -156,7 +166,22 @@ export default function RepresentantesIndex({ representantes }) {
             <Card styles={{ body: { padding: '16px' } }} className="mb-4 shadow-sm rounded-lg border border-gray-200 w-full">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                        <Avatar size={48} src={record.foto_url} icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
+                        {record.foto_url ? (
+                            <Image
+                                src={record.foto_url}
+                                width={48}
+                                height={48}
+                                className="object-cover rounded-md"
+                                style={{ borderRadius: '6px' }}
+                            />
+                        ) : (
+                            <Avatar
+                                shape="square"
+                                size={48}
+                                icon={<UserOutlined />}
+                                className="bg-blue-100 text-blue-600 rounded-md"
+                            />
+                        )}
                         <div>
                             <div className="font-semibold text-base text-gray-800">{record.name}</div>
                             <div className="text-xs text-gray-500">{record.apodo ? `"${record.apodo}"` : 'Representante (RD)'}</div>

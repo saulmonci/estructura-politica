@@ -551,7 +551,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <img 
                                             src={URL.createObjectURL(fileList[0].originFileObj)} 
                                             alt="avatar" 
-                                            className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-md mb-3"
+                                            className="w-28 h-28 object-cover rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Button danger size="small" onClick={() => setFileList([])}>Eliminar foto</Button>
                                     </div>
@@ -560,7 +560,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <img 
                                             src={existingFoto} 
                                             alt="avatar" 
-                                            className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-md mb-3"
+                                            className="w-28 h-28 object-cover rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
                                             beforeUpload={handleBeforeUpload}
@@ -576,7 +576,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="w-28 h-28 bg-gray-200 rounded-full flex items-center justify-center mb-4 relative shadow-inner">
+                                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
                                             <UserOutlined className="text-6xl text-gray-400" />
                                             <div className="absolute bottom-2 right-2 bg-[#0f172a] w-10 h-10 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
                                                 <CameraOutlined className="text-white text-lg" />

@@ -226,11 +226,7 @@ export default function TableCrud({
                 <ProTable
                     {...baseProps}
                     request={internalRequest}
-                    options={{
-                        density: true,
-                        fullScreen: true,
-                        setting: true,
-                    }}
+                    options={false}
                     pagination={{
                         defaultPageSize: 10,
                         showSizeChanger: true,
@@ -283,12 +279,7 @@ export default function TableCrud({
                 onSubmit={handleSearchSubmit}
                 onReset={handleSearchReset}
                 onChange={handleTableChange}
-                options={{
-                    density: true,
-                    fullScreen: true,
-                    reload: () => router.reload(), // Recarga usando Inertia
-                    setting: true,
-                }}
+                options={false}
                 pagination={isPaginated ? {
                     current,
                     pageSize,
