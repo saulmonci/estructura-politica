@@ -51,6 +51,8 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
 
     useEffect(() => {
         if (open) {
+            setFileList([]);
+            setExistingFoto(null);
             const fetchDemarcaciones = async () => {
                 setLoadingDemarcaciones(true);
                 try {

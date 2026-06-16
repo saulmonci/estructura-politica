@@ -46,6 +46,8 @@ export default function PromovidoFormModal({ open, onOpenChange, onSuccess, edit
 
     useEffect(() => {
         if (open) {
+            setFileList([]);
+            setExistingFoto(null);
             const fetchDemarcaciones = async () => {
                 setLoadingDemarcaciones(true);
                 try {
