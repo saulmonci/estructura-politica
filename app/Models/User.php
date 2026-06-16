@@ -83,6 +83,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Consulta para obtener los operadores bajo el alcance del usuario según su rol.
+     */
+    public function queryOperadores()
+    {
+        if ($this->role === 'presidente') {
+            return User::where('role', 'operador');
+        }
+
+        if ($this->role === 'rd') {
+            return User::where('role', 'operador')->where('parent_id', $this->id);
+        }
+
+        return User::whereRaw('1 = 0');
+    }
+
+    /**
      * Consulta para obtener los promotores bajo el alcance del usuario según su rol.
      */
     public function queryPromotores()

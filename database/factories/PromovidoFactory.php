@@ -19,7 +19,8 @@ class PromovidoFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre_completo' => 'Promovido ' . \Illuminate\Support\Str::random(5),
+            'nombre' => fake()->firstName(),
+            'apellidos' => fake()->lastName(),
             'clave_elector' => strtoupper(\Illuminate\Support\Str::random(6)) . rand(10000000, 99999999) . 'H' . rand(100, 999),
             'telefono' => '55' . rand(10000000, 99999999),
             'seccion_electoral' => (string) rand(1, 1000),

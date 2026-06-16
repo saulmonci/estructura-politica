@@ -21,19 +21,11 @@ class OperadorController extends BaseCrudController
 
     protected function getBaseQuery(Request $request): Builder
     {
-        $query = $this->modelClass::query()->where('role', 'operador');
-        
         $user = $request->user();
-        if ($user) {
-            $role = strtolower($user->role);
-            if ($role === 'rd') {
-                $query->where('parent_id', $user->id);
-            } elseif ($role === 'presidente') {
-                // Presidente ve todos los operadores
-            }
+        if (!$user) {
+            return $this->modelClass::query()->where('role', 'operador');
         }
-
-        return $query;
+        return $user->queryOperadores();
     }
 
     public function index(Request $request)

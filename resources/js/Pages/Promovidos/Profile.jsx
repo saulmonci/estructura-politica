@@ -46,8 +46,12 @@ export default function PromovidoProfile({ promovido }) {
             <Card bordered={false} className="shadow-sm mb-6">
                 <Row gutter={24} align="middle">
                     <Col>
-                        <div className="w-32 h-32 rounded-lg bg-gray-200 overflow-hidden shadow-inner border border-gray-100">
-                            <img src="https://i.pravatar.cc/300?u=pepe" alt="Perfil" className="w-full h-full object-cover" />
+                        <div className="w-32 h-32 rounded-lg bg-gray-200 overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center text-gray-400">
+                            {data.foto_url ? (
+                                <img src={data.foto_url} alt="Perfil" className="w-full h-full object-cover" />
+                            ) : (
+                                <UserOutlined style={{ fontSize: '48px' }} />
+                            )}
                         </div>
                     </Col>
                     <Col flex="auto">
@@ -89,8 +93,12 @@ export default function PromovidoProfile({ promovido }) {
                     </Col>
                     <Col>
                          <div className="text-center text-sm text-gray-500 font-medium mb-2">Fotografía actual</div>
-                         <div className="w-32 h-32 rounded-lg bg-gray-100 p-1 border border-dashed border-gray-300">
-                            <img src="https://i.pravatar.cc/300?u=pepe" alt="Verificación" className="w-full h-full object-cover rounded" />
+                         <div className="w-32 h-32 rounded-lg bg-gray-100 p-1 border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                            {data.foto_url ? (
+                                <img src={data.foto_url} alt="Verificación" className="w-full h-full object-cover rounded" />
+                            ) : (
+                                <UserOutlined style={{ fontSize: '48px' }} />
+                            )}
                          </div>
                     </Col>
                 </Row>

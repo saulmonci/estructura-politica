@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
+import { Card, Button, Avatar, Space, Badge, Modal, Image } from 'antd';
 import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined, MailOutlined, DownloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PromovidoFormModal from '@/Components/PromovidoFormModal';
@@ -55,17 +55,35 @@ export default function PromovidosIndex({ availablePromotores }) {
             ),
         },
         {
+            title: 'FOTO',
+            dataIndex: 'foto_url',
+            key: 'foto_url',
+            width: 70,
+            align: 'center',
+            search: false,
+            render: (fotoUrl) => (
+                fotoUrl ? (
+                    <Image
+                        src={fotoUrl}
+                        width={44}
+                        height={44}
+                        className="object-cover rounded-md"
+                        style={{ borderRadius: '6px' }}
+                    />
+                ) : (
+                    <Avatar shape="square" size={44} icon={<UserOutlined />} className="bg-gray-100 text-gray-600 rounded-md" />
+                )
+            ),
+        },
+        {
             title: 'NOMBRE',
             dataIndex: 'nombre',
             key: 'nombre',
             sorter: true,
             render: (nombre, record) => (
-                <Space>
-                    <Avatar size="small" icon={<UserOutlined />} className="bg-gray-100 text-gray-600" />
-                    <div className="flex flex-col">
-                        <span className="font-semibold">{nombre} {record.apellidos}</span>
-                    </div>
-                </Space>
+                <div className="flex flex-col">
+                    <span className="font-semibold">{nombre} {record.apellidos}</span>
+                </div>
             )
         },
         {
@@ -170,7 +188,22 @@ export default function PromovidosIndex({ availablePromotores }) {
             <Card styles={{ body: { padding: '16px' } }} className="mb-4 shadow-sm rounded-lg border border-gray-200 w-full">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                        <Avatar size={48} icon={<UserOutlined />} className="bg-gray-100 text-gray-600" />
+                        {record.foto_url ? (
+                            <Image
+                                src={record.foto_url}
+                                width={48}
+                                height={48}
+                                className="object-cover rounded-md"
+                                style={{ borderRadius: '6px' }}
+                            />
+                        ) : (
+                            <Avatar
+                                shape="square"
+                                size={48}
+                                icon={<UserOutlined />}
+                                className="bg-gray-100 text-gray-600 rounded-md"
+                            />
+                        )}
                         <div>
                             <div className="font-semibold text-base text-gray-800">{record.nombre} {record.apellidos}</div>
                             <div className="text-xs text-gray-500">Promovido (Simpatizante)</div>

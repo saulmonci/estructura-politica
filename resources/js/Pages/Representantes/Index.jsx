@@ -237,7 +237,7 @@ export default function RepresentantesIndex({ representantes }) {
                         <p className="text-gray-500 text-sm mt-1">Lista de todos los RD asignados en el sistema.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        {['presidente', 'rd'].includes(auth?.user?.role) && (
+                        {auth?.user?.role === 'presidente' && (
                             <Button 
                                 type="default" 
                                 icon={<DownloadOutlined />} 

@@ -21,29 +21,11 @@ class PromotorController extends BaseCrudController
 
     protected function getBaseQuery(Request $request): Builder
     {
-        $query = $this->modelClass::query()->where('role', 'promotor');
-        
         $user = $request->user();
-        if ($user) {
-            $role = strtolower($user->role);
-            if ($role === 'operador') {
-                $query->where('parent_id', $user->id);
-            } elseif ($role === 'rd') {
-                // El RD ve los promotores de sus operadores
-                $operadoresIds = User::where('role', 'operador')->where('parent_id', $user->id)->pluck('id');
-                // IMPORTANTE: Si un RD no tiene operadores, no debe ver ningún promotor.
-                if ($operadoresIds->isEmpty()) {
-                    $query->whereRaw('1 = 0');
-                } else {
-                    $query->whereIn('parent_id', $operadoresIds);
-                }
-            } elseif ($role === 'presidente') {
-                // El Presidente ve todos los promotores (opcionalmente de ciertos operadores/RDs si se filtra)
-                // Si no hay filtro, ve todos.
-            }
+        if (!$user) {
+            return $this->modelClass::query()->where('role', 'promotor');
         }
-
-        return $query;
+        return $user->queryPromotores();
     }
 
     public function index(Request $request)

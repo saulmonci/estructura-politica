@@ -27,11 +27,16 @@ class Promovido extends Model
      * Accessor para compatibilidad: devuelve nombre + apellidos juntos.
      * Esto permite que el ApoyosDrawer siga mostrando el nombre completo.
      */
-    protected $appends = ['nombre_completo'];
+    protected $appends = ['nombre_completo', 'foto_url'];
 
     public function getNombreCompletoAttribute(): string
     {
         return trim($this->nombre . ' ' . $this->apellidos);
+    }
+
+    public function getFotoUrlAttribute()
+    {
+        return $this->foto ? asset('storage/' . $this->foto) : null;
     }
 
     /**

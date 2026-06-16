@@ -168,7 +168,7 @@ abstract class BaseCrudController extends Controller
             if (empty($user->demarcacion)) {
                 abort(403, 'El RD no tiene una demarcación asignada.');
             }
-            $query->where('demarcacion', $user->demarcacion);
+            $query->where($query->getModel()->getTable() . '.demarcacion', $user->demarcacion);
         }
 
         // Aplicar filtros opcionales de búsqueda si se pasan en el request
