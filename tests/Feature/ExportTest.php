@@ -195,4 +195,32 @@ class ExportTest extends TestCase
         $this->assertEquals('Carlos', $promovidosRows[0]['Nombre']);
         $this->assertEquals('Ruiz', $promovidosRows[0]['Apellidos']);
     }
+
+    public function test_can_create_promovido_with_photo(): void
+    {
+        $promotor = User::factory()->create(['role' => 'promotor']);
+        
+        \Illuminate\Support\Facades\Storage::fake('public');
+        
+        $file = \Illuminate\Http\UploadedFile::fake()->image('avatar.jpg');
+        
+        $response = $this->actingAs($promotor)->post('/promovidos', [
+            'nombre' => 'Test',
+            'apellidos' => 'User',
+            'clave_elector' => 'TEST123456789012',
+            'telefono' => '1234567890',
+            'demarcacion' => '1',
+            'seccion_electoral' => '100',
+            'colonia' => 'Test Colonia',
+            'foto' => $file,
+        ]);
+        
+        $response->assertRedirect();
+        
+        $promovido = Promovido::first();
+        $this->assertNotNull($promovido);
+        $this->assertNotNull($promovido->foto);
+        
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($promovido->foto);
+    }
 }

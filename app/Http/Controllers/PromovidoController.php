@@ -93,6 +93,23 @@ class PromovidoController extends BaseCrudController
         }
     }
 
+    public function store(Request $request)
+    {
+        $this->checkAccess($request);
+        $validated = $request->validate($this->getValidationRules($request));
+        
+        $user = $request->user();
+        if ($user && $user->role === 'promotor') {
+            $validated['promotor_id'] = $user->id;
+        }
+
+        $item = $this->modelClass::create($validated);
+        
+        $this->afterStore($request, $item);
+
+        return redirect()->back()->with('success', 'Registro creado exitosamente.');
+    }
+
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
         $user = $request->user();

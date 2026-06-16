@@ -15,9 +15,12 @@ import {
     CameraOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, ref) => {
+    const { auth } = usePage().props;
+    const userRole = auth?.user?.role;
+
     const [open, setOpen] = useState(false);
     const [editId, setEditingId] = useState(null);
     const [fetchUrl, setFetchUrl] = useState(null);
@@ -232,22 +235,31 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                         <Divider className="my-2 border-gray-300" />
 
                         <div className="mt-4">
-                            {availablePromotores.length > 0 && (
-                                <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
-                                    <Col span={24}>
-                                        <ProFormSelect
-                                            name="promotor_id"
-                                            label={<span className="font-bold text-blue-800">Asignar a Promotor</span>}
-                                            placeholder="Seleccionar el Promotor que trajo a este simpatizante"
-                                            rules={[{ required: true, message: 'Debe seleccionar un Promotor' }]}
-                                            options={availablePromotores.map(p => ({
-                                                label: p.apodo ? `${p.name} (${p.apodo})` : p.name,
-                                                value: p.id
-                                            }))}
-                                            fieldProps={{ prefix: <TeamOutlined className="text-blue-500 mr-2" />, showSearch: true }}
-                                        />
-                                    </Col>
-                                </Row>
+                            {userRole !== 'promotor' && (
+                                availablePromotores.length > 0 ? (
+                                    <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
+                                        <Col span={24}>
+                                            <ProFormSelect
+                                                name="promotor_id"
+                                                label={<span className="font-bold text-blue-800">Asignar a Promotor</span>}
+                                                placeholder="Seleccionar el Promotor que trajo a este simpatizante"
+                                                rules={[{ required: true, message: 'Debe seleccionar un Promotor' }]}
+                                                options={availablePromotores.map(p => ({
+                                                    label: p.apodo ? `${p.name} (${p.apodo})` : p.name,
+                                                    value: p.id
+                                                }))}
+                                                fieldProps={{ prefix: <TeamOutlined className="text-blue-500 mr-2" />, showSearch: true }}
+                                            />
+                                        </Col>
+                                    </Row>
+                                ) : (
+                                    <Row gutter={16} className="mb-4 bg-red-50 p-3 rounded-md border border-red-100 text-red-600 text-sm">
+                                        <Col span={24}>
+                                            <strong>⚠️ Sin Promotores:</strong> No tienes promotores registrados en tu red. 
+                                            Debes registrar al menos un promotor antes de poder registrar un promovido.
+                                        </Col>
+                                    </Row>
+                                )
                             )}
                             <Row gutter={16}>
                                 <Col xs={24} md={12}>
