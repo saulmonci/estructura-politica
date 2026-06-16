@@ -83,8 +83,37 @@ class User extends Authenticatable
     }
 
     /**
+     * Consulta para obtener los promotores bajo el alcance del usuario según su rol.
+     */
+    public function queryPromotores()
+    {
+        if ($this->role === 'presidente') {
+            return User::where('role', 'promotor');
+        }
+
+        if ($this->role === 'rd') {
+            return User::where('role', 'promotor')
+                ->where(function($query) {
+                    $query->where('parent_id', $this->id)
+                          ->orWhereIn('parent_id', function($subQuery) {
+                              $subQuery->select('id')
+                                  ->from('users')
+                                  ->where('role', 'operador')
+                                  ->where('parent_id', $this->id);
+                          });
+                });
+        }
+
+        if ($this->role === 'operador') {
+            return User::where('parent_id', $this->id)->where('role', 'promotor');
+        }
+
+        return User::whereRaw('1 = 0');
+    }
+
+    /**
      * Consulta optimizada para obtener los promovidos bajo el alcance del usuario según su rol.
-     * Este helper resuelve las limitaciones de Eloquent para consultas de más de 2 niveles (e.g. Presidente).
+     * Este helper resuelve las limitaciones de Eloquent para consultas de más de 2 niveles.
      */
     public function queryPromovidos()
     {
@@ -93,25 +122,45 @@ class User extends Authenticatable
         }
 
         if ($this->role === 'operador') {
-            return Promovido::whereIn('promotor_id', function ($query) {
-                $query->select('id')
-                    ->from('users')
-                    ->where('role', 'promotor')
-                    ->where('parent_id', $this->id);
+            return Promovido::where(function($query) {
+                // Promovidos directos (si se asignó al operador directamente)
+                $query->where('promotor_id', $this->id)
+                      // O promovidos a través de sus promotores
+                      ->orWhereIn('promotor_id', function ($subQuery) {
+                          $subQuery->select('id')
+                              ->from('users')
+                              ->where('role', 'promotor')
+                              ->where('parent_id', $this->id);
+                      });
             });
         }
 
         if ($this->role === 'rd') {
-            return Promovido::whereIn('promotor_id', function ($query) {
-                $query->select('id')
-                    ->from('users')
-                    ->where('role', 'promotor')
-                    ->whereIn('parent_id', function ($subQuery) {
-                        $subQuery->select('id')
-                            ->from('users')
-                            ->where('role', 'operador')
-                            ->where('parent_id', $this->id);
-                    });
+            return Promovido::where(function($query) {
+                // Promovidos directos
+                $query->where('promotor_id', $this->id)
+                      // O a través de sus operadores (si se les asignó como "promotor" en promovidos)
+                      ->orWhereIn('promotor_id', function ($subQuery) {
+                          $subQuery->select('id')
+                              ->from('users')
+                              ->where('role', 'operador')
+                              ->where('parent_id', $this->id);
+                      })
+                      // O a través de los promotores de su red
+                      ->orWhereIn('promotor_id', function ($subQuery) {
+                          $subQuery->select('id')
+                              ->from('users')
+                              ->where('role', 'promotor')
+                              ->where(function($q) {
+                                  $q->where('parent_id', $this->id)
+                                    ->orWhereIn('parent_id', function ($opQuery) {
+                                        $opQuery->select('id')
+                                            ->from('users')
+                                            ->where('role', 'operador')
+                                            ->where('parent_id', $this->id);
+                                    });
+                              });
+                      });
             });
         }
 

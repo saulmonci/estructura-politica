@@ -39,7 +39,12 @@ class PromovidoController extends BaseCrudController
                     $promotores = User::where('role', 'promotor')->get(['id', 'name', 'apodo']);
                 } elseif ($user->role === 'rd') {
                     $operadoresIds = User::where('role', 'operador')->where('parent_id', $user->id)->pluck('id');
-                    $promotores = User::where('role', 'promotor')->whereIn('parent_id', $operadoresIds)->get(['id', 'name', 'apodo']);
+                    $promotores = User::where('role', 'promotor')
+                        ->where(function($q) use ($user, $operadoresIds) {
+                            $q->where('parent_id', $user->id)
+                              ->orWhereIn('parent_id', $operadoresIds);
+                        })
+                        ->get(['id', 'name', 'apodo']);
                 } elseif ($user->role === 'operador') {
                     $promotores = User::where('role', 'promotor')->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
                 }

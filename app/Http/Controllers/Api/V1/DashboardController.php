@@ -93,49 +93,32 @@ class DashboardController extends Controller
         $user = $request->user();
         
         $operadores = 0;
-        $promotores = 0;
-        $promovidos = 0;
+        $promotores = $user->queryPromotores()->count();
+        $promovidos = $user->queryPromovidos()->count();
         $totalEstructura = 0;
 
         if ($user->role === 'presidente') {
             // RDs del Presidente
             $rdIds = User::where('parent_id', $user->id)->where('role', 'rd')->pluck('id')->toArray();
+            $rdCount = count($rdIds);
             
-            if (!empty($rdIds)) {
-                $operadores = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->count();
-                $promotores = User::whereIn('parent_id', $rdIds)->where('role', 'promotor')->count();
-                
-                // Promovidos de la red
-                $promovidos = Promovido::whereIn('promotor_id', function ($query) use ($rdIds) {
-                    $query->select('id')
-                        ->from('users')
-                        ->whereIn('parent_id', $rdIds)
-                        ->where('role', 'promotor');
-                })->count();
-            }
-
+            $operadores = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->count();
+            
             // Total estructura: RDs + Operadores + Promotores + Promovidos
-            $totalEstructura = count($rdIds) + $operadores + $promotores + $promovidos;
+            $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;
 
         } elseif ($user->role === 'rd') {
-            // Operadores y Promotores directos
+            // Operadores
             $operadores = User::where('parent_id', $user->id)->where('role', 'operador')->count();
-            $promotores = User::where('parent_id', $user->id)->where('role', 'promotor')->count();
             
-            // Promovidos de sus promotores
-            $promovidos = Promovido::whereIn('promotor_id', function ($query) use ($user) {
-                $query->select('id')
-                    ->from('users')
-                    ->where('parent_id', $user->id)
-                    ->where('role', 'promotor');
-            })->count();
-
             // Total estructura: Operadores + Promotores + Promovidos
             $totalEstructura = $operadores + $promotores + $promovidos;
 
+        } elseif ($user->role === 'operador') {
+            // Total estructura: Promotores + Promovidos
+            $totalEstructura = $promotores + $promovidos;
+
         } elseif ($user->role === 'promotor') {
-            // Solo sus propios promovidos
-            $promovidos = Promovido::where('promotor_id', $user->id)->count();
             $totalEstructura = $promovidos;
         }
 

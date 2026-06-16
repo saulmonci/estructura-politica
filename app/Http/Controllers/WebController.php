@@ -50,8 +50,8 @@ class WebController extends Controller
         
         $rdCount = 0;
         $operadores = 0;
-        $promotores = 0;
-        $promovidos = 0;
+        $promotores = $user->queryPromotores()->count();
+        $promovidos = $user->queryPromovidos()->count();
         $totalEstructura = 0;
         
         // Generar puntos de fechas para la gráfica (últimas 5 semanas)
@@ -72,37 +72,25 @@ class WebController extends Controller
             $rdIds = User::where('parent_id', $user->id)->where('role', 'rd')->pluck('id')->toArray();
             $rdCount = count($rdIds);
             
-            if (!empty($rdIds)) {
-                $opsIds = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->pluck('id')->toArray();
-                $operadores = count($opsIds);
-                
-                $promIds = User::whereIn('parent_id', $opsIds)->where('role', 'promotor')->pluck('id')->toArray();
-                $promotores = count($promIds);
-                
-                $promovidos = Promovido::whereIn('promotor_id', $promIds)->count();
-                
-                foreach($dates as &$d) {
-                    $d['rd'] = User::where('parent_id', $user->id)->where('role', 'rd')->where('created_at', '<=', $d['date'])->count();
-                    
-                    $d_opsIds = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->where('created_at', '<=', $d['date'])->pluck('id')->toArray();
-                    $d['operadores'] = count($d_opsIds);
-                    
-                    $d_promIds = User::whereIn('parent_id', $d_opsIds)->where('role', 'promotor')->where('created_at', '<=', $d['date'])->pluck('id')->toArray();
-                    $d['promotores'] = count($d_promIds);
-                    
-                    $d['promovidos'] = Promovido::whereIn('promotor_id', $d_promIds)->where('created_at', '<=', $d['date'])->count();
-                }
-            }
+            $opsIds = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->pluck('id')->toArray();
+            $operadores = count($opsIds);
+            
             $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;
+            
+            foreach($dates as &$d) {
+                $d['rd'] = User::where('parent_id', $user->id)->where('role', 'rd')->where('created_at', '<=', $d['date'])->count();
+                
+                $d_opsIds = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->where('created_at', '<=', $d['date'])->pluck('id')->toArray();
+                $d['operadores'] = count($d_opsIds);
+                
+                $d['promotores'] = User::where('role', 'promotor')->where('created_at', '<=', $d['date'])->count();
+                
+                $d['promovidos'] = Promovido::where('created_at', '<=', $d['date'])->count();
+            }
             
         } elseif ($user->role === 'rd') {
             $opsIds = User::where('parent_id', $user->id)->where('role', 'operador')->pluck('id')->toArray();
             $operadores = count($opsIds);
-            
-            $promIds = User::whereIn('parent_id', $opsIds)->where('role', 'promotor')->pluck('id')->toArray();
-            $promotores = count($promIds);
-            
-            $promovidos = Promovido::whereIn('promotor_id', $promIds)->count();
             
             $totalEstructura = $operadores + $promotores + $promovidos;
             
@@ -110,26 +98,40 @@ class WebController extends Controller
                 $d_opsIds = User::where('parent_id', $user->id)->where('role', 'operador')->where('created_at', '<=', $d['date'])->pluck('id')->toArray();
                 $d['operadores'] = count($d_opsIds);
                 
-                $d_promIds = User::whereIn('parent_id', $d_opsIds)->where('role', 'promotor')->where('created_at', '<=', $d['date'])->pluck('id')->toArray();
+                $d_promIds = User::where('role', 'promotor')
+                    ->where('created_at', '<=', $d['date'])
+                    ->where(function($q) use ($user, $d_opsIds) {
+                        $q->where('parent_id', $user->id)
+                          ->orWhereIn('parent_id', $d_opsIds);
+                    })
+                    ->pluck('id')
+                    ->toArray();
                 $d['promotores'] = count($d_promIds);
                 
-                $d['promovidos'] = Promovido::whereIn('promotor_id', $d_promIds)->where('created_at', '<=', $d['date'])->count();
+                $d['promovidos'] = Promovido::where('created_at', '<=', $d['date'])
+                    ->where(function($q) use ($user, $d_opsIds, $d_promIds) {
+                        $q->whereIn('promotor_id', $d_promIds)
+                          ->orWhere('promotor_id', $user->id)
+                          ->orWhereIn('promotor_id', $d_opsIds);
+                    })
+                    ->count();
             }
             
         } elseif ($user->role === 'operador') {
-            $promIds = User::where('parent_id', $user->id)->where('role', 'promotor')->pluck('id')->toArray();
-            $promotores = count($promIds);
-            $promovidos = Promovido::whereIn('promotor_id', $promIds)->count();
             $totalEstructura = $promotores + $promovidos;
             
             foreach($dates as &$d) {
                 $d_promIds = User::where('parent_id', $user->id)->where('role', 'promotor')->where('created_at', '<=', $d['date'])->pluck('id')->toArray();
                 $d['promotores'] = count($d_promIds);
-                $d['promovidos'] = Promovido::whereIn('promotor_id', $d_promIds)->where('created_at', '<=', $d['date'])->count();
+                $d['promovidos'] = Promovido::where('created_at', '<=', $d['date'])
+                    ->where(function($q) use ($user, $d_promIds) {
+                        $q->whereIn('promotor_id', $d_promIds)
+                          ->orWhere('promotor_id', $user->id);
+                    })
+                    ->count();
             }
             
         } elseif ($user->role === 'promotor') {
-            $promovidos = Promovido::where('promotor_id', $user->id)->count();
             $totalEstructura = $promovidos;
             
             foreach($dates as &$d) {
@@ -152,13 +154,9 @@ class WebController extends Controller
         if ($user->role === 'presidente') {
             $rdsList = User::where('parent_id', $user->id)->where('role', 'rd')->get();
             foreach($rdsList as $rd) {
-                $opIds = User::where('parent_id', $rd->id)->where('role', 'operador')->pluck('id')->toArray();
-                $op = count($opIds);
-                
-                $prIds = User::whereIn('parent_id', $opIds)->where('role', 'promotor')->pluck('id')->toArray();
-                $pr = count($prIds);
-                
-                $pm = Promovido::whereIn('promotor_id', $prIds)->count();
+                $op = User::where('parent_id', $rd->id)->where('role', 'operador')->count();
+                $pr = $rd->queryPromotores()->count();
+                $pm = $rd->queryPromovidos()->count();
                 
                 $rds[] = [
                     'id' => $rd->id,
