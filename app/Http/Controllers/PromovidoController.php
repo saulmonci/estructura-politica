@@ -145,4 +145,29 @@ class PromovidoController extends BaseCrudController
         parent::afterUpdate($request, $item);
         $this->handlePhotoUpload($request, $item);
     }
+
+    protected function getExportHeaders(): array
+    {
+        return [
+            'ID', 'Asignado a (Promotor)', 'Nombre', 'Apellidos', 'Clave de Elector', 
+            'Teléfono', 'Demarcación', 'Sección Electoral', 'Colonia', 'Fecha de Registro'
+        ];
+    }
+
+    protected function getExportRow($item): array
+    {
+        $promotor = $item->promotor;
+        return [
+            '#' . str_pad($item->id, 5, '0', STR_PAD_LEFT),
+            $promotor ? $promotor->name : 'No asignado',
+            $item->nombre,
+            $item->apellidos,
+            $item->clave_elector,
+            $item->telefono,
+            $item->demarcacion,
+            $item->seccion_electoral,
+            $item->colonia,
+            $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '',
+        ];
+    }
 }

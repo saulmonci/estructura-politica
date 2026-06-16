@@ -13,19 +13,24 @@ Route::post('/logout', [WebController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
+    
     // CRUD para Representantes de Demarcación (Solo Presidente)
+    Route::get('/representantes/export', [RepresentanteDemarcacionController::class, 'export']);
     Route::resource('representantes', RepresentanteDemarcacionController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
     // CRUD para Operadores (Solo Presidente y RD)
+    Route::get('/operadores/export', [OperadorController::class, 'export']);
     Route::resource('operadores', OperadorController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
     // CRUD para Promotores (Solo Presidente, RD y Operador)
+    Route::get('/promotores/export', [PromotorController::class, 'export']);
     Route::resource('promotores', PromotorController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
     // CRUD para Promovidos (Todos)
+    Route::get('/promovidos/export', [PromovidoController::class, 'export']);
     Route::resource('promovidos', PromovidoController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 

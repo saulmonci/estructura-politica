@@ -197,4 +197,40 @@ class OperadorController extends BaseCrudController
         parent::afterUpdate($request, $item);
         $this->handlePhotoUpload($request, $item);
     }
+
+    protected function getExportHeaders(): array
+    {
+        return [
+            'ID', 'Asignado a (RD)', 'Nombre', 'Apellidos', 'Email', 'Sexo', 'Calle', 'No. Exterior', 'No. Interior', 
+            'Colonia', 'Código Postal', 'Demarcación', 'Sección Electoral', 'Clave Electoral', 
+            'Teléfono', 'CURP', 'Apodo', 'Estatus', 'Notas', 'Fecha de Registro'
+        ];
+    }
+
+    protected function getExportRow($item): array
+    {
+        $rd = $item->leader;
+        return [
+            'OP-' . str_pad($item->id, 4, '0', STR_PAD_LEFT),
+            $rd ? $rd->name : 'No asignado',
+            $item->nombre,
+            $item->apellidos,
+            $item->email,
+            $item->sexo,
+            $item->calle,
+            $item->numero_exterior,
+            $item->numero_interior,
+            $item->colonia,
+            $item->codigo_postal,
+            $item->demarcacion,
+            $item->seccion_electoral,
+            $item->clave_electoral,
+            $item->telefono,
+            $item->curp,
+            $item->apodo,
+            $item->estado ? 'Activo' : 'Inactivo',
+            $item->notas,
+            $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '',
+        ];
+    }
 }

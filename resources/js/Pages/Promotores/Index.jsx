@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, GiftOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, GiftOutlined, DownloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
@@ -242,9 +242,21 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                         <h2 className="text-xl font-bold m-0">Promotores</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de promotores asignados a los operadores.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-orange-600 hover:bg-orange-500 w-full sm:w-auto" onClick={handleCreate}>
-                        Agregar Promotor
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        {['presidente', 'rd'].includes(auth?.user?.role) && (
+                            <Button 
+                                type="default" 
+                                icon={<DownloadOutlined />} 
+                                onClick={() => window.location.href = '/promotores/export'}
+                                className="w-full sm:w-auto border-gray-300"
+                            >
+                                Descargar Excel
+                            </Button>
+                        )}
+                        <Button type="primary" icon={<PlusOutlined />} className="bg-orange-600 hover:bg-orange-500 w-full sm:w-auto" onClick={handleCreate}>
+                            Agregar Promotor
+                        </Button>
+                    </div>
                 </div>
 
                 <TableCrud

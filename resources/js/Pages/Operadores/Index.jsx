@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, DownloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 
@@ -214,9 +214,21 @@ export default function OperadoresIndex({ availableRds }) {
                         <h2 className="text-xl font-bold m-0">Operadores Políticos</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de operadores políticos asignados a tu red.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-purple-700 hover:bg-purple-600 w-full sm:w-auto" onClick={handleCreate}>
-                        Agregar Operador
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        {['presidente', 'rd'].includes(auth?.user?.role) && (
+                            <Button 
+                                type="default" 
+                                icon={<DownloadOutlined />} 
+                                onClick={() => window.location.href = '/operadores/export'}
+                                className="w-full sm:w-auto border-gray-300"
+                            >
+                                Descargar Excel
+                            </Button>
+                        )}
+                        <Button type="primary" icon={<PlusOutlined />} className="bg-purple-700 hover:bg-purple-600 w-full sm:w-auto" onClick={handleCreate}>
+                            Agregar Operador
+                        </Button>
+                    </div>
                 </div>
 
                 <TableCrud

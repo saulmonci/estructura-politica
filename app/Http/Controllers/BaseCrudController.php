@@ -151,4 +151,72 @@ abstract class BaseCrudController extends Controller
     }
     
     protected function afterUpdate(Request $request, Model $item): void {}
+
+    public function export(Request $request)
+    {
+        $this->checkAccess($request);
+        
+        $user = $request->user();
+        if (!$user || !in_array($user->role, ['presidente', 'rd'])) {
+            abort(403, 'No autorizado para exportar datos.');
+        }
+
+        $query = $this->getBaseQuery($request);
+
+        // Seguridad: Los RDs solo pueden exportar registros de su demarcación asignada
+        if ($user->role === 'rd') {
+            if (empty($user->demarcacion)) {
+                abort(403, 'El RD no tiene una demarcación asignada.');
+            }
+            $query->where('demarcacion', $user->demarcacion);
+        }
+
+        // Aplicar filtros opcionales de búsqueda si se pasan en el request
+        if ($search = $request->input('search')) {
+            $this->applySearch($query, $search);
+        }
+        
+        $filters = $request->except(['search', 'page', 'per_page', 'sort_field', 'sort_direction']);
+        if (!empty($filters)) {
+            $this->applyFilters($query, $filters);
+        }
+
+        $items = $query->get();
+        $headers = $this->getExportHeaders();
+        
+        $callback = function() use ($items, $headers) {
+            $file = fopen('php://output', 'w');
+            
+            // Añadir BOM de UTF-8 para soporte de Excel
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            fputcsv($file, $headers);
+
+            foreach ($items as $item) {
+                fputcsv($file, $this->getExportRow($item));
+            }
+
+            fclose($file);
+        };
+
+        $fileName = strtolower($this->dataKey) . '_export_' . date('Y-m-d_H-i') . '.csv';
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
+    protected function getExportHeaders(): array
+    {
+        return [];
+    }
+
+    protected function getExportRow($item): array
+    {
+        return [];
+    }
 }

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, MailOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, MailOutlined, DownloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 
 export default function RepresentantesIndex({ representantes }) {
+    const { auth } = usePage().props;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const actionRef = React.useRef();
@@ -213,9 +214,21 @@ export default function RepresentantesIndex({ representantes }) {
                         <h2 className="text-xl font-bold m-0">Representantes de Demarcación</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de todos los RD asignados en el sistema.</p>
                     </div>
-                    <Button type="primary" icon={<PlusOutlined />} className="bg-[#0f172a] hover:bg-slate-800 w-full sm:w-auto" onClick={handleCreate}>
-                        Agregar Representante
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        {['presidente', 'rd'].includes(auth?.user?.role) && (
+                            <Button 
+                                type="default" 
+                                icon={<DownloadOutlined />} 
+                                onClick={() => window.location.href = '/representantes/export'}
+                                className="w-full sm:w-auto border-gray-300"
+                            >
+                                Descargar Excel
+                            </Button>
+                        )}
+                        <Button type="primary" icon={<PlusOutlined />} className="bg-[#0f172a] hover:bg-slate-800 w-full sm:w-auto" onClick={handleCreate}>
+                            Agregar Representante
+                        </Button>
+                    </div>
                 </div>
 
                 <TableCrud
