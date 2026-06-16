@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import { Card, Col, Row, Statistic, Table, Tag, Button, Tabs } from 'antd';
 import { 
     UserOutlined, 
@@ -92,7 +92,9 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         />
                         <div className="mt-4 flex justify-between items-center">
                             <span className="text-xs text-green-600 font-medium">Activos</span>
-                            <a href="#" className="text-blue-600 text-sm hover:underline">Ver todos →</a>
+                            {user.role === 'presidente' && (
+                                <Link href="/representantes" className="text-blue-600 text-sm hover:underline">Ver todos →</Link>
+                            )}
                         </div>
                     </Card>
                 </Col>
@@ -106,7 +108,9 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         />
                         <div className="mt-4 flex justify-between items-center">
                             <span className="text-xs text-green-600 font-medium">Activos</span>
-                            <a href="#" className="text-blue-600 text-sm hover:underline">Ver todos →</a>
+                            {['presidente', 'rd'].includes(user.role) && (
+                                <Link href="/operadores" className="text-blue-600 text-sm hover:underline">Ver todos →</Link>
+                            )}
                         </div>
                     </Card>
                 </Col>
@@ -120,7 +124,9 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         />
                         <div className="mt-4 flex justify-between items-center">
                             <span className="text-xs text-green-600 font-medium">Activos</span>
-                            <a href="#" className="text-blue-600 text-sm hover:underline">Ver todos →</a>
+                            {['presidente', 'rd', 'operador'].includes(user.role) && (
+                                <Link href="/promotores" className="text-blue-600 text-sm hover:underline">Ver todos →</Link>
+                            )}
                         </div>
                     </Card>
                 </Col>
@@ -134,7 +140,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         />
                         <div className="mt-4 flex justify-between items-center">
                             <span className="text-xs text-gray-600 font-medium">Totales</span>
-                            <a href="#" className="text-blue-600 text-sm hover:underline">Ver todos →</a>
+                            <Link href="/promovidos" className="text-blue-600 text-sm hover:underline">Ver todos →</Link>
                         </div>
                     </Card>
                 </Col>
@@ -212,7 +218,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         className="overflow-x-auto"
                     />
                     <div className="text-center mt-4">
-                        <a href="#" className="text-blue-600 font-medium hover:underline">Ver todos los Representantes (RD) →</a>
+                        <Link href="/representantes" className="text-blue-600 font-medium hover:underline">Ver todos los Representantes (RD) →</Link>
                     </div>
                 </Card>
             )}
