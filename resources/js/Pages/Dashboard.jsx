@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, usePage, Link } from '@inertiajs/react';
+import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Card, Col, Row, Statistic, Table, Tag, Button, Tabs } from 'antd';
 import { 
     UserOutlined, 
@@ -18,7 +18,7 @@ import PersonaFormModal from '@/Components/PersonaFormModal';
 export default function Dashboard({ stats, growthData, distribution, rds, reporteDemarcaciones }) {
     const { auth } = usePage().props;
     const user = auth?.user || { role: 'presidente' };
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const modalRef = React.useRef();
 
     // growthData ahora viene como prop desde el backend
 
@@ -202,7 +202,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         <Button 
                             type="primary" 
                             icon={<PlusOutlined />} 
-                            onClick={() => setIsModalOpen(true)} 
+                            onClick={() => modalRef.current?.open()} 
                             className="bg-[#0f172a]"
                         >
                             Agregar RD
@@ -274,11 +274,10 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
             />
 
             <PersonaFormModal 
-                open={isModalOpen} 
-                onOpenChange={setIsModalOpen} 
+                ref={modalRef} 
                 onSuccess={(values) => {
                     console.log('Nuevos datos de RD:', values);
-                    setIsModalOpen(false);
+                    router.reload();
                 }}
             />
 

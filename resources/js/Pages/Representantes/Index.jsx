@@ -8,18 +8,15 @@ import PersonaFormModal from '@/Components/PersonaFormModal';
 
 export default function RepresentantesIndex({ representantes }) {
     const { auth } = usePage().props;
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState(null);
+    const modalRef = React.useRef();
     const actionRef = React.useRef();
 
     const handleCreate = () => {
-        setEditingId(null);
-        setIsModalOpen(true);
+        modalRef.current?.open();
     };
 
     const handleEdit = (id) => {
-        setEditingId(id);
-        setIsModalOpen(true);
+        modalRef.current?.open(id, `/representantes/${id}`);
     };
 
     const handleDelete = (id) => {
@@ -242,10 +239,7 @@ export default function RepresentantesIndex({ representantes }) {
             </Card>
 
             <PersonaFormModal 
-                open={isModalOpen} 
-                onOpenChange={setIsModalOpen}
-                editId={editingId}
-                fetchUrl={editingId ? `/representantes/${editingId}` : null}
+                ref={modalRef}
                 onSuccess={() => {
                     if (actionRef.current) {
                         actionRef.current.reload();

@@ -9,8 +9,7 @@ import ApoyosDrawer from '@/Components/ApoyosDrawer';
 
 export default function PromotoresIndex({ availableOperadores, availableRds }) {
     const { auth } = usePage().props;
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState(null);
+    const modalRef = React.useRef();
     const [isApoyosOpen, setIsApoyosOpen] = useState(false);
     const [selectedPromotor, setSelectedPromotor] = useState(null);
     const actionRef = React.useRef();
@@ -21,13 +20,11 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
     };
 
     const handleCreate = () => {
-        setEditingId(null);
-        setIsModalOpen(true);
+        modalRef.current?.open();
     };
 
     const handleEdit = (id) => {
-        setEditingId(id);
-        setIsModalOpen(true);
+        modalRef.current?.open(id, `/promotores/${id}`);
     };
 
     const handleDelete = (id) => {
@@ -294,10 +291,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             </Card>
 
             <PersonaFormModal 
-                open={isModalOpen} 
-                onOpenChange={setIsModalOpen}
-                editId={editingId}
-                fetchUrl={editingId ? `/promotores/${editingId}` : null}
+                ref={modalRef}
                 entityType="Promotor"
                 availableRds={availableOperadores || []} // Reusamos el prop availableRds para pasar los operadores por ahora
                 onSuccess={() => {

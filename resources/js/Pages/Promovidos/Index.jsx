@@ -10,20 +10,17 @@ import { GiftOutlined } from '@ant-design/icons';
 
 export default function PromovidosIndex({ availablePromotores }) {
     const { auth } = usePage().props;
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState(null);
+    const modalRef = React.useRef();
     const [isApoyosOpen, setIsApoyosOpen] = useState(false);
     const [selectedPromovido, setSelectedPromovido] = useState(null);
     const actionRef = React.useRef();
 
     const handleCreate = () => {
-        setEditingId(null);
-        setIsModalOpen(true);
+        modalRef.current?.open();
     };
 
     const handleEdit = (id) => {
-        setEditingId(id);
-        setIsModalOpen(true);
+        modalRef.current?.open(id, `/promovidos/${id}`);
     };
 
     const handleOpenApoyos = (record) => {
@@ -269,10 +266,7 @@ export default function PromovidosIndex({ availablePromotores }) {
             </Card>
 
             <PromovidoFormModal 
-                open={isModalOpen} 
-                onOpenChange={setIsModalOpen}
-                editId={editingId}
-                fetchUrl={editingId ? `/promovidos/${editingId}` : null}
+                ref={modalRef}
                 availablePromotores={availablePromotores || []}
                 onSuccess={() => {
                     if (actionRef.current) {

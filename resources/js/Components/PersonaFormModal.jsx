@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ModalForm, ProFormText, ProFormSelect, ProFormTextArea } from '@ant-design/pro-components';
 import { Row, Col, Upload, message, Alert, Button, Divider, Form } from 'antd';
 import { 
@@ -21,10 +21,26 @@ import { router, usePage } from '@inertiajs/react';
 
 const { Dragger } = Upload;
 
-export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId = null, fetchUrl = null, entityType = 'RD', availableRds = [] }) {
+const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRds = [] }, ref) => {
     const { auth } = usePage().props;
+    const [open, setOpen] = useState(false);
+    const [editId, setEditingId] = useState(null);
+    const [fetchUrl, setFetchUrl] = useState(null);
     const [fileList, setFileList] = useState([]);
     const [existingFoto, setExistingFoto] = useState(null);
+
+    useImperativeHandle(ref, () => ({
+        open(id = null, url = null) {
+            setFileList([]);
+            setExistingFoto(null);
+            setEditingId(id);
+            setFetchUrl(url);
+            setOpen(true);
+        },
+        close() {
+            setOpen(false);
+        }
+    }));
 
     const [form] = Form.useForm();
     const [demarcaciones, setDemarcaciones] = useState([]);
@@ -91,7 +107,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
             form={form}
             title={null}
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={setOpen}
             width={1000}
             modalProps={{
                 destroyOnClose: true,
@@ -106,7 +122,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                             <Button 
                                 key="cancel" 
-                                onClick={() => onOpenChange(false)}
+                                onClick={() => setOpen(false)}
                                 icon={<CloseOutlined />}
                                 className="border-gray-300 text-gray-700"
                             >
@@ -144,7 +160,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                         onSuccess: () => {
                             message.success('Registro actualizado exitosamente');
                             if (onSuccess) onSuccess(values);
-                            onOpenChange(false);
+                            setOpen(false);
                         },
                         onError: () => message.error('Por favor revisa los campos en rojo')
                     });
@@ -154,7 +170,7 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                         onSuccess: () => {
                             message.success('Registro creado exitosamente');
                             if (onSuccess) onSuccess(values);
-                            onOpenChange(false);
+                            setOpen(false);
                         },
                         onError: () => message.error('Por favor revisa los campos en rojo')
                     });
@@ -587,4 +603,6 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
             </div>
         </ModalForm>
     );
-}
+});
+
+export default PersonaFormModal;
