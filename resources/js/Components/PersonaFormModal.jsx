@@ -268,7 +268,6 @@ export default function PersonaFormModal({ open, onOpenChange, onSuccess, editId
                                         name="apodo"
                                         label="Apodo (alias)"
                                         placeholder="Ingresar apodo"
-                                        rules={[{ required: true, message: 'Requerido' }]}
                                         fieldProps={{ prefix: <UserOutlined className="text-gray-400 mr-2" /> }}
                                     />
                                 </Col>
