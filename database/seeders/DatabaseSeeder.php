@@ -78,7 +78,8 @@ class DatabaseSeeder extends Seeder
                 $claveElector = strtoupper(Str::random(6)) . rand(10, 99) . rand(10, 99) . rand(10, 99) . rand(10, 99) . strtoupper(Str::random(4));
                 
                 Promovido::create([
-                    'nombre_completo' => "Votante Promovido $promovidoCount",
+                    'nombre' => "Votante",
+                    'apellidos' => "Promovido $promovidoCount",
                     'clave_elector' => $claveElector,
                     'telefono' => '55' . rand(10000000, 99999999),
                     'seccion_electoral' => $secciones[array_rand($secciones)],

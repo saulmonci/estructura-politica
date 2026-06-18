@@ -250,4 +250,66 @@ class WebController extends Controller
         ]);
     }
 
+    public function mapa(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'presidente') {
+            abort(403, 'No autorizado.');
+        }
+
+        // Obtener todas las demarcaciones con sus metas
+        $demarcaciones = \App\Models\Demarcacion::orderBy('id')->get();
+
+        // Contar promovidos por demarcación
+        $promovidosPorDemarcacion = DB::table('promovidos')
+            ->select('demarcacion', DB::raw('count(*) as total'))
+            ->whereNotNull('demarcacion')
+            ->groupBy('demarcacion')
+            ->pluck('total', 'demarcacion')
+            ->toArray();
+
+        $mapData = [];
+        $totalPromovidos = 0;
+        $totalMeta = 0;
+
+        foreach ($demarcaciones as $d) {
+            $cantPromovidos = $promovidosPorDemarcacion[$d->id] ?? 0;
+            $meta = $d->total_votantes ?? 500;
+            
+            $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
+
+            // Determinar color
+            if ($porcentaje < 40) {
+                $color = '#EF4444'; // Rojo
+            } elseif ($porcentaje <= 60) {
+                $color = '#F59E0B'; // Amarillo
+            } else {
+                $color = '#10B981'; // Verde
+            }
+
+            $mapData[] = [
+                'id' => $d->id,
+                'nombre' => $d->nombre,
+                'promovidos' => $cantPromovidos,
+                'meta' => $meta,
+                'porcentaje' => $porcentaje,
+                'color' => $color,
+            ];
+
+            $totalPromovidos += $cantPromovidos;
+            $totalMeta += $meta;
+        }
+
+        $avanceGlobal = $totalMeta > 0 ? round(($totalPromovidos / $totalMeta) * 100, 1) : 0;
+
+        return Inertia::render('Mapa', [
+            'demarcaciones' => $mapData,
+            'globalStats' => [
+                'total_promovidos' => $totalPromovidos,
+                'total_meta' => $totalMeta,
+                'porcentaje' => $avanceGlobal,
+            ]
+        ]);
+    }
+
 }

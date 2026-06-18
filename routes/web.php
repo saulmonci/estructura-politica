@@ -49,4 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Catálogos
     Route::get('/catalogos/demarcaciones', [App\Http\Controllers\CatalogoController::class, 'getDemarcaciones']);
     Route::get('/catalogos/demarcaciones/{demarcacion}/secciones', [App\Http\Controllers\CatalogoController::class, 'getSecciones']);
+
+    // Mapa Territorial
+    Route::get('/mapa', [WebController::class, 'mapa'])->name('mapa');
 });
