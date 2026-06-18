@@ -116,8 +116,18 @@ class PromovidoController extends BaseCrudController
         $rules = [
             'nombre'    => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
-            'clave_elector'     => ['nullable', 'string', 'max:18'],
-            'curp'              => ['nullable', 'string', 'max:18'],
+            'clave_elector'     => [
+                'nullable', 
+                'string', 
+                'max:18', 
+                \Illuminate\Validation\Rule::unique('promovidos', 'clave_elector')->ignore($id)
+            ],
+            'curp'              => [
+                'nullable', 
+                'string', 
+                'max:18', 
+                \Illuminate\Validation\Rule::unique('promovidos', 'curp')->ignore($id)
+            ],
             'telefono'          => ['nullable', 'string', 'max:10'],
             'demarcacion'       => ['nullable', 'string', 'max:255'],
             'seccion_electoral' => ['nullable', 'string', 'max:10'],
