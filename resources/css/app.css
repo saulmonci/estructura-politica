@@ -11,7 +11,22 @@
 }
 
 @media (max-width: 768px) {
+    .mobile-full-width-card {
+        margin-left: -16px !important;
+        margin-right: -16px !important;
+        width: calc(100% + 32px) !important;
+        max-width: calc(100% + 32px) !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
     .mobile-full-width-card > .ant-card-body {
-        padding: 16px 8px !important;
+        padding: 16px 12px !important;
     }
 }
+
+/* Remove default padding from ProLayout content area */
+main.ant-pro-layout-content {
+    padding: 0 !important;
+}
+

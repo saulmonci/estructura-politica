@@ -192,23 +192,59 @@ export default function TableCrud({
             <div className={containerClass}>
                 {!showHeader && (
                     <style>{`
+                        .mobile-card-table {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            overflow: hidden !important;
+                            box-sizing: border-box !important;
+                        }
+                        .mobile-card-table .ant-table-wrapper,
+                        .mobile-card-table .ant-spin-nested-loading,
+                        .mobile-card-table .ant-spin-container,
+                        .mobile-card-table .ant-table,
+                        .mobile-card-table .ant-table-container,
+                        .mobile-card-table .ant-table-content,
+                        .mobile-card-table .ant-table-tbody {
+                            display: block !important;
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            box-sizing: border-box !important;
+                            background: transparent !important;
+                        }
                         .mobile-card-table .ant-table-cell {
                             padding: 0 0 16px 0 !important;
                             border: none !important;
-                        }
-                        .mobile-card-table .ant-table {
-                            background: transparent !important;
+                            width: 100% !important;
+                            display: block !important;
+                            box-sizing: border-box !important;
                         }
                         .mobile-card-table .ant-table-tbody > tr:hover > td {
                             background: transparent !important;
                         }
-                        .mobile-card-table table {
+                        .mobile-card-table table,
+                        .mobile-card-table tbody,
+                        .mobile-card-table tr,
+                        .mobile-card-table .ant-table-row {
+                            display: block !important;
                             width: 100% !important;
+                            box-sizing: border-box !important;
+                        }
+                        .mobile-card-table table {
+                            table-layout: fixed !important;
                         }
                         /* Quitar margin bottom del card porque ya le pusimos padding a la celda */
                         .mobile-card-table .ant-card {
                             margin-bottom: 0 !important;
                             width: 100% !important;
+                            box-sizing: border-box !important;
+                        }
+                        /* Fix flex truncation overflow in card contents */
+                        .mobile-card-table .ant-card .flex {
+                            min-width: 0 !important;
+                        }
+                        .mobile-card-table .ant-card .flex-1,
+                        .mobile-card-table .ant-card .truncate {
+                            min-width: 0 !important;
                         }
                         /* Remover paddings internos de ProTable en mobile */
                         .mobile-card-table .ant-pro-card-body {
@@ -243,24 +279,61 @@ export default function TableCrud({
         <div className={containerClass}>
             {!showHeader && (
                 <style>{`
+                    .mobile-card-table {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                    }
+                    .mobile-card-table .ant-table-wrapper,
+                    .mobile-card-table .ant-spin-nested-loading,
+                    .mobile-card-table .ant-spin-container,
+                    .mobile-card-table .ant-table,
+                    .mobile-card-table .ant-table-container,
+                    .mobile-card-table .ant-table-content,
+                    .mobile-card-table .ant-table-tbody {
+                        display: block !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        box-sizing: border-box !important;
+                        background: transparent !important;
+                    }
                     .mobile-card-table .ant-table-cell {
                         padding: 0 0 16px 0 !important;
                         border: none !important;
-                    }
-                    .mobile-card-table .ant-table {
-                        background: transparent !important;
+                        width: 100% !important;
+                        display: block !important;
+                        box-sizing: border-box !important;
                     }
                     .mobile-card-table .ant-table-tbody > tr:hover > td {
                         background: transparent !important;
                     }
-                    .mobile-card-table table {
+                    .mobile-card-table table,
+                    .mobile-card-table tbody,
+                    .mobile-card-table tr,
+                    .mobile-card-table .ant-table-row {
+                        display: block !important;
                         width: 100% !important;
+                        box-sizing: border-box !important;
+                    }
+                    .mobile-card-table table {
                         table-layout: fixed !important;
                     }
+                    /* Quitar margin bottom del card porque ya le pusimos padding a la celda */
                     .mobile-card-table .ant-card {
                         margin-bottom: 0 !important;
                         width: 100% !important;
+                        box-sizing: border-box !important;
                     }
+                    /* Fix flex truncation overflow in card contents */
+                    .mobile-card-table .ant-card .flex {
+                        min-width: 0 !important;
+                    }
+                    .mobile-card-table .ant-card .flex-1,
+                    .mobile-card-table .ant-card .truncate {
+                        min-width: 0 !important;
+                    }
+                    /* Remover paddings internos de ProTable en mobile */
                     .mobile-card-table .ant-pro-card-body {
                         padding-inline: 0 !important;
                     }

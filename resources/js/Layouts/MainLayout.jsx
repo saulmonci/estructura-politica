@@ -148,7 +148,7 @@ export default function MainLayout({ children }) {
                     }}
                     headerRender={false}
                 >
-                    <div className="flex flex-col h-[calc(100vh-64px)] w-full -m-6 relative">
+                    <div className="flex flex-col h-[calc(100vh-64px)] w-full relative">
                         {/* Custom Header that bypasses ProLayout header issues */}
                         <div className="flex items-center justify-between w-full h-16 bg-white px-4 md:px-6 shadow-sm border-b border-gray-100 flex-shrink-0 relative z-10">
                             <div className="hidden md:flex items-center text-sm text-gray-500 truncate mr-4">
@@ -201,7 +201,7 @@ export default function MainLayout({ children }) {
                         </div>
 
                         {/* Page Content */}
-                        <div className="flex-1 overflow-auto bg-gray-50 p-6 shadow-inner">
+                        <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6 shadow-inner">
                             {children}
                         </div>
                     </div>
