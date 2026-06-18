@@ -108,7 +108,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             render: (_, record) => (
                 <div className="flex flex-col">
                     <span className="text-gray-600 flex items-center">
-                        <EnvironmentOutlined className="mr-2" /> {record.colonia || 'Sin colonia'}
+                        <EnvironmentOutlined className="mr-2" /> {record.colonia || 'Sin colonia'}{record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
                     </span>
                     <div className="flex gap-2 mt-0.5">
                         {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion}</span>}
@@ -237,6 +237,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                         <span className="w-18 text-gray-400 shrink-0">Ubicación:</span> 
                         <span className="truncate flex-1">
                             {record.colonia || 'Sin colonia'}
+                            {record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
                             {record.demarcacion ? ` (Dem: ${record.demarcacion})` : ''}
                             {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
                         </span>
