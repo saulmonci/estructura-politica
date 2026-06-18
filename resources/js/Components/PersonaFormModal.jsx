@@ -162,7 +162,16 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                             if (onSuccess) onSuccess(values);
                             setOpen(false);
                         },
-                        onError: () => message.error('Por favor revisa los campos en rojo')
+                        onError: (errors) => {
+                            if (errors) {
+                                const fieldErrors = Object.keys(errors).map((key) => ({
+                                    name: key,
+                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+                                }));
+                                form.setFields(fieldErrors);
+                            }
+                            message.error('Por favor revisa los campos en rojo');
+                        }
                     });
                 } else {
                     router.post(endpoint, values, {
@@ -172,7 +181,16 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                             if (onSuccess) onSuccess(values);
                             setOpen(false);
                         },
-                        onError: () => message.error('Por favor revisa los campos en rojo')
+                        onError: (errors) => {
+                            if (errors) {
+                                const fieldErrors = Object.keys(errors).map((key) => ({
+                                    name: key,
+                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+                                }));
+                                form.setFields(fieldErrors);
+                            }
+                            message.error('Por favor revisa los campos en rojo');
+                        }
                     });
                 }
                 // Retornar false para evitar que ProForm cierre el modal automáticamente antes del response
@@ -346,7 +364,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         name="numero_exterior"
                                         label="No. Ext"
                                         placeholder="Exterior"
-                                        rules={[{ required: true, message: 'Requerido' }]}
+                                        rules={[{ max: 50, message: 'Máximo 50 caracteres' }]}
                                         fieldProps={{ prefix: <span className="text-gray-400 font-bold mr-2">#</span> }}
                                     />
                                 </Col>

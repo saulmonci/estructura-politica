@@ -94,10 +94,26 @@ abstract class BaseCrudController extends Controller
         ]);
     }
 
+    /**
+     * Mensajes de validación personalizados
+     */
+    protected function getValidationMessages(Request $request): array
+    {
+        return [
+            'clave_elector.unique' => 'La clave de elector ya está registrada.',
+            'clave_electoral.unique' => 'La clave electoral ya está registrada.',
+            'curp.unique' => 'La CURP ya está registrada.',
+            'email.unique' => 'El correo electrónico ya está registrado.',
+        ];
+    }
+
     public function store(Request $request)
     {
         $this->checkAccess($request);
-        $validated = $request->validate($this->getValidationRules($request));
+        $validated = $request->validate(
+            $this->getValidationRules($request),
+            $this->getValidationMessages($request)
+        );
         
         $item = $this->modelClass::create($validated);
         
@@ -117,7 +133,10 @@ abstract class BaseCrudController extends Controller
     public function update(Request $request, string $id)
     {
         $this->checkAccess($request);
-        $validated = $request->validate($this->getValidationRules($request, $id));
+        $validated = $request->validate(
+            $this->getValidationRules($request, $id),
+            $this->getValidationMessages($request)
+        );
         
         $item = $this->getBaseQuery($request)->findOrFail($id);
         $item->update($validated);

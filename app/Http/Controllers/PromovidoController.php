@@ -96,7 +96,10 @@ class PromovidoController extends BaseCrudController
     public function store(Request $request)
     {
         $this->checkAccess($request);
-        $validated = $request->validate($this->getValidationRules($request));
+        $validated = $request->validate(
+            $this->getValidationRules($request),
+            $this->getValidationMessages($request)
+        );
         
         $user = $request->user();
         if ($user && $user->role === 'promotor') {

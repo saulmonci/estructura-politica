@@ -159,7 +159,16 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             if (onSuccess) onSuccess(values);
                             setOpen(false);
                         },
-                        onError: () => message.error('Por favor revisa los campos en rojo')
+                        onError: (errors) => {
+                            if (errors) {
+                                const fieldErrors = Object.keys(errors).map((key) => ({
+                                    name: key,
+                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+                                }));
+                                form.setFields(fieldErrors);
+                            }
+                            message.error('Por favor revisa los campos en rojo');
+                        }
                     });
                 } else {
                     router.post(endpoint, values, {
@@ -169,7 +178,16 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             if (onSuccess) onSuccess(values);
                             setOpen(false);
                         },
-                        onError: () => message.error('Por favor revisa los campos en rojo')
+                        onError: (errors) => {
+                            if (errors) {
+                                const fieldErrors = Object.keys(errors).map((key) => ({
+                                    name: key,
+                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+                                }));
+                                form.setFields(fieldErrors);
+                            }
+                            message.error('Por favor revisa los campos en rojo');
+                        }
                     });
                 }
                 return false;
