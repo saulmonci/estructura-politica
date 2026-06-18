@@ -22,9 +22,13 @@ class PromovidoFactory extends Factory
             'nombre' => fake()->firstName(),
             'apellidos' => fake()->lastName(),
             'clave_elector' => strtoupper(\Illuminate\Support\Str::random(6)) . rand(10000000, 99999999) . 'H' . rand(100, 999),
+            'curp' => strtoupper(\Illuminate\Support\Str::random(4)) . rand(100000, 999999) . 'HDF' . \Illuminate\Support\Str::random(3) . rand(10, 99),
             'telefono' => '55' . rand(10000000, 99999999),
             'seccion_electoral' => (string) rand(1, 1000),
-            'colonia' => 'Colonia ' . \Illuminate\Support\Str::random(5),
+            'colonia' => fake()->word() . ' Sector ' . rand(1, 5),
+            'calle' => fake()->streetName(),
+            'numero' => (string) fake()->buildingNumber(),
+            'codigo_postal' => sprintf('%05d', rand(10000, 99999)),
             'promotor_id' => User::where('role', 'promotor')->inRandomOrder()->first()->id ?? User::factory()->create(['role' => 'promotor'])->id,
         ];
     }

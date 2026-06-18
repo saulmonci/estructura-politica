@@ -117,10 +117,14 @@ class PromovidoController extends BaseCrudController
             'nombre'    => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
             'clave_elector'     => ['nullable', 'string', 'max:18'],
+            'curp'              => ['nullable', 'string', 'max:18'],
             'telefono'          => ['nullable', 'string', 'max:10'],
             'demarcacion'       => ['nullable', 'string', 'max:255'],
             'seccion_electoral' => ['nullable', 'string', 'max:10'],
             'colonia'           => ['nullable', 'string', 'max:255'],
+            'calle'             => ['nullable', 'string', 'max:255'],
+            'numero'            => ['nullable', 'string', 'max:50'],
+            'codigo_postal'     => ['nullable', 'string', 'max:5'],
             'foto'              => ['nullable', 'image', 'max:5120'],
         ];
 
@@ -166,8 +170,8 @@ class PromovidoController extends BaseCrudController
     protected function getExportHeaders(): array
     {
         return [
-            'ID', 'Asignado a (Promotor)', 'Nombre', 'Apellidos', 'Clave de Elector', 
-            'Teléfono', 'Demarcación', 'Sección Electoral', 'Colonia', 'Fecha de Registro'
+            'ID', 'Asignado a (Promotor)', 'Nombre', 'Apellidos', 'CURP', 'Clave de Elector', 
+            'Teléfono', 'Demarcación', 'Sección Electoral', 'Colonia', 'Calle', 'Número', 'Código Postal', 'Fecha de Registro'
         ];
     }
 
@@ -179,11 +183,15 @@ class PromovidoController extends BaseCrudController
             $promotor ? $promotor->name : 'No asignado',
             $item->nombre,
             $item->apellidos,
+            $item->curp,
             $item->clave_elector,
             $item->telefono,
             $item->demarcacion,
             $item->seccion_electoral,
             $item->colonia,
+            $item->calle,
+            $item->numero,
+            $item->codigo_postal,
             $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '',
         ];
     }

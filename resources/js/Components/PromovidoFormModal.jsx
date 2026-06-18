@@ -315,6 +315,26 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <ProFormText
+                                        name="curp"
+                                        label="CURP"
+                                        placeholder="18 caracteres"
+                                        rules={[
+                                            { max: 18, message: 'Máximo 18 caracteres' },
+                                            { pattern: /^[A-Z]{4}[0-9]{6}[A-Z]{6}[0-9A-Z]{2}$/i, message: 'Formato de CURP inválido' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 18,
+                                            style: { textTransform: 'uppercase' }
+                                        }}
+                                        transform={(val) => val ? val.toUpperCase() : val}
+                                    />
+                                </Col>
+                            </Row>
+
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
                                         name="telefono"
                                         label="Teléfono de contacto"
                                         placeholder="10 dígitos"
@@ -328,10 +348,25 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                         }}
                                     />
                                 </Col>
+                                <Col xs={24} md={12}>
+                                    <ProFormText
+                                        name="codigo_postal"
+                                        label="Código Postal"
+                                        placeholder="5 dígitos"
+                                        rules={[
+                                            { pattern: /^[0-9]{5}$/, message: 'Debe contener exactamente 5 dígitos' }
+                                        ]}
+                                        fieldProps={{
+                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 5,
+                                            onKeyPress: (e) => { if (!/[0-9]/.test(e.key)) e.preventDefault(); }
+                                        }}
+                                    />
+                                </Col>
                             </Row>
 
                             <Row gutter={16}>
-                                <Col span={24}>
+                                <Col xs={24} md={12}>
                                     <ProFormText
                                         name="colonia"
                                         label="Colonia"
@@ -340,6 +375,30 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                         fieldProps={{
                                             prefix: <BankOutlined className="text-gray-400 mr-2" />,
                                             maxLength: 255,
+                                        }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <ProFormText
+                                        name="calle"
+                                        label="Calle"
+                                        placeholder="Ingresar calle"
+                                        rules={[{ max: 255, message: 'Máximo 255 caracteres' }]}
+                                        fieldProps={{
+                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 255,
+                                        }}
+                                    />
+                                </Col>
+                                <Col xs={24} md={4}>
+                                    <ProFormText
+                                        name="numero"
+                                        label="Número"
+                                        placeholder="Nº"
+                                        rules={[{ max: 50, message: 'Máximo 50 caracteres' }]}
+                                        fieldProps={{
+                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
+                                            maxLength: 50,
                                         }}
                                     />
                                 </Col>
