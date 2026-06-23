@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Apoyo;
+use App\Traits\LogsActivity;
 
 #[Fillable([
     'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id',
@@ -22,7 +23,7 @@ use App\Models\Apoyo;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, LogsActivity;
 
     /**
      * Get the attributes that should be cast.

@@ -64,4 +64,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Mapa Territorial
     Route::get('/mapa', [WebController::class, 'mapa'])->name('mapa');
+
+    // Bitácora / Logs de Actividad (Solo Presidente)
+    Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
+    Route::get('/logs/{log}', [App\Http\Controllers\ActivityLogController::class, 'show'])->name('logs.show');
 });

@@ -12,7 +12,8 @@ import {
   LogoutOutlined,
   BellOutlined,
   SearchOutlined,
-  MenuOutlined
+  MenuOutlined,
+  HistoryOutlined
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
@@ -135,6 +136,11 @@ export default function MainLayout({ children }) {
                                         path: '/estadisticas',
                                         name: 'Estadísticas',
                                         icon: <BarChartOutlined />,
+                                    },
+                                    user.role === 'presidente' && {
+                                        path: '/logs',
+                                        name: 'Bitácora',
+                                        icon: <HistoryOutlined />,
                                     },
                                     {
                                         path: '/mensajes',
