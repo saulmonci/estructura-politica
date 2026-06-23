@@ -293,21 +293,64 @@ export default function ActivityLogsIndex() {
     };
 
     const mobileCardRender = (record) => {
+        let actionColor = 'blue';
+        let actionLabel = 'Actualización';
+        if (record.action === 'created') {
+            actionColor = 'green';
+            actionLabel = 'Creación';
+        } else if (record.action === 'deleted') {
+            actionColor = 'red';
+            actionLabel = 'Eliminación';
+        }
+
         return (
-            <div className="flex flex-col gap-2 p-2 border border-gray-200 rounded">
-                <div className="text-gray-500 font-semibold">{record.label}:</div>
-                <div>{record.value}</div>
-                <Button
-                    type="text"
-                    icon={<EyeOutlined className="text-blue-600" />}
-                    title="Ver detalle de cambios"
-                    onClick={() => handleViewDetail(record)}
-                />
-                <div className="text-gray-500 font-semibold">{record.label}:</div>
-                <div>{record.value}</div>
-            </div>
+            <Card size="small" bordered className="shadow-sm w-full">
+                <div className="flex justify-between items-start mb-2">
+                    <Tag color={actionColor} className="uppercase font-bold text-[10px] m-0">{actionLabel}</Tag>
+                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                        <CalendarOutlined />
+                        {new Date(record.created_at).toLocaleString('es-MX')}
+                    </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5 mt-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Usuario</span>
+                        <span className="font-semibold text-gray-800 text-xs">{record.user_identifier || 'Sistema'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Módulo</span>
+                        <span className="text-gray-600 text-xs">{MODULE_NAMES[record.model_friendly_name] || record.model_friendly_name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Registro</span>
+                        <div className="text-right">
+                            <span className="font-medium text-gray-800 text-xs">{record.model_representation}</span>
+                            <span className="text-[10px] text-gray-400 font-mono ml-1">ID: {record.model_id}</span>
+                        </div>
+                    </div>
+                    {record.ip_address && (
+                        <div className="flex justify-between items-center">
+                            <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">IP</span>
+                            <span className="font-mono text-xs text-gray-500">{record.ip_address}</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-gray-100 flex justify-end">
+                    <Button
+                        type="link"
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => handleViewDetail(record)}
+                        className="text-xs p-0"
+                    >
+                        Ver detalle
+                    </Button>
+                </div>
+            </Card>
         );
-    }
+    };
 
     return (
         <MainLayout>
