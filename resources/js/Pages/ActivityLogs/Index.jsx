@@ -116,8 +116,8 @@ export default function ActivityLogsIndex() {
                 updated: { text: 'Actualización', status: 'Processing' },
                 deleted: { text: 'Eliminación', status: 'Error' },
             },
-            render: (action) => {
-                console.log("action ",action);
+            render: (_, record) => {
+                const action = record.action;
                 let color = 'blue';
                 let label = 'Actualización';
                 if (action === 'created') {
