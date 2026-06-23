@@ -11,7 +11,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const geoJsonLayers = useRef({});
-    const demarcacionGroupRef = useRef(null);
+    const demarcacionGroupsRef = useRef({});
     const [selectedId, setSelectedId] = useState(null);
 
     useEffect(() => {
@@ -52,9 +52,9 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
             // Añadir la capa inicial por defecto (Clara)
             lightLayer.addTo(mapInstance.current);
 
-            // Crear el grupo de capas para las demarcaciones (polígonos + etiquetas)
-            const demarcacionGroup = L.layerGroup();
-            demarcacionGroupRef.current = demarcacionGroup;
+            // Crear el contenedor de grupos de capas para cada demarcación individual
+            const demarcacionGroups = {};
+            demarcacionGroupsRef.current = demarcacionGroups;
 
             // Objeto de mapas base para el control
             const baseMaps = {
@@ -63,13 +63,6 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 "Mapa Estándar (OSM)": osmLayer,
                 "Mapa Satelital": satelliteLayer
             };
-
-            const overlayMaps = {
-                "Límites de Demarcación": demarcacionGroup
-            };
-
-            // Añadir control de selección al mapa (incluyendo overlays)
-            L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mapInstance.current);
 
             // Cargar los polígonos GeoJSON desde la base de datos (con fallback estático)
             let geoJsonToLoad = demarcacionesGeoJson;
@@ -223,12 +216,36 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                         iconAnchor: [35, 25]
                     });
 
-                    L.marker(center, { icon: labelIcon, interactive: false }).addTo(demarcacionGroup);
+                    const labelMarker = L.marker(center, { icon: labelIcon, interactive: false });
+
+                    // Crear un grupo de capas específico para esta demarcación
+                    const group = L.layerGroup();
+                    demarcacionGroups[id] = group;
+
+                    // Agregar tanto el polígono (layer) como el marcador (label) a este grupo
+                    layer.addTo(group);
+                    labelMarker.addTo(group);
                 }
             });
 
-            geoJsonLayer.addTo(demarcacionGroup);
-            demarcacionGroup.addTo(mapInstance.current);
+            // Definir capas overlay individuales por cada demarcación
+            const overlayMaps = {};
+            Object.keys(demarcacionGroups)
+                .sort((a, b) => Number(a) - Number(b))
+                .forEach(id => {
+                    const group = demarcacionGroups[id];
+                    const stats = demarcaciones.find(d => d.id === Number(id)) || {};
+                    const name = stats.nombre || `Demarcación ${id}`;
+                    
+                    // Añadir al mapa por defecto
+                    group.addTo(mapInstance.current);
+                    
+                    // Registrar en la lista de overlays
+                    overlayMaps[name] = group;
+                });
+
+            // Añadir control de selección al mapa con mapas base y capas individuales
+            L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mapInstance.current);
         }
 
         return () => {
@@ -243,9 +260,10 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
         setSelectedId(id);
         const layer = geoJsonLayers.current[id];
         if (layer && mapInstance.current) {
-            // Asegurar que la capa de demarcaciones esté visible si se había desactivado
-            if (demarcacionGroupRef.current && !mapInstance.current.hasLayer(demarcacionGroupRef.current)) {
-                demarcacionGroupRef.current.addTo(mapInstance.current);
+            // Asegurar que la capa de la demarcación específica esté visible si se había desactivado
+            const group = demarcacionGroupsRef.current[id];
+            if (group && !mapInstance.current.hasLayer(group)) {
+                group.addTo(mapInstance.current);
             }
             const bounds = layer.getBounds();
             mapInstance.current.fitBounds(bounds, { maxZoom: 12, animate: true, padding: [30, 30] });
