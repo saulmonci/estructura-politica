@@ -7,19 +7,17 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         // Asegurar que PostGIS esté activo en PostgreSQL (producción)
         if (DB::getDriverName() === 'pgsql') {
             DB::statement('CREATE EXTENSION IF NOT EXISTS postgis;');
+            DB::statement("SELECT AddGeometryColumn('public', 'demarcaciones', 'geom', 32613, 'POLYGON', 2);");
+        } else {
+            Schema::table('demarcaciones', function (Blueprint $table) {
+                $table->geometry('geom')->nullable();
+            });
         }
-
-        Schema::table('demarcaciones', function (Blueprint $table) {
-            $table->geometry('geom')->nullable();
-        });
     }
 
     /**
@@ -27,8 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('demarcaciones', function (Blueprint $table) {
-            $table->dropColumn('geom');
-        });
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT DropGeometryColumn('public', 'demarcaciones', 'geom');");
+        } else {
+            Schema::table('demarcaciones', function (Blueprint $table) {
+                $table->dropColumn('geom');
+            });
+        }
     }
 };
