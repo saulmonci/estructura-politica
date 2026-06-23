@@ -173,7 +173,6 @@ export default function TableCrud({
         },
         search: search ? { 
             defaultCollapsed: false, 
-            labelWidth: 'auto',
             ...search
         } : false,
         headerTitle,
