@@ -224,9 +224,9 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 {/* Panel lateral: Estadísticas y lista de Demarcaciones */}
                 <Col xs={24} lg={8} className="flex flex-col gap-4">
                     {/* Estadísticas Generales */}
-                    <Card bordered={false} className="shadow-sm bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white">
+                    <Card bordered={false} className="shadow-sm">
                         <Statistic 
-                            title={<span className="text-gray-300 text-xs tracking-wider uppercase font-semibold">Avance General Municipal</span>} 
+                            title={<span className="text-gray-500 text-xs tracking-wider uppercase font-semibold">Avance General Municipal</span>} 
                             value={globalStats.porcentaje} 
                             precision={1}
                             suffix="%"
@@ -236,18 +236,18 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                             <Progress 
                                 percent={globalStats.porcentaje} 
                                 strokeColor="#10B981" 
-                                trailColor="rgba(255,255,255,0.1)" 
+                                trailColor="#f1f5f9" 
                                 showInfo={false} 
                             />
                         </div>
-                        <Row className="mt-4 border-t border-white/10 pt-4" gutter={16}>
+                        <Row className="mt-4 border-t border-gray-100 pt-4" gutter={16}>
                             <Col span={12}>
-                                <div className="text-gray-400 text-xs">Total Promovidos</div>
-                                <div className="text-lg font-bold text-white mt-1">{globalStats.total_promovidos}</div>
+                                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Total Promovidos</div>
+                                <div className="text-xl font-bold text-gray-800 mt-1">{globalStats.total_promovidos}</div>
                             </Col>
                             <Col span={12}>
-                                <div className="text-gray-400 text-xs">Meta Total Votantes</div>
-                                <div className="text-lg font-bold text-white mt-1">{globalStats.total_meta}</div>
+                                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Meta Total Votantes</div>
+                                <div className="text-xl font-bold text-gray-800 mt-1">{globalStats.total_meta}</div>
                             </Col>
                         </Row>
                     </Card>
