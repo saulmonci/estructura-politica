@@ -14,6 +14,7 @@ class SeccionElectoral extends Model
     protected $fillable = [
         'numero',
         'demarcacion_id',
+        'geom',
     ];
 
     /**
