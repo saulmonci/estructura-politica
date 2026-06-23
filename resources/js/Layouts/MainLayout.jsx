@@ -125,6 +125,11 @@ export default function MainLayout({ children }) {
                                         name: 'Mapa Territorial',
                                         icon: <EnvironmentOutlined />,
                                     },
+                                    user.role === 'presidente' && {
+                                        path: '/demarcaciones',
+                                        name: 'Demarcaciones',
+                                        icon: <EnvironmentOutlined />,
+                                    },
 
                                     user.role === 'presidente' && {
                                         path: '/estadisticas',

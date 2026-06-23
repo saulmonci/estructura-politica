@@ -6,6 +6,7 @@ use App\Http\Controllers\RepresentanteDemarcacionController;
 use App\Http\Controllers\OperadorController;
 use App\Http\Controllers\PromotorController;
 use App\Http\Controllers\PromovidoController;
+use App\Http\Controllers\DemarcacionController;
 
 Route::get('/', [WebController::class, 'showLogin'])->name('login');
 Route::post('/login', [WebController::class, 'login']);
@@ -14,6 +15,11 @@ Route::post('/logout', [WebController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
     
+    // CRUD para Demarcaciones (Solo Presidente)
+    Route::get('/demarcaciones/export', [DemarcacionController::class, 'export']);
+    Route::resource('demarcaciones', DemarcacionController::class)
+         ->only(['index', 'store', 'update', 'destroy', 'show']);
+
     // CRUD para Representantes de Demarcación (Solo Presidente)
     Route::get('/representantes/export', [RepresentanteDemarcacionController::class, 'export']);
     Route::resource('representantes', RepresentanteDemarcacionController::class)
