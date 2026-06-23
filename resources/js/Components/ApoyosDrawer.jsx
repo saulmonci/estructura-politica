@@ -305,7 +305,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                         )}
                         <Upload
                             beforeUpload={(file) => {
-                                const maxSizeMB = 5;
+                                const maxSizeMB = 10;
                                 if (file.size / 1024 / 1024 > maxSizeMB) {
                                     message.error(`❌ El archivo es demasiado pesado. El tamaño máximo permitido es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
                                     return Upload.LIST_IGNORE;

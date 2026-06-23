@@ -138,7 +138,7 @@ class PromovidoController extends BaseCrudController
             'calle'             => ['nullable', 'string', 'max:255'],
             'numero'            => ['nullable', 'string', 'max:50'],
             'codigo_postal'     => ['nullable', 'string', 'max:5'],
-            'foto'              => ['nullable', 'image', 'max:5120'],
+            'foto'              => ['nullable', 'image', 'max:10240'],
         ];
 
         if ($user && in_array($user->role, ['presidente', 'rd', 'operador'])) {

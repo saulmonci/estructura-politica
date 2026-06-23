@@ -86,7 +86,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             'curp' => ['nullable', 'string', 'size:18', Rule::unique('users', 'curp')->ignore($id)],
             'apodo' => ['nullable', 'string', 'max:100'],
             'notas' => ['nullable', 'string'],
-            'foto' => ['nullable', 'image', 'max:15360'],
+            'foto' => ['nullable', 'image', 'max:10240'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
             'role' => ['nullable', 'string'],

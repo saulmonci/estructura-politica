@@ -148,7 +148,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
     };
 
     const handleBeforeUpload = (file) => {
-        const maxSizeMB = 5;
+        const maxSizeMB = 10;
         if (file.size / 1024 / 1024 > maxSizeMB) {
             message.error(`❌ La foto es demasiado pesada. El tamaño máximo es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
             return Upload.LIST_IGNORE;
