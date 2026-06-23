@@ -31,11 +31,32 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
 
     useEffect(() => {
         if (open) {
-            if (!editId) {
-                form.resetFields();
+            // Limpiar campos inmediatamente al abrir para evitar stale data flash
+            form.resetFields();
+            form.setFieldsValue({
+                id: undefined,
+                nombre: '',
+                meta: undefined,
+                wkt_polygon: ''
+            });
+
+            if (editId) {
+                const url = fetchUrl || `/demarcaciones/${editId}`;
+                axios.get(url)
+                    .then(response => {
+                        form.setFieldsValue({
+                            id: response.data.id,
+                            nombre: response.data.nombre,
+                            meta: response.data.meta,
+                            wkt_polygon: response.data.wkt_polygon || ''
+                        });
+                    })
+                    .catch(() => {
+                        message.error('No se pudo cargar la información de la demarcación');
+                    });
             }
         }
-    }, [open, editId]);
+    }, [open, editId, fetchUrl]);
 
     return (
         <ModalForm
@@ -119,19 +140,6 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
                     });
                 }
                 return false;
-            }}
-            request={async () => {
-                if (!editId) {
-                    return {};
-                }
-                try {
-                    const url = fetchUrl || `/demarcaciones/${editId}`;
-                    const response = await axios.get(url);
-                    return response.data;
-                } catch (error) {
-                    message.error('No se pudo cargar la información de la demarcación');
-                    return {};
-                }
             }}
         >
             {/* Custom Header */}

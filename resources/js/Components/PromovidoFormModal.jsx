@@ -67,6 +67,26 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
         if (open) {
             setFileList([]);
             setExistingFoto(null);
+            setSelectedDemarcacion(null);
+            setSecciones([]);
+
+            // Limpiar todos los campos inmediatamente al abrir para evitar stale data flash
+            form.resetFields();
+            form.setFieldsValue({
+                promotor_id: undefined,
+                nombre: '',
+                apellidos: '',
+                clave_elector: '',
+                curp: '',
+                telefono: '',
+                codigo_postal: '',
+                colonia: '',
+                calle: '',
+                numero: '',
+                demarcacion_id: undefined,
+                seccion_electoral: undefined
+            });
+
             const fetchDemarcaciones = async () => {
                 setLoadingDemarcaciones(true);
                 try {
@@ -79,13 +99,49 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                 }
             };
             fetchDemarcaciones();
-            if (!editId) {
-                form.resetFields();
-                setSelectedDemarcacion(null);
-                setSecciones([]);
+
+            if (editId) {
+                const url = fetchUrl || `/api/promovidos/${editId}`;
+                axios.get(url)
+                    .then(response => {
+                        const data = response.data;
+                        if (data.foto) {
+                            setExistingFoto(`/storage/${data.foto}`);
+                        } else {
+                            setExistingFoto(null);
+                        }
+
+                        if (data.demarcacion_id) {
+                            const demId = String(data.demarcacion_id);
+                            setSelectedDemarcacion(demId);
+                            setLoadingSecciones(true);
+                            axios.get(`/catalogos/demarcaciones/${demId}/secciones`)
+                                .then(secRes => {
+                                    setSecciones(secRes.data || []);
+                                    form.setFieldsValue({
+                                        ...data,
+                                        demarcacion_id: demId,
+                                        seccion_electoral: data.seccion_electoral ? String(data.seccion_electoral) : undefined
+                                    });
+                                })
+                                .catch(() => {
+                                    message.error('Error al cargar las secciones electorales');
+                                })
+                                .finally(() => {
+                                    setLoadingSecciones(false);
+                                });
+                        } else {
+                            setSelectedDemarcacion(null);
+                            setSecciones([]);
+                            form.setFieldsValue(data);
+                        }
+                    })
+                    .catch(() => {
+                        message.error('No se pudo cargar la información del registro');
+                    });
             }
         }
-    }, [open, editId]);
+    }, [open, editId, fetchUrl]);
 
     const handleUploadChange = (info) => {
         setFileList(info.fileList.slice(-1));
@@ -191,36 +247,6 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                     });
                 }
                 return false;
-            }}
-            request={async () => {
-                if (!editId) {
-                    setExistingFoto(null);
-                    setSelectedDemarcacion(null);
-                    setSecciones([]);
-                    return {};
-                }
-                try {
-                    const url = fetchUrl || `/api/promovidos/${editId}`;
-                    const response = await axios.get(url);
-                    if (response.data.foto) {
-                        setExistingFoto(`/storage/${response.data.foto}`);
-                    } else {
-                        setExistingFoto(null);
-                    }
-
-                    if (response.data.demarcacion_id) {
-                        setSelectedDemarcacion(response.data.demarcacion_id);
-                        fetchSecciones(response.data.demarcacion_id);
-                    } else {
-                        setSelectedDemarcacion(null);
-                        setSecciones([]);
-                    }
-
-                    return response.data;
-                } catch (error) {
-                    message.error('No se pudo cargar la información del registro');
-                    return {};
-                }
             }}
         >
             <div className="bg-[#0f172a] text-white p-6 rounded-t-lg flex justify-between items-center">

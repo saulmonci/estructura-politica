@@ -69,6 +69,33 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
         if (open) {
             setFileList([]);
             setExistingFoto(null);
+            setSelectedDemarcacion(null);
+            setSecciones([]);
+
+            // Limpiar todos los campos inmediatamente al abrir para evitar stale data flash
+            form.resetFields();
+            form.setFieldsValue({
+                parent_id: undefined,
+                nombre: '',
+                apellidos: '',
+                apodo: '',
+                sexo: undefined,
+                estado: true,
+                password: '',
+                calle: '',
+                numero_exterior: '',
+                numero_interior: '',
+                colonia: '',
+                codigo_postal: '',
+                demarcacion_id: undefined,
+                seccion_electoral: undefined,
+                curp: '',
+                clave_electoral: '',
+                telefono: '',
+                email: '',
+                notas: ''
+            });
+
             const fetchDemarcaciones = async () => {
                 setLoadingDemarcaciones(true);
                 try {
@@ -81,13 +108,53 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                 }
             };
             fetchDemarcaciones();
-            if (!editId) {
-                form.resetFields();
-                setSelectedDemarcacion(null);
-                setSecciones([]);
+
+            if (editId) {
+                const url = fetchUrl || `/api/personas/${editId}`;
+                axios.get(url)
+                    .then(response => {
+                        const data = response.data;
+                        if (data.foto_url) {
+                            setExistingFoto(data.foto_url);
+                        } else {
+                            setExistingFoto(null);
+                        }
+                        
+                        if (data.estado !== undefined && data.estado !== null) {
+                            data.estado = (data.estado === true || data.estado === 1 || data.estado === '1');
+                        }
+
+                        if (data.demarcacion_id) {
+                            const demId = String(data.demarcacion_id);
+                            setSelectedDemarcacion(demId);
+                            setLoadingSecciones(true);
+                            axios.get(`/catalogos/demarcaciones/${demId}/secciones`)
+                                .then(secRes => {
+                                    setSecciones(secRes.data || []);
+                                    form.setFieldsValue({
+                                        ...data,
+                                        demarcacion_id: demId,
+                                        seccion_electoral: data.seccion_electoral ? String(data.seccion_electoral) : undefined
+                                    });
+                                })
+                                .catch(() => {
+                                    message.error('Error al cargar las secciones electorales');
+                                })
+                                .finally(() => {
+                                    setLoadingSecciones(false);
+                                });
+                        } else {
+                            setSelectedDemarcacion(null);
+                            setSecciones([]);
+                            form.setFieldsValue(data);
+                        }
+                    })
+                    .catch(() => {
+                        message.error('No se pudo cargar la información del registro');
+                    });
             }
         }
-    }, [open, editId]);
+    }, [open, editId, fetchUrl]);
 
     const handleUploadChange = (info) => {
         setFileList(info.fileList.slice(-1));
@@ -195,40 +262,6 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                 }
                 // Retornar false para evitar que ProForm cierre el modal automáticamente antes del response
                 return false;
-            }}
-            request={async () => {
-                if (!editId) {
-                    setExistingFoto(null);
-                    setSelectedDemarcacion(null);
-                    setSecciones([]);
-                    return {};
-                }
-                try {
-                    const url = fetchUrl || `/api/personas/${editId}`;
-                    const response = await axios.get(url);
-                    if (response.data.foto_url) {
-                        setExistingFoto(response.data.foto_url);
-                    } else {
-                        setExistingFoto(null);
-                    }
-                    
-                    if (response.data.estado !== undefined && response.data.estado !== null) {
-                        response.data.estado = (response.data.estado === true || response.data.estado === 1 || response.data.estado === '1');
-                    }
-
-                    if (response.data.demarcacion_id) {
-                        setSelectedDemarcacion(response.data.demarcacion_id);
-                        fetchSecciones(response.data.demarcacion_id);
-                    } else {
-                        setSelectedDemarcacion(null);
-                        setSecciones([]);
-                    }
-
-                    return response.data;
-                } catch (error) {
-                    message.error('No se pudo cargar la información del registro');
-                    return {};
-                }
             }}
         >
             {/* Custom Header */}
