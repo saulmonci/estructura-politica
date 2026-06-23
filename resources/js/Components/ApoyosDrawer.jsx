@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space } from 'antd';
+import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space, Card } from 'antd';
 import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -17,6 +17,16 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState(null);
     const [currentEvidenciaUrl, setCurrentEvidenciaUrl] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         if (visible && resolvedBasePath) {
@@ -171,7 +181,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
     return (
         <Drawer
             title={`Kardex de Apoyos: ${resolvedTitle}`}
-            width={720}
+            width={isMobile ? '100%' : 720}
             onClose={onClose}
             open={visible}
             bodyStyle={{ paddingBottom: 80 }}
@@ -187,16 +197,68 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                             form.resetFields();
                         }}
                         style={{ marginBottom: 16 }}
+                        block={isMobile}
                     >
                         Registrar Nuevo Apoyo
                     </Button>
-                    <Table 
-                        dataSource={apoyos} 
-                        columns={columns} 
-                        rowKey="id" 
-                        loading={loading} 
-                        pagination={{ pageSize: 5 }}
-                    />
+                    {isMobile ? (
+                        <div className="flex flex-col gap-3">
+                            {loading ? (
+                                <div className="text-center py-6 text-gray-500">Cargando apoyos...</div>
+                            ) : apoyos.length === 0 ? (
+                                <div className="text-center py-6 text-gray-400 bg-gray-50 border rounded-lg">No hay apoyos registrados.</div>
+                            ) : (
+                                apoyos.map(record => {
+                                    let tagColor = record.estado === 'Entregado' ? 'green' : (record.estado === 'Pendiente' ? 'orange' : 'red');
+                                    return (
+                                        <Card key={record.id} size="small" className="shadow-sm border border-gray-100 rounded-lg">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <span className="font-bold text-gray-800 text-sm">{record.tipo_apoyo}</span>
+                                                    <div className="text-xs text-gray-400 mt-0.5">Fecha: {record.fecha}</div>
+                                                </div>
+                                                <Tag color={tagColor} className="m-0">{record.estado}</Tag>
+                                            </div>
+                                            <div className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                                <span className="font-semibold block text-gray-500 mb-0.5">Descripción:</span>
+                                                {record.descripcion || 'Sin descripción'}
+                                            </div>
+                                            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                                <div className="text-sm font-bold text-gray-900">
+                                                    {record.cantidad_monetaria ? `$${Number(record.cantidad_monetaria).toLocaleString()}` : '$0'}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {record.evidencia_url && (
+                                                        isImageUrl(record.evidencia_url) ? (
+                                                            <a href={record.evidencia_url} target="_blank" rel="noopener noreferrer">
+                                                                <img src={record.evidencia_url} alt="evidencia" className="w-8 h-8 object-cover rounded border" />
+                                                            </a>
+                                                        ) : (
+                                                            <a href={record.evidencia_url} target="_blank" rel="noopener noreferrer">
+                                                                <Button size="small" icon={<PaperClipOutlined />} type="link">Doc</Button>
+                                                            </a>
+                                                        )
+                                                    )}
+                                                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} size="small" />
+                                                    <Popconfirm title="¿Eliminar apoyo?" onConfirm={() => handleDelete(record.id)}>
+                                                        <Button danger icon={<DeleteOutlined />} size="small" />
+                                                    </Popconfirm>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    );
+                                })
+                            )}
+                        </div>
+                    ) : (
+                        <Table 
+                            dataSource={apoyos} 
+                            columns={columns} 
+                            rowKey="id" 
+                            loading={loading} 
+                            pagination={{ pageSize: 5 }}
+                        />
+                    )}
                 </>
             ) : (
                 <Form layout="vertical" form={form} onFinish={handleSubmit}>
