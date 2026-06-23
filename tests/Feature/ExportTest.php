@@ -4,12 +4,22 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Promovido;
+use App\Models\Demarcacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExportTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Sembrar demarcaciones de prueba
+        Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación 1']);
+        Demarcacion::create(['id' => 2, 'nombre' => 'Demarcación 2']);
+    }
 
     private function parseCsvResponse($responseContent): array
     {
@@ -53,7 +63,7 @@ class ExportTest extends TestCase
 
     public function test_rd_cannot_export_representantes(): void
     {
-        $rd = User::factory()->create(['role' => 'rd', 'demarcacion' => '1']);
+        $rd = User::factory()->create(['role' => 'rd', 'demarcacion_id' => 1]);
 
         $this->actingAs($rd)->get('/representantes/export')->assertStatus(403);
     }
@@ -74,7 +84,7 @@ class ExportTest extends TestCase
 
     public function test_rd_without_demarcation_cannot_export(): void
     {
-        $rd = User::factory()->create(['role' => 'rd', 'demarcacion' => null]);
+        $rd = User::factory()->create(['role' => 'rd', 'demarcacion_id' => null]);
 
         $this->actingAs($rd)->get('/operadores/export')
             ->assertStatus(403)
@@ -84,86 +94,86 @@ class ExportTest extends TestCase
     public function test_rd_can_only_export_subordinates_matching_demarcation(): void
     {
         // 1. Crear RDs
-        $rd1 = User::factory()->create(['role' => 'rd', 'demarcacion' => '1', 'name' => 'RD 1']);
-        $rd2 = User::factory()->create(['role' => 'rd', 'demarcacion' => '2', 'name' => 'RD 2']);
+        $rd1 = User::factory()->create(['role' => 'rd', 'demarcacion_id' => 1, 'name' => 'RD 1']);
+        $rd2 = User::factory()->create(['role' => 'rd', 'demarcacion_id' => 2, 'name' => 'RD 2']);
 
         // 2. Crear Operadores
-        // Operador 1: Bajo RD 1, demarcación '1' (Debe ser exportable por RD 1)
+        // Operador 1: Bajo RD 1, demarcación 1 (Debe ser exportable por RD 1)
         $op1 = User::factory()->create([
             'role' => 'operador',
             'parent_id' => $rd1->id,
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'nombre' => 'Juan',
             'apellidos' => 'Perez'
         ]);
         
-        // Operador 2: Bajo RD 1, pero demarcación '2' (No debe ser exportable por RD 1 por demarcación diferente)
+        // Operador 2: Bajo RD 1, pero demarcación 2 (No debe ser exportable por RD 1 por demarcación diferente)
         $op2 = User::factory()->create([
             'role' => 'operador',
             'parent_id' => $rd1->id,
-            'demarcacion' => '2',
+            'demarcacion_id' => 2,
             'nombre' => 'Pedro',
             'apellidos' => 'Gomez'
         ]);
 
-        // Operador 3: Bajo RD 2, demarcación '1' (No debe ser exportable por RD 1 por jerarquía diferente)
+        // Operador 3: Bajo RD 2, demarcación 1 (No debe ser exportable por RD 1 por jerarquía diferente)
         $op3 = User::factory()->create([
             'role' => 'operador',
             'parent_id' => $rd2->id,
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'nombre' => 'Lucas',
             'apellidos' => 'Alba'
         ]);
 
         // 3. Crear Promotores
-        // Promotor 1: Bajo Op 1, demarcación '1' (Debe ser exportable por RD 1)
+        // Promotor 1: Bajo Op 1, demarcación 1 (Debe ser exportable por RD 1)
         $pr1 = User::factory()->create([
             'role' => 'promotor',
             'parent_id' => $op1->id,
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'nombre' => 'Maria',
             'apellidos' => 'Diaz'
         ]);
 
-        // Promotor 2: Bajo Op 1, demarcación '2' (No debe ser exportable)
+        // Promotor 2: Bajo Op 1, demarcación 2 (No debe ser exportable)
         $pr2 = User::factory()->create([
             'role' => 'promotor',
             'parent_id' => $op1->id,
-            'demarcacion' => '2',
+            'demarcacion_id' => 2,
             'nombre' => 'Clara',
             'apellidos' => 'Luna'
         ]);
 
-        // Promotor 3: Bajo Op 3 (RD 2), demarcación '1' (No debe ser exportable)
+        // Promotor 3: Bajo Op 3 (RD 2), demarcación 1 (No debe ser exportable)
         $pr3 = User::factory()->create([
             'role' => 'promotor',
             'parent_id' => $op3->id,
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'nombre' => 'Sonia',
             'apellidos' => 'Rios'
         ]);
 
         // 4. Crear Promovidos
-        // Promovido 1: Bajo Pr 1, demarcación '1' (Debe ser exportable)
+        // Promovido 1: Bajo Pr 1, demarcación 1 (Debe ser exportable)
         $pm1 = Promovido::factory()->create([
             'promotor_id' => $pr1->id,
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'nombre' => 'Carlos',
             'apellidos' => 'Ruiz'
         ]);
 
-        // Promovido 2: Bajo Pr 1, demarcación '2' (No debe ser exportable)
+        // Promovido 2: Bajo Pr 1, demarcación 2 (No debe ser exportable)
         $pm2 = Promovido::factory()->create([
             'promotor_id' => $pr1->id,
-            'demarcacion' => '2',
+            'demarcacion_id' => 2,
             'nombre' => 'Ana',
             'apellidos' => 'Vega'
         ]);
 
-        // Promovido 3: Bajo Pr 3, demarcación '1' (No debe ser exportable)
+        // Promovido 3: Bajo Pr 3, demarcación 1 (No debe ser exportable)
         $pm3 = Promovido::factory()->create([
             'promotor_id' => $pr3->id,
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'nombre' => 'Beto',
             'apellidos' => 'Solis'
         ]);
@@ -209,7 +219,7 @@ class ExportTest extends TestCase
             'apellidos' => 'User',
             'clave_elector' => 'TEST123456789012',
             'telefono' => '1234567890',
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'seccion_electoral' => '100',
             'colonia' => 'Test Colonia',
             'foto' => $file,

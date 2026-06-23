@@ -13,7 +13,7 @@ foreach ($users as $u) {
         'numero_exterior' => $faker->buildingNumber,
         'numero_interior' => $faker->optional(0.3)->buildingNumber,
         'colonia' => $faker->citySuffix,
-        'demarcacion' => (string) $faker->numberBetween(1, 100),
+        'demarcacion_id' => $faker->numberBetween(1, 9),
         'clave_electoral' => strtoupper($faker->bothify('????????????######')),
         'telefono' => $faker->numerify('##########'),
         'curp' => strtoupper($faker->bothify('????######??????##')),

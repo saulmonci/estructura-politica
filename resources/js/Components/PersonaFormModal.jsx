@@ -216,9 +216,9 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                         response.data.estado = (response.data.estado === true || response.data.estado === 1 || response.data.estado === '1');
                     }
 
-                    if (response.data.demarcacion) {
-                        setSelectedDemarcacion(response.data.demarcacion);
-                        fetchSecciones(response.data.demarcacion);
+                    if (response.data.demarcacion_id) {
+                        setSelectedDemarcacion(response.data.demarcacion_id);
+                        fetchSecciones(response.data.demarcacion_id);
                     } else {
                         setSelectedDemarcacion(null);
                         setSecciones([]);
@@ -413,7 +413,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                             <Row gutter={16}>
                                 <Col xs={24} md={12}>
                                     <ProFormSelect
-                                        name="demarcacion"
+                                        name="demarcacion_id"
                                         label="Demarcación"
                                         placeholder="Seleccionar demarcación"
                                         rules={[{ required: true, message: 'Requerido' }]}

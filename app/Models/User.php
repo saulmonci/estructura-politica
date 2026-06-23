@@ -15,7 +15,7 @@ use App\Models\Apoyo;
 #[Fillable([
     'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
-    'colonia', 'codigo_postal', 'demarcacion', 'seccion_electoral', 'clave_electoral', 'telefono',
+    'colonia', 'codigo_postal', 'demarcacion_id', 'seccion_electoral', 'clave_electoral', 'telefono',
     'curp', 'apodo', 'foto', 'estado', 'notas'
 ])]
 #[Hidden(['password', 'remember_token'])]
@@ -42,6 +42,14 @@ class User extends Authenticatable
     public function getFotoUrlAttribute()
     {
         return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
+
+    /**
+     * Obtener la demarcación asignada a este usuario.
+     */
+    public function demarcacion()
+    {
+        return $this->belongsTo(Demarcacion::class, 'demarcacion_id');
     }
 
     /**

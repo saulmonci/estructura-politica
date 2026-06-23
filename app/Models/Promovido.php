@@ -17,7 +17,7 @@ class Promovido extends Model
         'clave_elector',
         'curp',
         'telefono',
-        'demarcacion',
+        'demarcacion_id',
         'seccion_electoral',
         'colonia',
         'calle',
@@ -41,6 +41,14 @@ class Promovido extends Model
     public function getFotoUrlAttribute()
     {
         return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
+
+    /**
+     * Obtener la demarcación asignada a este promovido.
+     */
+    public function demarcacion()
+    {
+        return $this->belongsTo(Demarcacion::class, 'demarcacion_id');
     }
 
     /**

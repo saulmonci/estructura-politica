@@ -47,7 +47,7 @@ class MapaTest extends TestCase
             'nombre' => 'Juan',
             'apellidos' => 'Perez',
             'clave_elector' => 'ABCDEF123456789012',
-            'demarcacion' => '1',
+            'demarcacion_id' => 1,
             'seccion_electoral' => '0120',
             'colonia' => 'Centro',
             'promotor_id' => $promotor->id,

@@ -131,7 +131,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                         <EnvironmentOutlined className="mr-1" /> {record.colonia || 'Sin colonia'} {record.codigo_postal ? `(CP: ${record.codigo_postal})` : ''}
                     </span>
                     <div className="flex gap-2 mt-0.5">
-                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion}</span>}
+                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion.nombre}</span>}
                         {record.seccion_electoral && <span className="text-xs text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
                     </div>
                 </div>
@@ -284,7 +284,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     <div className="flex items-center gap-2">
                         <EnvironmentOutlined className="text-gray-400 shrink-0" /> 
                         <span className="w-20 text-gray-400 shrink-0 font-medium">Demarcación:</span> 
-                        <span className="truncate flex-1 text-gray-800">{record.demarcacion || 'N/A'}</span>
+                        <span className="truncate flex-1 text-gray-800">{record.demarcacion?.nombre || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <EnvironmentOutlined className="text-gray-400 shrink-0" /> 

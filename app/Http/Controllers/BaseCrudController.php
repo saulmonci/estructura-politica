@@ -184,10 +184,10 @@ abstract class BaseCrudController extends Controller
 
         // Seguridad: Los RDs solo pueden exportar registros de su demarcación asignada
         if ($user->role === 'rd') {
-            if (empty($user->demarcacion)) {
+            if (empty($user->demarcacion_id)) {
                 abort(403, 'El RD no tiene una demarcación asignada.');
             }
-            $query->where($query->getModel()->getTable() . '.demarcacion', $user->demarcacion);
+            $query->where($query->getModel()->getTable() . '.demarcacion_id', $user->demarcacion_id);
         }
 
         // Aplicar filtros opcionales de búsqueda si se pasan en el request

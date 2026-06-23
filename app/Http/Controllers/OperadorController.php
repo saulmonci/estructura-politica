@@ -23,9 +23,9 @@ class OperadorController extends BaseCrudController
     {
         $user = $request->user();
         if (!$user) {
-            return $this->modelClass::query()->where('role', 'operador');
+            return $this->modelClass::query()->where('role', 'operador')->with('demarcacion');
         }
-        return $user->queryOperadores();
+        return $user->queryOperadores()->with('demarcacion');
     }
 
     public function index(Request $request)
@@ -98,7 +98,7 @@ class OperadorController extends BaseCrudController
             'numero_interior' => ['nullable', 'string', 'max:50'],
             'colonia' => ['nullable', 'string', 'max:255'],
             'codigo_postal' => ['nullable', 'digits:5'],
-            'demarcacion' => ['nullable', 'string', 'max:255'],
+            'demarcacion_id' => ['nullable', 'exists:demarcaciones,id'],
             'seccion_electoral' => ['nullable', 'string', 'max:255'],
             'clave_electoral' => ['nullable', 'string', 'size:18', Rule::unique('users', 'clave_electoral')->ignore($id)],
             'telefono' => ['nullable', 'digits:10'],
@@ -214,7 +214,7 @@ class OperadorController extends BaseCrudController
             $item->numero_interior,
             $item->colonia,
             $item->codigo_postal,
-            $item->demarcacion,
+            $item->demarcacion?->nombre,
             $item->seccion_electoral,
             $item->clave_electoral,
             $item->telefono,

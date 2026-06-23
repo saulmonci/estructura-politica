@@ -18,11 +18,11 @@ class PromovidoController extends BaseCrudController
         $user = $request->user();
         
         if (!$user) {
-            return Promovido::query();
+            return Promovido::query()->with('demarcacion');
         }
 
         // Usamos la función optimizada del modelo User para obtener promovidos
-        return $user->queryPromovidos();
+        return $user->queryPromovidos()->with('demarcacion');
     }
 
     public function index(Request $request)
@@ -132,7 +132,7 @@ class PromovidoController extends BaseCrudController
                 \Illuminate\Validation\Rule::unique('promovidos', 'curp')->ignore($id)
             ],
             'telefono'          => ['nullable', 'string', 'max:10'],
-            'demarcacion'       => ['nullable', 'string', 'max:255'],
+            'demarcacion_id'    => ['nullable', 'exists:demarcaciones,id'],
             'seccion_electoral' => ['nullable', 'string', 'max:10'],
             'colonia'           => ['nullable', 'string', 'max:255'],
             'calle'             => ['nullable', 'string', 'max:255'],
@@ -199,7 +199,7 @@ class PromovidoController extends BaseCrudController
             $item->curp,
             $item->clave_elector,
             $item->telefono,
-            $item->demarcacion,
+            $item->demarcacion?->nombre,
             $item->seccion_electoral,
             $item->colonia,
             $item->calle,

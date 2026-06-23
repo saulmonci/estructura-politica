@@ -111,7 +111,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                         <EnvironmentOutlined className="mr-2" /> {record.colonia || 'Sin colonia'}{record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
                     </span>
                     <div className="flex gap-2 mt-0.5">
-                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion}</span>}
+                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion.nombre}</span>}
                         {record.seccion_electoral && <span className="text-xs text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
                     </div>
                 </div>
@@ -238,7 +238,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                         <span className="truncate flex-1">
                             {record.colonia || 'Sin colonia'}
                             {record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
-                            {record.demarcacion ? ` (Dem: ${record.demarcacion})` : ''}
+                            {record.demarcacion ? ` (Dem: ${record.demarcacion.nombre})` : ''}
                             {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
                         </span>
                     </div>
