@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space, Card } from 'antd';
+import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space, Card, Modal } from 'antd';
 import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -18,6 +18,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
     const [editingId, setEditingId] = useState(null);
     const [currentEvidenciaUrl, setCurrentEvidenciaUrl] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -150,9 +151,9 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                 if (!url) return <span className="text-gray-300">-</span>;
                 if (isImageUrl(url)) {
                     return (
-                        <a href={url} target="_blank" rel="noopener noreferrer" title="Ver imagen">
-                            <img src={url} alt="evidencia" className="w-10 h-10 object-cover rounded border border-gray-200 hover:opacity-80 transition-opacity" />
-                        </a>
+                        <div onClick={() => setPreviewImage(url)} className="cursor-pointer hover:opacity-80 transition-opacity" title="Ver imagen">
+                            <img src={url} alt="evidencia" className="w-10 h-10 object-cover rounded border border-gray-200" />
+                        </div>
                     );
                 }
                 return (
@@ -230,9 +231,9 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                                                 <div className="flex items-center gap-2">
                                                     {record.evidencia_url && (
                                                         isImageUrl(record.evidencia_url) ? (
-                                                            <a href={record.evidencia_url} target="_blank" rel="noopener noreferrer">
+                                                            <div onClick={() => setPreviewImage(record.evidencia_url)} className="cursor-pointer hover:opacity-80 transition-opacity">
                                                                 <img src={record.evidencia_url} alt="evidencia" className="w-8 h-8 object-cover rounded border" />
-                                                            </a>
+                                                            </div>
                                                         ) : (
                                                             <a href={record.evidencia_url} target="_blank" rel="noopener noreferrer">
                                                                 <Button size="small" icon={<PaperClipOutlined />} type="link">Doc</Button>
@@ -291,9 +292,9 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                         {editingId && currentEvidenciaUrl && (
                             <div className="mb-2 p-2 bg-gray-50 border border-gray-200 rounded flex items-center gap-2">
                                 {isImageUrl(currentEvidenciaUrl) ? (
-                                    <a href={currentEvidenciaUrl} target="_blank" rel="noopener noreferrer">
+                                    <div onClick={() => setPreviewImage(currentEvidenciaUrl)} className="cursor-pointer hover:opacity-80 transition-opacity" title="Ver imagen grande">
                                         <img src={currentEvidenciaUrl} alt="evidencia actual" className="w-14 h-14 object-cover rounded border" />
-                                    </a>
+                                    </div>
                                 ) : (
                                     <a href={currentEvidenciaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600">
                                         <PaperClipOutlined /> Ver archivo actual
@@ -325,6 +326,17 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     </Space>
                 </Form>
             )}
+            
+            <Modal
+                open={!!previewImage}
+                title="Evidencia de Apoyo"
+                footer={null}
+                onCancel={() => setPreviewImage(null)}
+                width={650}
+                centered
+            >
+                <img alt="Evidencia" style={{ width: '100%', borderRadius: '8px', maxHeight: '75vh', objectFit: 'contain' }} src={previewImage} />
+            </Modal>
         </Drawer>
     );
 };
