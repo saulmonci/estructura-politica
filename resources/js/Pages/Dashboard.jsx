@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Card, Col, Row, Statistic, Table, Tag, Button, Tabs } from 'antd';
@@ -19,6 +19,16 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
     const { auth } = usePage().props;
     const user = auth?.user || { role: 'presidente' };
     const modalRef = React.useRef();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // growthData ahora viene como prop desde el backend
 
@@ -209,14 +219,52 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         </Button>
                     }
                 >
-                    <Table 
-                        columns={columns} 
-                        dataSource={rds} 
-                        pagination={false} 
-                        rowKey="id"
-                        scroll={{ x: 'max-content' }}
-                        className="overflow-x-auto"
-                    />
+                    {isMobile ? (
+                        <div className="flex flex-col gap-3">
+                            {rds.map(item => (
+                                <Card 
+                                    key={item.id} 
+                                    size="small" 
+                                    className="shadow-sm border border-gray-100 rounded-lg"
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <span className="text-xs text-blue-600 font-bold">RD-{String(item.id).padStart(4, '0')}</span>
+                                            <div className="font-bold text-gray-800 text-sm">{item.nombre}</div>
+                                        </div>
+                                        <Tag color="blue" className="m-0 text-xs">{item.demarcacion || 'Sin demarcación'}</Tag>
+                                    </div>
+                                    <Row gutter={[8, 8]} className="bg-gray-50 p-2 rounded mb-2 text-center">
+                                        <Col span={8}>
+                                            <div className="text-gray-400 text-[10px] uppercase">Operadores</div>
+                                            <div className="font-semibold text-gray-800 text-xs">{item.operadores}</div>
+                                        </Col>
+                                        <Col span={8}>
+                                            <div className="text-gray-400 text-[10px] uppercase">Promotores</div>
+                                            <div className="font-semibold text-gray-800 text-xs">{item.promotores}</div>
+                                        </Col>
+                                        <Col span={8}>
+                                            <div className="text-gray-400 text-[10px] uppercase">Promovidos</div>
+                                            <div className="font-semibold text-gray-800 text-xs">{item.promovidos}</div>
+                                        </Col>
+                                    </Row>
+                                    <div className="flex justify-between items-center pt-1">
+                                        <span className="text-[11px] font-semibold text-gray-500">TOTAL ESTRUCTURA: <strong className="text-gray-800">{item.total}</strong></span>
+                                        <Link href={`/representantes`} className="text-xs text-blue-600 font-medium hover:underline">👁 Ver detalle</Link>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <Table 
+                            columns={columns} 
+                            dataSource={rds} 
+                            pagination={false} 
+                            rowKey="id"
+                            scroll={{ x: 'max-content' }}
+                            className="overflow-x-auto"
+                        />
+                    )}
                     <div className="text-center mt-4">
                         <Link href="/representantes" className="text-blue-600 font-medium hover:underline">Ver todos los Representantes (RD) →</Link>
                     </div>
@@ -232,14 +280,50 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                 <h2 className="text-lg font-bold m-0">Reportes por Demarcación</h2>
             </div>
             <p className="text-gray-500 mb-6">Resumen detallado de la estructura agrupada por Demarcación</p>
-            <Table 
-                columns={reportesColumns} 
-                dataSource={reporteDemarcaciones} 
-                rowKey="demarcacion"
-                pagination={{ pageSize: 15 }}
-                scroll={{ x: 'max-content' }}
-                className="overflow-x-auto"
-            />
+            {isMobile ? (
+                <div className="flex flex-col gap-4">
+                    {reporteDemarcaciones.map(item => (
+                        <Card 
+                            key={item.demarcacion} 
+                            size="small" 
+                            className="shadow-sm border border-gray-100 rounded-lg"
+                            title={<span className="font-semibold text-gray-800 text-sm">{item.demarcacion}</span>}
+                        >
+                            <Row gutter={[8, 8]}>
+                                <Col span={12}>
+                                    <div className="text-gray-400 text-xs">RDs</div>
+                                    <div className="font-bold text-gray-800 text-sm">{item.rds}</div>
+                                </Col>
+                                <Col span={12}>
+                                    <div className="text-gray-400 text-xs">Operadores</div>
+                                    <div className="font-bold text-gray-800 text-sm">{item.operadores}</div>
+                                </Col>
+                                <Col span={12} className="mt-2">
+                                    <div className="text-gray-400 text-xs">Promotores</div>
+                                    <div className="font-bold text-gray-800 text-sm">{item.promotores}</div>
+                                </Col>
+                                <Col span={12} className="mt-2">
+                                    <div className="text-gray-400 text-xs">Promovidos</div>
+                                    <div className="font-bold text-gray-800 text-sm">{item.promovidos}</div>
+                                </Col>
+                            </Row>
+                            <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center bg-gray-50 -mx-3 -mb-3 p-3 rounded-b-lg">
+                                <span className="text-gray-500 font-semibold text-xs">TOTAL EN ESTRUCTURA:</span>
+                                <span className="font-extrabold text-blue-600 text-sm">{item.total}</span>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <Table 
+                    columns={reportesColumns} 
+                    dataSource={reporteDemarcaciones} 
+                    rowKey="demarcacion"
+                    pagination={{ pageSize: 15 }}
+                    scroll={{ x: 'max-content' }}
+                    className="overflow-x-auto"
+                />
+            )}
         </Card>
     );
 
