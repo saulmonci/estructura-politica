@@ -15,6 +15,7 @@ class Demarcacion extends Model
         'id',
         'nombre',
         'total_votantes',
+        'geom',
     ];
 
     /**

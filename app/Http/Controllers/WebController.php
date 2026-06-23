@@ -257,8 +257,13 @@ class WebController extends Controller
             abort(403, 'No autorizado.');
         }
 
-        // Obtener todas las demarcaciones con sus metas
-        $demarcaciones = \App\Models\Demarcacion::orderBy('id')->get();
+        // Obtener todas las demarcaciones con sus metas y polígonos
+        $demarcaciones = \App\Models\Demarcacion::select(
+            'id',
+            'nombre',
+            'total_votantes',
+            DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
+        )->orderBy('id')->get();
 
         // Contar promovidos por demarcación
         $promovidosPorDemarcacion = DB::table('promovidos')
@@ -294,6 +299,7 @@ class WebController extends Controller
                 'meta' => $meta,
                 'porcentaje' => $porcentaje,
                 'color' => $color,
+                'geojson' => $d->geojson,
             ];
 
             $totalPromovidos += $cantPromovidos;

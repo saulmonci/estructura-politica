@@ -32,8 +32,40 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 maxZoom: 20
             }).addTo(mapInstance.current);
 
-            // Cargar los polígonos GeoJSON de las demarcaciones
-            L.geoJSON(demarcacionesGeoJson, {
+            // Cargar los polígonos GeoJSON desde la base de datos (con fallback estático)
+            let geoJsonToLoad = demarcacionesGeoJson;
+            const hasDbGeometries = demarcaciones.some(d => d.geojson);
+
+            if (hasDbGeometries) {
+                const features = demarcaciones
+                    .filter(d => d.geojson)
+                    .map(d => {
+                        try {
+                            const geometry = JSON.parse(d.geojson);
+                            return {
+                                type: "Feature",
+                                properties: {
+                                    id: d.id,
+                                    nombre: d.nombre
+                                },
+                                geometry: geometry
+                            };
+                        } catch (e) {
+                            console.error("Error parsing GeoJSON for demarcation", d.id, e);
+                            return null;
+                        }
+                    })
+                    .filter(Boolean);
+
+                if (features.length > 0) {
+                    geoJsonToLoad = {
+                        type: "FeatureCollection",
+                        features: features
+                    };
+                }
+            }
+
+            L.geoJSON(geoJsonToLoad, {
                 style: (feature) => {
                     const id = feature.properties.id;
                     const stats = demarcaciones.find(d => d.id === id) || {};

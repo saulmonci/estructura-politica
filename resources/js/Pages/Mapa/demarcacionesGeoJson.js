@@ -7,7 +7,7 @@ export const demarcacionesGeoJson = {
             "properties": { "id": 9, "nombre": "Demarcación 9 - Sayulita/Mita/Cruz" },
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
+                    "coordinates": [[
                     [-105.56, 20.78],
                     [-105.52, 20.85],
                     [-105.42, 20.92],
