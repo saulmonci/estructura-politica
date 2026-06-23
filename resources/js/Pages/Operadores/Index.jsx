@@ -29,6 +29,11 @@ export default function OperadoresIndex({ availableRds }) {
             onOk: () => {
                 router.delete(`/operadores/${id}`, {
                     preserveScroll: true,
+                    onSuccess: () => {
+                        if (actionRef.current) {
+                            actionRef.current.reload();
+                        }
+                    }
                 });
             }
         });

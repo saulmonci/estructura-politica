@@ -37,6 +37,11 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             onOk: () => {
                 router.delete(`/promotores/${id}`, {
                     preserveScroll: true,
+                    onSuccess: () => {
+                        if (actionRef.current) {
+                            actionRef.current.reload();
+                        }
+                    }
                 });
             }
         });

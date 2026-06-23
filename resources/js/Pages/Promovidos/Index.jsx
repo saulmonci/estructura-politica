@@ -38,6 +38,11 @@ export default function PromovidosIndex({ availablePromotores }) {
             onOk: () => {
                 router.delete(`/promovidos/${id}`, {
                     preserveScroll: true,
+                    onSuccess: () => {
+                        if (actionRef.current) {
+                            actionRef.current.reload();
+                        }
+                    }
                 });
             }
         });

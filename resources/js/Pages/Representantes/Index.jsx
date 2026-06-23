@@ -29,6 +29,11 @@ export default function RepresentantesIndex({ representantes }) {
             onOk: () => {
                 router.delete(`/representantes/${id}`, {
                     preserveScroll: true,
+                    onSuccess: () => {
+                        if (actionRef.current) {
+                            actionRef.current.reload();
+                        }
+                    }
                 });
             }
         });
