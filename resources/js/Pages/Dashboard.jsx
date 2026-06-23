@@ -7,18 +7,15 @@ import {
     TeamOutlined, 
     UsergroupAddOutlined, 
     EnvironmentOutlined,
-    PlusOutlined,
     BarChartOutlined
 } from '@ant-design/icons';
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import PersonaFormModal from '@/Components/PersonaFormModal';
 
 export default function Dashboard({ stats, growthData, distribution, rds, reporteDemarcaciones }) {
     const { auth } = usePage().props;
     const user = auth?.user || { role: 'presidente' };
-    const modalRef = React.useRef();
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -31,17 +28,6 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
     }, []);
 
     // growthData ahora viene como prop desde el backend
-
-    const columns = [
-        { title: 'ID RD', dataIndex: 'id', key: 'id', render: (id) => `RD-${String(id).padStart(4, '0')}` },
-        { title: 'NOMBRE', dataIndex: 'nombre', key: 'nombre' },
-        { title: 'DEMARCACIÓN', dataIndex: 'demarcacion', key: 'demarcacion' },
-        { title: 'OPERADORES', dataIndex: 'operadores', key: 'operadores' },
-        { title: 'PROMOTORES', dataIndex: 'promotores', key: 'promotores' },
-        { title: 'PROMOVIDOS', dataIndex: 'promovidos', key: 'promovidos' },
-        { title: 'TOTAL EN ESTRUCTURA', dataIndex: 'total', key: 'total' },
-        { title: 'ACCIÓN', key: 'action', render: () => <a className="text-blue-600">👁 Ver detalle</a> },
-    ];
 
     const reportesColumns = [
         { 
@@ -203,73 +189,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                 </Col>
             </Row>
 
-            {user.role === 'presidente' && (
-                <Card 
-                    title={<span className="font-semibold">Vista general por Representante de Demarcación (RD)</span>} 
-                    bordered={false} 
-                    className="shadow-sm"
-                    extra={
-                        <Button 
-                            type="primary" 
-                            icon={<PlusOutlined />} 
-                            onClick={() => modalRef.current?.open()} 
-                            className="bg-[#0f172a]"
-                        >
-                            Agregar RD
-                        </Button>
-                    }
-                >
-                    {isMobile ? (
-                        <div className="flex flex-col gap-3">
-                            {rds.map(item => (
-                                <Card 
-                                    key={item.id} 
-                                    size="small" 
-                                    className="shadow-sm border border-gray-100 rounded-lg"
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <span className="text-xs text-blue-600 font-bold">RD-{String(item.id).padStart(4, '0')}</span>
-                                            <div className="font-bold text-gray-800 text-sm">{item.nombre}</div>
-                                        </div>
-                                        <Tag color="blue" className="m-0 text-xs">{item.demarcacion || 'Sin demarcación'}</Tag>
-                                    </div>
-                                    <Row gutter={[8, 8]} className="bg-gray-50 p-2 rounded mb-2 text-center">
-                                        <Col span={8}>
-                                            <div className="text-gray-400 text-[10px] uppercase">Operadores</div>
-                                            <div className="font-semibold text-gray-800 text-xs">{item.operadores}</div>
-                                        </Col>
-                                        <Col span={8}>
-                                            <div className="text-gray-400 text-[10px] uppercase">Promotores</div>
-                                            <div className="font-semibold text-gray-800 text-xs">{item.promotores}</div>
-                                        </Col>
-                                        <Col span={8}>
-                                            <div className="text-gray-400 text-[10px] uppercase">Promovidos</div>
-                                            <div className="font-semibold text-gray-800 text-xs">{item.promovidos}</div>
-                                        </Col>
-                                    </Row>
-                                    <div className="flex justify-between items-center pt-1">
-                                        <span className="text-[11px] font-semibold text-gray-500">TOTAL ESTRUCTURA: <strong className="text-gray-800">{item.total}</strong></span>
-                                        <Link href={`/representantes`} className="text-xs text-blue-600 font-medium hover:underline">👁 Ver detalle</Link>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <Table 
-                            columns={columns} 
-                            dataSource={rds} 
-                            pagination={false} 
-                            rowKey="id"
-                            scroll={{ x: 'max-content' }}
-                            className="overflow-x-auto"
-                        />
-                    )}
-                    <div className="text-center mt-4">
-                        <Link href="/representantes" className="text-blue-600 font-medium hover:underline">Ver todos los Representantes (RD) →</Link>
-                    </div>
-                </Card>
-            )}
+
         </>
     );
 
@@ -357,13 +277,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                 ]}
             />
 
-            <PersonaFormModal 
-                ref={modalRef} 
-                onSuccess={(values) => {
-                    console.log('Nuevos datos de RD:', values);
-                    router.reload();
-                }}
-            />
+
 
         </MainLayout>
     );
