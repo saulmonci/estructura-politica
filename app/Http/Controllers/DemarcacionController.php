@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Demarcacion;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class DemarcacionController extends BaseCrudController
@@ -22,18 +21,7 @@ class DemarcacionController extends BaseCrudController
 
     protected function getBaseQuery(Request $request): Builder
     {
-        $driver = DB::getDriverName();
-        $query = $this->modelClass::query();
-        
-        // Exponer el geom como WKT legible transformado a EPSG:4326
-        if ($driver === 'mysql') {
-            $query->select('id', 'nombre', 'meta', DB::raw('ST_AsText(geom) as wkt_polygon'));
-        } else {
-            // PostgreSQL PostGIS
-            $query->select('id', 'nombre', 'meta', DB::raw('ST_AsText(ST_Transform(geom, 4326)) as wkt_polygon'));
-        }
-
-        return $query;
+        return $this->modelClass::query()->select('id', 'nombre', 'meta');
     }
 
     protected function applySearch(Builder $query, string $search): void
@@ -63,13 +51,9 @@ class DemarcacionController extends BaseCrudController
 
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
-        // Validar estrictamente la estructura WKT del polígono para evitar inyección SQL
-        $wktRegex = '/^POLYGON\s*\(\s*\(\s*-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?(?:\s*,\s*-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?)*\s*\)\s*\)$/i';
-
         $rules = [
             'nombre' => ['required', 'string', 'max:255'],
             'meta' => ['required', 'integer', 'min:0'],
-            'wkt_polygon' => ['nullable', 'string', 'regex:' . $wktRegex],
         ];
 
         if (!$id) {
@@ -84,8 +68,7 @@ class DemarcacionController extends BaseCrudController
     protected function getValidationMessages(Request $request): array
     {
         return [
-            'id.unique' => 'El número de demarcación ya está registrado.',
-            'wkt_polygon.regex' => 'El formato del polígono WKT no es válido. Debe ser del tipo POLYGON((lng lat, lng lat, ...)).'
+            'id.unique' => 'El número de demarcación ya está registrado.'
         ];
     }
 
@@ -96,23 +79,11 @@ class DemarcacionController extends BaseCrudController
             $this->getValidationRules($request),
             $this->getValidationMessages($request)
         );
-        
-        $driver = DB::getDriverName();
-        $geomSql = null;
-        if (!empty($validated['wkt_polygon'])) {
-            $wkt = $validated['wkt_polygon'];
-            if ($driver === 'mysql') {
-                $geomSql = DB::raw("ST_Transform(ST_GeomFromText('{$wkt}', 4326, 'axis-order=long-lat'), 32613)");
-            } else {
-                $geomSql = DB::raw("ST_Transform(ST_GeomFromText('{$wkt}', 4326), 32613)");
-            }
-        }
 
         Demarcacion::create([
             'id' => $validated['id'],
             'nombre' => $validated['nombre'],
             'meta' => $validated['meta'],
-            'geom' => $geomSql,
         ]);
 
         return redirect()->back()->with('success', 'Demarcación creada exitosamente.');
@@ -128,22 +99,10 @@ class DemarcacionController extends BaseCrudController
         
         $demarcacion = Demarcacion::findOrFail($id);
         
-        $driver = DB::getDriverName();
-        $geomSql = null;
-        if (!empty($validated['wkt_polygon'])) {
-            $wkt = $validated['wkt_polygon'];
-            if ($driver === 'mysql') {
-                $geomSql = DB::raw("ST_Transform(ST_GeomFromText('{$wkt}', 4326, 'axis-order=long-lat'), 32613)");
-            } else {
-                $geomSql = DB::raw("ST_Transform(ST_GeomFromText('{$wkt}', 4326), 32613)");
-            }
-        }
-
         $demarcacion->update([
             'id' => $validated['id'],
             'nombre' => $validated['nombre'],
             'meta' => $validated['meta'],
-            'geom' => $geomSql,
         ]);
 
         return redirect()->back()->with('success', 'Demarcación actualizada exitosamente.');
@@ -151,7 +110,7 @@ class DemarcacionController extends BaseCrudController
 
     protected function getExportHeaders(): array
     {
-        return ['ID', 'Nombre', 'Meta de Votantes', 'Polígono WKT', 'Fecha de Registro'];
+        return ['ID', 'Nombre', 'Meta de Votantes', 'Fecha de Registro'];
     }
 
     protected function getExportRow($item): array
@@ -160,7 +119,6 @@ class DemarcacionController extends BaseCrudController
             $item->id,
             $item->nombre,
             $item->meta,
-            $item->wkt_polygon ?: 'No definido',
             $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '',
         ];
     }

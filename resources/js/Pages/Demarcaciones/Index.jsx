@@ -77,19 +77,6 @@ export default function DemarcacionesIndex() {
             )
         },
         {
-            title: 'MAPA GEOMÉTRICO',
-            dataIndex: 'wkt_polygon',
-            key: 'wkt_polygon',
-            search: false,
-            render: (wkt) => (
-                wkt ? (
-                    <Badge status="success" text="Con Polígono" />
-                ) : (
-                    <Badge status="default" text="Sin Polígono" />
-                )
-            )
-        },
-        {
             title: 'ACCIONES',
             key: 'acciones',
             width: 120,
@@ -121,11 +108,6 @@ export default function DemarcacionesIndex() {
                         <div className="font-bold text-base text-gray-800">{record.nombre}</div>
                         <div className="text-xs text-blue-600 font-bold mt-0.5">Demarcación: {record.id}</div>
                     </div>
-                    {record.wkt_polygon ? (
-                        <Badge status="success" text="Polígono OK" className="bg-green-50 px-2 py-0.5 rounded text-xs border border-green-100" />
-                    ) : (
-                        <Badge status="default" text="Sin mapa" className="bg-gray-50 px-2 py-0.5 rounded text-xs border border-gray-200" />
-                    )}
                 </div>
                 
                 <div className="space-y-2 mb-4 text-sm text-gray-600">

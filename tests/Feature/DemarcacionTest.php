@@ -41,7 +41,7 @@ class DemarcacionTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_presidente_can_create_demarcacion_without_wkt()
+    public function test_presidente_can_create_demarcacion()
     {
         $presidente = User::factory()->create(['role' => 'presidente']);
 
@@ -56,25 +56,6 @@ class DemarcacionTest extends TestCase
             'id' => 10,
             'nombre' => 'Demarcación 10',
             'meta' => 500
-        ]);
-    }
-
-    public function test_presidente_can_create_demarcacion_with_valid_wkt()
-    {
-        $presidente = User::factory()->create(['role' => 'presidente']);
-
-        $response = $this->actingAs($presidente)->post('/demarcaciones', [
-            'id' => 11,
-            'nombre' => 'Demarcación 11 con Geom',
-            'meta' => 600,
-            'wkt_polygon' => 'POLYGON((-105.28 20.78, -105.26 20.74, -105.24 20.72, -105.28 20.78))'
-        ]);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('demarcaciones', [
-            'id' => 11,
-            'nombre' => 'Demarcación 11 con Geom',
-            'meta' => 600
         ]);
     }
 
@@ -90,15 +71,6 @@ class DemarcacionTest extends TestCase
             'meta' => 500
         ]);
         $response->assertSessionHasErrors('id');
-
-        // Invalid WKT
-        $response = $this->actingAs($presidente)->post('/demarcaciones', [
-            'id' => 12,
-            'nombre' => 'Demarcación WKT Invalido',
-            'meta' => 500,
-            'wkt_polygon' => 'INVALID_WKT'
-        ]);
-        $response->assertSessionHasErrors('wkt_polygon');
     }
 
     public function test_presidente_can_update_demarcacion()

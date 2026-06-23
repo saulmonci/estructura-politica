@@ -36,8 +36,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
             form.setFieldsValue({
                 id: undefined,
                 nombre: '',
-                meta: undefined,
-                wkt_polygon: ''
+                meta: undefined
             });
 
             if (editId) {
@@ -47,8 +46,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
                         form.setFieldsValue({
                             id: response.data.id,
                             nombre: response.data.nombre,
-                            meta: response.data.meta,
-                            wkt_polygon: response.data.wkt_polygon || ''
+                            meta: response.data.meta
                         });
                     })
                     .catch(() => {
@@ -209,31 +207,6 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
                             />
                         </Col>
                     </Row>
-
-                    <Row gutter={16}>
-                        <Col span={24}>
-                            <ProFormTextArea
-                                name="wkt_polygon"
-                                label="Delimitación Geográfica (Polígono WKT)"
-                                placeholder="Ej: POLYGON((-105.28 20.78, -105.26 20.74, -105.24 20.72, -105.19 20.75, -105.28 20.78))"
-                                fieldProps={{ 
-                                    rows: 4 
-                                }}
-                            />
-                            <div className="text-gray-400 text-xs mt-1 mb-4 flex items-center gap-1">
-                                <GlobalOutlined />
-                                <span>Coordenadas en sistema EPSG:4326 (Longitud Latitud). El primer y último punto deben ser idénticos para cerrar el polígono.</span>
-                            </div>
-                        </Col>
-                    </Row>
-
-                    <Alert
-                        message={<span className="font-bold text-xs uppercase">Advertencia Geográfica</span>}
-                        description="Si ingresas un polígono WKT, asegúrate de que tenga un formato correcto. De lo contrario, no se cargará adecuadamente en el mapa territorial."
-                        type="warning"
-                        showIcon
-                        className="bg-amber-50 border-amber-200"
-                    />
                 </div>
             </div>
         </ModalForm>
