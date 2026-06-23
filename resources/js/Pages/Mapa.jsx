@@ -357,8 +357,8 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                     overlayMaps[name] = group;
                 });
 
-            // Añadir control de selección al mapa con mapas base y capas individuales (no colapsado para visualización directa)
-            L.control.layers(baseMaps, overlayMaps, { position: 'topright', collapsed: false }).addTo(mapInstance.current);
+            // Añadir control de selección al mapa con mapas base y capas individuales (colapsado por defecto)
+            L.control.layers(baseMaps, overlayMaps, { position: 'topright', collapsed: true }).addTo(mapInstance.current);
         }
 
         return () => {
