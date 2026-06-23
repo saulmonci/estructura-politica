@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head } from '@inertiajs/react';
-import { Card, Row, Col, Progress, Statistic, Badge, List, Button, Radio } from 'antd';
-import { EnvironmentOutlined, GlobalOutlined, ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Progress, Statistic, Badge, List, Button, Radio, Input } from 'antd';
+import { EnvironmentOutlined, GlobalOutlined, ArrowRightOutlined, InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { demarcacionesGeoJson } from './Mapa/demarcacionesGeoJson';
@@ -14,6 +14,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
     const demarcacionGroupsRef = useRef({});
     const [selectedId, setSelectedId] = useState(null);
     const [viewMode, setViewMode] = useState('demarcacion');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         if (!mapInstance.current && mapRef.current) {
@@ -403,6 +404,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                         onChange={e => {
                             setViewMode(e.target.value);
                             setSelectedId(null);
+                            setSearchTerm('');
                         }} 
                         buttonStyle="solid"
                         size="middle"
@@ -470,8 +472,35 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                         bordered={false} 
                         className="shadow-sm flex-1 max-h-[380px] overflow-y-auto"
                     >
+                        <div className="mb-3">
+                            <Input
+                                placeholder={viewMode === 'demarcacion' ? 'Buscar demarcación...' : 'Buscar sección electoral...'}
+                                prefix={<SearchOutlined className="text-gray-400" />}
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                allowClear
+                                size="small"
+                            />
+                        </div>
                         <List
-                            dataSource={viewMode === 'demarcacion' ? demarcaciones : secciones}
+                            dataSource={
+                                (viewMode === 'demarcacion' ? demarcaciones : secciones)
+                                    .filter(item => {
+                                        if (!searchTerm.trim()) return true;
+                                        const term = searchTerm.toLowerCase().trim();
+                                        if (viewMode === 'demarcacion') {
+                                            return (
+                                                String(item.id).includes(term) ||
+                                                (item.nombre && item.nombre.toLowerCase().includes(term))
+                                            );
+                                        } else {
+                                            return (
+                                                String(item.numero).includes(term) ||
+                                                String(item.demarcacion_id).includes(term)
+                                            );
+                                        }
+                                    })
+                            }
                             renderItem={(item) => (
                                 <List.Item 
                                     className={`cursor-pointer px-2.5 py-2 hover:bg-gray-50 rounded transition-colors ${selectedId === item.id ? 'bg-blue-50 hover:bg-blue-50 border-l-4 border-blue-600' : ''}`}
