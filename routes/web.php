@@ -20,6 +20,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('demarcaciones', DemarcacionController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
+    // Secciones Electorales de Demarcaciones (Solo Presidente)
+    Route::get('/demarcaciones/{demarcacion}/secciones', [App\Http\Controllers\SeccionElectoralController::class, 'index']);
+    Route::post('/demarcaciones/{demarcacion}/secciones', [App\Http\Controllers\SeccionElectoralController::class, 'store']);
+    Route::put('/secciones/{seccion}', [App\Http\Controllers\SeccionElectoralController::class, 'update']);
+    Route::delete('/secciones/{seccion}', [App\Http\Controllers\SeccionElectoralController::class, 'destroy']);
+
     // CRUD para Representantes de Demarcación (Solo Presidente)
     Route::get('/representantes/export', [RepresentanteDemarcacionController::class, 'export']);
     Route::resource('representantes', RepresentanteDemarcacionController::class)

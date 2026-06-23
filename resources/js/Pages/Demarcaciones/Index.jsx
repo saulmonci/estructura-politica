@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Space, Badge, Modal } from 'antd';
@@ -9,16 +9,20 @@ import {
     DeleteOutlined, 
     DownloadOutlined, 
     GlobalOutlined,
-    CompassOutlined
+    CompassOutlined,
+    UnorderedListOutlined
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import DemarcacionFormModal from './DemarcacionFormModal';
+import SeccionesDrawer from '@/Components/SeccionesDrawer';
 
 export default function DemarcacionesIndex() {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
+    const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
+    const [isSeccionesOpen, setIsSeccionesOpen] = useState(false);
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -26,6 +30,11 @@ export default function DemarcacionesIndex() {
 
     const handleEdit = (id) => {
         modalRef.current?.open(id, `/demarcaciones/${id}`);
+    };
+
+    const handleOpenSecciones = (record) => {
+        setSelectedDemarcacion(record);
+        setIsSeccionesOpen(true);
     };
 
     const handleDelete = (id) => {
@@ -80,11 +89,17 @@ export default function DemarcacionesIndex() {
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 120,
+            width: 150,
             align: 'center',
             search: false,
             render: (_, record) => (
                 <Space size="middle">
+                    <Button 
+                        type="text" 
+                        icon={<UnorderedListOutlined className="text-green-600" />} 
+                        onClick={() => handleOpenSecciones(record)}
+                        title="Secciones"
+                    />
                     <Button 
                         type="text" 
                         icon={<EditOutlined className="text-blue-600" />} 
@@ -119,10 +134,13 @@ export default function DemarcacionesIndex() {
                     </div>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-100 flex justify-between">
-                    <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
-                    <div className="w-px bg-gray-200 my-1"></div>
-                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
+                    <Button type="primary" icon={<UnorderedListOutlined />} className="bg-[#0f172a] hover:bg-slate-800 w-full flex justify-center items-center" onClick={() => handleOpenSecciones(record)}>Ver Secciones</Button>
+                    <div className="flex justify-between w-full gap-2">
+                        <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                        <div className="w-px bg-gray-200 my-1"></div>
+                        <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                    </div>
                 </div>
             </Card>
         );
@@ -173,6 +191,12 @@ export default function DemarcacionesIndex() {
                         actionRef.current.reload();
                     }
                 }}
+            />
+
+            <SeccionesDrawer 
+                visible={isSeccionesOpen}
+                onClose={() => setIsSeccionesOpen(false)}
+                demarcacion={selectedDemarcacion}
             />
         </MainLayout>
     );
