@@ -25,12 +25,42 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 attributionControl: true
             });
 
-            // Capa base de mapas (OpenStreetMap)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            // Definir capas base
+            const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
                 subdomains: 'abcd',
                 maxZoom: 20
-            }).addTo(mapInstance.current);
+            });
+
+            const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            });
+
+            const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            });
+
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 18
+            });
+
+            // Añadir la capa inicial por defecto (Clara)
+            lightLayer.addTo(mapInstance.current);
+
+            // Objeto de mapas base para el control
+            const baseMaps = {
+                "Mapa Claro": lightLayer,
+                "Mapa Oscuro": darkLayer,
+                "Mapa Estándar (OSM)": osmLayer,
+                "Mapa Satelital": satelliteLayer
+            };
+
+            // Añadir control de selección al mapa
+            L.control.layers(baseMaps, null, { position: 'topright' }).addTo(mapInstance.current);
 
             // Cargar los polígonos GeoJSON desde la base de datos (con fallback estático)
             let geoJsonToLoad = demarcacionesGeoJson;
