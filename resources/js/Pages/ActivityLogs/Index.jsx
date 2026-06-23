@@ -117,6 +117,7 @@ export default function ActivityLogsIndex() {
                 deleted: { text: 'Eliminación', status: 'Error' },
             },
             render: (action) => {
+                console.log("action ",action);
                 let color = 'blue';
                 let label = 'Actualización';
                 if (action === 'created') {
