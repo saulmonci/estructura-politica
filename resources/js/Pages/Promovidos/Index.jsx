@@ -14,6 +14,7 @@ export default function PromovidosIndex({ availablePromotores }) {
     const [isApoyosOpen, setIsApoyosOpen] = useState(false);
     const [selectedPromovido, setSelectedPromovido] = useState(null);
     const actionRef = React.useRef();
+    const [modal, contextHolder] = Modal.useModal();
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -29,7 +30,7 @@ export default function PromovidosIndex({ availablePromotores }) {
     };
 
     const handleDelete = (id) => {
-        Modal.confirm({
+        modal.confirm({
             title: '¿Estás seguro de eliminar este promovido?',
             content: 'Esta acción no se puede deshacer.',
             okText: 'Sí, eliminar',
@@ -335,6 +336,7 @@ export default function PromovidosIndex({ availablePromotores }) {
 
     return (
         <MainLayout>
+            {contextHolder}
             <Head title="Promovidos" />
 
             <Card bordered={false} className="shadow-sm mobile-full-width-card">

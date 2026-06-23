@@ -18,6 +18,7 @@ export default function DemarcacionesIndex() {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
+    const [modal, contextHolder] = Modal.useModal();
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -28,7 +29,7 @@ export default function DemarcacionesIndex() {
     };
 
     const handleDelete = (id) => {
-        Modal.confirm({
+        modal.confirm({
             title: '¿Estás seguro de eliminar esta demarcación?',
             content: 'Esta acción no se puede deshacer y puede dejar sin demarcación a los usuarios y promovidos asignados a ella.',
             okText: 'Sí, eliminar',
@@ -129,6 +130,7 @@ export default function DemarcacionesIndex() {
 
     return (
         <MainLayout>
+            {contextHolder}
             <Head title="Administrar Demarcaciones" />
 
             <Card bordered={false} className="shadow-sm mobile-full-width-card">

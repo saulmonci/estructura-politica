@@ -10,6 +10,7 @@ export default function OperadoresIndex({ availableRds }) {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
+    const [modal, contextHolder] = Modal.useModal();
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -20,7 +21,7 @@ export default function OperadoresIndex({ availableRds }) {
     };
 
     const handleDelete = (id) => {
-        Modal.confirm({
+        modal.confirm({
             title: '¿Estás seguro de eliminar este operador?',
             content: 'Esta acción no se puede deshacer.',
             okText: 'Sí, eliminar',
@@ -234,6 +235,7 @@ export default function OperadoresIndex({ availableRds }) {
 
     return (
         <MainLayout>
+            {contextHolder}
             <Head title="Operadores Políticos" />
 
             <Card bordered={false} className="shadow-sm mobile-full-width-card">

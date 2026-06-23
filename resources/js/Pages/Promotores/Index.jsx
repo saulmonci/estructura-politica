@@ -13,6 +13,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
     const [isApoyosOpen, setIsApoyosOpen] = useState(false);
     const [selectedPromotor, setSelectedPromotor] = useState(null);
     const actionRef = React.useRef();
+    const [modal, contextHolder] = Modal.useModal();
 
     const handleOpenApoyos = (record) => {
         setSelectedPromotor(record);
@@ -28,7 +29,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
     };
 
     const handleDelete = (id) => {
-        Modal.confirm({
+        modal.confirm({
             title: '¿Estás seguro de eliminar este promotor?',
             content: 'Esta acción no se puede deshacer.',
             okText: 'Sí, eliminar',
@@ -262,6 +263,7 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
 
     return (
         <MainLayout>
+            {contextHolder}
             <Head title="Promotores" />
 
             <Card bordered={false} className="shadow-sm mobile-full-width-card">

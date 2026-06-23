@@ -10,6 +10,7 @@ export default function RepresentantesIndex({ representantes }) {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
+    const [modal, contextHolder] = Modal.useModal();
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -20,7 +21,7 @@ export default function RepresentantesIndex({ representantes }) {
     };
 
     const handleDelete = (id) => {
-        Modal.confirm({
+        modal.confirm({
             title: '¿Estás seguro de eliminar este representante?',
             content: 'Esta acción no se puede deshacer.',
             okText: 'Sí, eliminar',
@@ -234,6 +235,7 @@ export default function RepresentantesIndex({ representantes }) {
 
     return (
         <MainLayout>
+            {contextHolder}
             <Head title="Representantes de Demarcación" />
 
             <Card bordered={false} className="shadow-sm mobile-full-width-card">
