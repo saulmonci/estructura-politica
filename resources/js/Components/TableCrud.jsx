@@ -174,7 +174,6 @@ export default function TableCrud({
         search: search ? { 
             defaultCollapsed: false, 
             labelWidth: 'auto',
-            span: { xs: 24, sm: 12, md: 12, lg: 8, xl: 6, xxl: 6 },
             ...search
         } : false,
         headerTitle,
