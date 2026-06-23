@@ -172,6 +172,7 @@ export default function TableCrud({
             }
         },
         search: search ? { 
+            layout: 'vertical',
             defaultCollapsed: false, 
             ...search
         } : false,
