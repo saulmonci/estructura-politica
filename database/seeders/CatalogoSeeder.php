@@ -84,16 +84,22 @@ class CatalogoSeeder extends Seeder
                 ['id' => $demarcacionId],
                 [
                     'nombre' => $info['nombre'],
-                    'total_votantes' => $info['total'],
+                    'meta' => $info['total'],
                     'geom' => DB::raw($geomSql)
                 ]
             );
+
+            $sectionsCount = count($info['secciones']);
+            $sectionMeta = $sectionsCount > 0 ? (int)round($info['total'] / $sectionsCount) : 0;
 
             foreach ($info['secciones'] as $numero) {
                 SeccionElectoral::updateOrCreate(
                     [
                         'numero' => (string)$numero,
                         'demarcacion_id' => $demarcacion->id
+                    ],
+                    [
+                        'meta' => $sectionMeta
                     ]
                 );
             }

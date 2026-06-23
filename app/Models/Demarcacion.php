@@ -14,7 +14,7 @@ class Demarcacion extends Model
     protected $fillable = [
         'id',
         'nombre',
-        'total_votantes',
+        'meta',
         'geom',
     ];
 

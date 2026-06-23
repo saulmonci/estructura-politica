@@ -15,6 +15,7 @@ class SeccionElectoral extends Model
         'numero',
         'demarcacion_id',
         'geom',
+        'meta',
     ];
 
     /**

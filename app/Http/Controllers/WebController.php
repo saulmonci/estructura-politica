@@ -264,7 +264,7 @@ class WebController extends Controller
         $demarcaciones = \App\Models\Demarcacion::select(
             'id',
             'nombre',
-            'total_votantes',
+            'meta',
             DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
         )->orderBy('id')->get();
 
@@ -282,7 +282,7 @@ class WebController extends Controller
 
         foreach ($demarcaciones as $d) {
             $cantPromovidos = $promovidosPorDemarcacion[$d->id] ?? 0;
-            $meta = $d->total_votantes ?? 500;
+            $meta = $d->meta ?? 500;
             
             $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
 

@@ -36,8 +36,8 @@ class MapaTest extends TestCase
     public function test_presidente_can_access_mapa_with_statistics()
     {
         // Sembrar demarcaciones de prueba
-        $dem1 = Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación 1', 'total_votantes' => 400]);
-        $dem2 = Demarcacion::create(['id' => 2, 'nombre' => 'Demarcación 2', 'total_votantes' => 1000]);
+        $dem1 = Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación 1', 'meta' => 400]);
+        $dem2 = Demarcacion::create(['id' => 2, 'nombre' => 'Demarcación 2', 'meta' => 1000]);
 
         $presidente = User::factory()->create(['role' => 'presidente']);
         $promotor = User::factory()->create(['role' => 'promotor', 'parent_id' => $presidente->id]);
