@@ -292,6 +292,23 @@ export default function ActivityLogsIndex() {
         );
     };
 
+    const mobileCardRender = (record) => {
+        return (
+            <div className="flex flex-col gap-2 p-2 border border-gray-200 rounded">
+                <div className="text-gray-500 font-semibold">{record.label}:</div>
+                <div>{record.value}</div>
+                <Button
+                    type="text"
+                    icon={<EyeOutlined className="text-blue-600" />}
+                    title="Ver detalle de cambios"
+                    onClick={() => handleViewDetail(record)}
+                />
+                <div className="text-gray-500 font-semibold">{record.label}:</div>
+                <div>{record.value}</div>
+            </div>
+        );
+    }
+
     return (
         <MainLayout>
             <Head title="Bitácora de Logs" />
@@ -315,6 +332,7 @@ export default function ActivityLogsIndex() {
                     endpoint="/logs"
                     rowKey="id"
                     search={true}
+                    mobileCardRender={mobileCardRender}
                 />
             </Card>
 
