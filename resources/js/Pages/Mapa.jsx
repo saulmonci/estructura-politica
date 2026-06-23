@@ -11,6 +11,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const geoJsonLayers = useRef({});
+    const demarcacionGroupRef = useRef(null);
     const [selectedId, setSelectedId] = useState(null);
 
     useEffect(() => {
@@ -51,6 +52,10 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
             // Añadir la capa inicial por defecto (Clara)
             lightLayer.addTo(mapInstance.current);
 
+            // Crear el grupo de capas para las demarcaciones (polígonos + etiquetas)
+            const demarcacionGroup = L.layerGroup();
+            demarcacionGroupRef.current = demarcacionGroup;
+
             // Objeto de mapas base para el control
             const baseMaps = {
                 "Mapa Claro": lightLayer,
@@ -59,8 +64,12 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 "Mapa Satelital": satelliteLayer
             };
 
-            // Añadir control de selección al mapa
-            L.control.layers(baseMaps, null, { position: 'topright' }).addTo(mapInstance.current);
+            const overlayMaps = {
+                "Límites de Demarcación": demarcacionGroup
+            };
+
+            // Añadir control de selección al mapa (incluyendo overlays)
+            L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mapInstance.current);
 
             // Cargar los polígonos GeoJSON desde la base de datos (con fallback estático)
             let geoJsonToLoad = demarcacionesGeoJson;
@@ -95,7 +104,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 }
             }
 
-            L.geoJSON(geoJsonToLoad, {
+            const geoJsonLayer = L.geoJSON(geoJsonToLoad, {
                 style: (feature) => {
                     const id = feature.properties.id;
                     const stats = demarcaciones.find(d => d.id === id) || {};
@@ -214,9 +223,12 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                         iconAnchor: [35, 25]
                     });
 
-                    L.marker(center, { icon: labelIcon, interactive: false }).addTo(mapInstance.current);
+                    L.marker(center, { icon: labelIcon, interactive: false }).addTo(demarcacionGroup);
                 }
-            }).addTo(mapInstance.current);
+            });
+
+            geoJsonLayer.addTo(demarcacionGroup);
+            demarcacionGroup.addTo(mapInstance.current);
         }
 
         return () => {
@@ -231,6 +243,10 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
         setSelectedId(id);
         const layer = geoJsonLayers.current[id];
         if (layer && mapInstance.current) {
+            // Asegurar que la capa de demarcaciones esté visible si se había desactivado
+            if (demarcacionGroupRef.current && !mapInstance.current.hasLayer(demarcacionGroupRef.current)) {
+                demarcacionGroupRef.current.addTo(mapInstance.current);
+            }
             const bounds = layer.getBounds();
             mapInstance.current.fitBounds(bounds, { maxZoom: 12, animate: true, padding: [30, 30] });
             layer.openPopup();
