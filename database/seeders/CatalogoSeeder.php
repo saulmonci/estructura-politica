@@ -92,8 +92,31 @@ class CatalogoSeeder extends Seeder
             $sectionsCount = count($info['secciones']);
             $sectionMeta = $sectionsCount > 0 ? (int)round($info['total'] / $sectionsCount) : 0;
 
-            foreach ($info['secciones'] as $numero) {
-                SeccionElectoral::updateOrCreate(
+            // Sort sections to ensure deterministic partition mapping
+            $seccionesNumeros = $info['secciones'];
+            sort($seccionesNumeros);
+
+            // Calculate bounding box of demarcation polygon to partition it
+            preg_match_all('/-?\d+\.\d+\s+-?\d+\.\d+/', $info['polygon'], $matches);
+            $points = [];
+            foreach ($matches[0] as $match) {
+                $parts = preg_split('/\s+/', $match);
+                $points[] = ['x' => (float)$parts[0], 'y' => (float)$parts[1]];
+            }
+            
+            $xs = array_column($points, 'x');
+            $ys = array_column($points, 'y');
+            $xmin = min($xs);
+            $xmax = max($xs);
+            $ymin = min($ys);
+            $ymax = max($ys);
+            
+            $width = $xmax - $xmin;
+            $height = $ymax - $ymin;
+            $useVerticalSlices = $width > $height;
+
+            foreach ($seccionesNumeros as $index => $numero) {
+                $seccion = SeccionElectoral::updateOrCreate(
                     [
                         'numero' => (string)$numero,
                         'demarcacion_id' => $demarcacion->id
@@ -102,6 +125,37 @@ class CatalogoSeeder extends Seeder
                         'meta' => $sectionMeta
                     ]
                 );
+
+                if ($sectionsCount === 1) {
+                    if ($driver === 'mysql') {
+                        $geomSql = "ST_Transform(ST_GeomFromText('{$info['polygon']}', 4326, 'axis-order=long-lat'), 32613)";
+                    } else {
+                        $geomSql = "ST_Transform(ST_GeomFromText('{$info['polygon']}', 4326), 32613)";
+                    }
+                } else {
+                    if ($useVerticalSlices) {
+                        $xStart = $xmin + ($index * $width / $sectionsCount);
+                        $xEnd = $xmin + (($index + 1) * $width / $sectionsCount);
+                        $yStart = $ymin - 0.05;
+                        $yEnd = $ymax + 0.05;
+                    } else {
+                        $xStart = $xmin - 0.05;
+                        $xEnd = $xmax + 0.05;
+                        $yStart = $ymin + ($index * $height / $sectionsCount);
+                        $yEnd = $ymin + (($index + 1) * $height / $sectionsCount);
+                    }
+                    $sliceWkt = "POLYGON(({$xStart} {$yStart}, {$xEnd} {$yStart}, {$xEnd} {$yEnd}, {$xStart} {$yEnd}, {$xStart} {$yStart}))";
+                    
+                    if ($driver === 'mysql') {
+                        $geomSql = "ST_Intersection((SELECT geom FROM demarcaciones WHERE id = {$demarcacion->id}), ST_Transform(ST_GeomFromText('{$sliceWkt}', 4326, 'axis-order=long-lat'), 32613))";
+                    } else {
+                        $geomSql = "ST_Intersection((SELECT geom FROM demarcaciones WHERE id = {$demarcacion->id}), ST_Transform(ST_GeomFromText('{$sliceWkt}', 4326), 32613))";
+                    }
+                }
+
+                $seccion->update([
+                    'geom' => DB::raw($geomSql)
+                ]);
             }
         }
     }

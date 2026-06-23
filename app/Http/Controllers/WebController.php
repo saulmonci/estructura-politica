@@ -311,8 +311,54 @@ class WebController extends Controller
 
         $avanceGlobal = $totalMeta > 0 ? round(($totalPromovidos / $totalMeta) * 100, 1) : 0;
 
+        // Obtener todas las secciones con sus metas, demarcación asignada y polígonos
+        $secciones = \App\Models\SeccionElectoral::select(
+            'id',
+            'numero',
+            'meta',
+            'demarcacion_id',
+            DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
+        )->orderBy('numero')->get();
+
+        // Contar promovidos por sección electoral
+        $promovidosPorSeccion = DB::table('promovidos')
+            ->select('seccion_electoral', DB::raw('count(*) as total'))
+            ->whereNotNull('seccion_electoral')
+            ->groupBy('seccion_electoral')
+            ->pluck('total', 'seccion_electoral')
+            ->toArray();
+
+        $seccionesData = [];
+        foreach ($secciones as $s) {
+            $cantPromovidos = $promovidosPorSeccion[$s->numero] ?? 0;
+            $meta = $s->meta ?? 50; // default meta if none set
+            
+            $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
+
+            // Determinar color
+            if ($porcentaje < 40) {
+                $color = '#EF4444'; // Rojo
+            } elseif ($porcentaje <= 60) {
+                $color = '#F59E0B'; // Amarillo
+            } else {
+                $color = '#10B981'; // Verde
+            }
+
+            $seccionesData[] = [
+                'id' => $s->id,
+                'numero' => $s->numero,
+                'demarcacion_id' => $s->demarcacion_id,
+                'promovidos' => $cantPromovidos,
+                'meta' => $meta,
+                'porcentaje' => $porcentaje,
+                'color' => $color,
+                'geojson' => $s->geojson,
+            ];
+        }
+
         return Inertia::render('Mapa', [
             'demarcaciones' => $mapData,
+            'secciones' => $seccionesData,
             'globalStats' => [
                 'total_promovidos' => $totalPromovidos,
                 'total_meta' => $totalMeta,

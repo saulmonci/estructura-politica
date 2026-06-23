@@ -39,6 +39,13 @@ class MapaTest extends TestCase
         $dem1 = Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación 1', 'meta' => 400]);
         $dem2 = Demarcacion::create(['id' => 2, 'nombre' => 'Demarcación 2', 'meta' => 1000]);
 
+        // Sembrar sección electoral de prueba
+        \App\Models\SeccionElectoral::create([
+            'numero' => '0120',
+            'demarcacion_id' => 1,
+            'meta' => 100,
+        ]);
+
         $presidente = User::factory()->create(['role' => 'presidente']);
         $promotor = User::factory()->create(['role' => 'promotor', 'parent_id' => $presidente->id]);
 
@@ -59,6 +66,7 @@ class MapaTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('Mapa')
             ->has('demarcaciones')
+            ->has('secciones')
             ->has('globalStats')
             ->where('globalStats.total_promovidos', 1)
             ->where('globalStats.total_meta', 1400)

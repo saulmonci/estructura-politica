@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head } from '@inertiajs/react';
-import { Card, Row, Col, Progress, Statistic, Badge, List, Button } from 'antd';
+import { Card, Row, Col, Progress, Statistic, Badge, List, Button, Radio } from 'antd';
 import { EnvironmentOutlined, GlobalOutlined, ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { demarcacionesGeoJson } from './Mapa/demarcacionesGeoJson';
 
-export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
+export default function MapaPage({ demarcaciones = [], secciones = [], globalStats = {} }) {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const geoJsonLayers = useRef({});
     const demarcacionGroupsRef = useRef({});
     const [selectedId, setSelectedId] = useState(null);
+    const [viewMode, setViewMode] = useState('demarcacion');
 
     useEffect(() => {
         if (!mapInstance.current && mapRef.current) {
@@ -21,7 +22,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 center: [20.78, -105.28],
                 zoom: 11,
                 minZoom: 10,
-                maxZoom: 14,
+                maxZoom: 15,
                 zoomControl: true,
                 attributionControl: true
             });
@@ -52,7 +53,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
             // Añadir la capa inicial por defecto (Clara)
             lightLayer.addTo(mapInstance.current);
 
-            // Crear el contenedor de grupos de capas para cada demarcación individual
+            // Crear el contenedor de grupos de capas para cada demarcación/sección individual
             const demarcacionGroups = {};
             demarcacionGroupsRef.current = demarcacionGroups;
 
@@ -65,42 +66,74 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
             };
 
             // Cargar los polígonos GeoJSON desde la base de datos (con fallback estático)
-            let geoJsonToLoad = demarcacionesGeoJson;
-            const hasDbGeometries = demarcaciones.some(d => d.geojson);
+            let geoJsonToLoad;
 
-            if (hasDbGeometries) {
-                const features = demarcaciones
-                    .filter(d => d.geojson)
-                    .map(d => {
+            if (viewMode === 'demarcacion') {
+                geoJsonToLoad = demarcacionesGeoJson;
+                const hasDbGeometries = demarcaciones.some(d => d.geojson);
+
+                if (hasDbGeometries) {
+                    const features = demarcaciones
+                        .filter(d => d.geojson)
+                        .map(d => {
+                            try {
+                                const geometry = JSON.parse(d.geojson);
+                                return {
+                                    type: "Feature",
+                                    properties: {
+                                        id: d.id,
+                                        nombre: d.nombre
+                                    },
+                                    geometry: geometry
+                                };
+                            } catch (e) {
+                                console.error("Error parsing GeoJSON for demarcation", d.id, e);
+                                return null;
+                            }
+                        })
+                        .filter(Boolean);
+
+                    if (features.length > 0) {
+                        geoJsonToLoad = {
+                            type: "FeatureCollection",
+                            features: features
+                        };
+                    }
+                }
+            } else {
+                const features = secciones
+                    .filter(s => s.geojson)
+                    .map(s => {
                         try {
-                            const geometry = JSON.parse(d.geojson);
+                            const geometry = JSON.parse(s.geojson);
                             return {
                                 type: "Feature",
                                 properties: {
-                                    id: d.id,
-                                    nombre: d.nombre
+                                    id: s.id,
+                                    numero: s.numero,
+                                    demarcacion_id: s.demarcacion_id
                                 },
                                 geometry: geometry
                             };
                         } catch (e) {
-                            console.error("Error parsing GeoJSON for demarcation", d.id, e);
+                            console.error("Error parsing GeoJSON for section", s.id, e);
                             return null;
                         }
                     })
                     .filter(Boolean);
 
-                if (features.length > 0) {
-                    geoJsonToLoad = {
-                        type: "FeatureCollection",
-                        features: features
-                    };
-                }
+                geoJsonToLoad = {
+                    type: "FeatureCollection",
+                    features: features
+                };
             }
 
             const geoJsonLayer = L.geoJSON(geoJsonToLoad, {
                 style: (feature) => {
                     const id = feature.properties.id;
-                    const stats = demarcaciones.find(d => d.id === id) || {};
+                    const stats = viewMode === 'demarcacion'
+                        ? (demarcaciones.find(d => d.id === id) || {})
+                        : (secciones.find(s => s.id === id) || {});
                     const color = stats.color || '#94a3b8'; // color por defecto gris
                     
                     return {
@@ -113,43 +146,81 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 },
                 onEachFeature: (feature, layer) => {
                     const id = feature.properties.id;
-                    const stats = demarcaciones.find(d => d.id === id) || {
-                        id,
-                        nombre: `Demarcación ${id}`,
-                        promovidos: 0,
-                        meta: 500,
-                        porcentaje: 0,
-                        color: '#94a3b8'
-                    };
+                    const stats = viewMode === 'demarcacion'
+                        ? (demarcaciones.find(d => d.id === id) || {
+                            id,
+                            nombre: `Demarcación ${id}`,
+                            promovidos: 0,
+                            meta: 500,
+                            porcentaje: 0,
+                            color: '#94a3b8'
+                          })
+                        : (secciones.find(s => s.id === id) || {
+                            id,
+                            numero: feature.properties.numero,
+                            demarcacion_id: feature.properties.demarcacion_id,
+                            promovidos: 0,
+                            meta: 50,
+                            porcentaje: 0,
+                            color: '#94a3b8'
+                          });
 
                     geoJsonLayers.current[id] = layer;
 
                     // Popup interactivo
-                    layer.bindPopup(`
-                        <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 160px;">
-                            <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: bold; color: #0f172a; text-transform: uppercase;">
-                                Demarcación ${stats.id}
-                            </h3>
-                            <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-                                ${feature.properties.nombre.split(' - ')[1] || ''}
+                    if (viewMode === 'demarcacion') {
+                        layer.bindPopup(`
+                            <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 160px;">
+                                <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: bold; color: #0f172a; text-transform: uppercase;">
+                                    Demarcación ${stats.id}
+                                </h3>
+                                <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+                                    ${feature.properties.nombre.split(' - ')[1] || ''}
+                                </div>
+                                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
+                                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 2px 0; color: #475569;">Promovidos:</td>
+                                        <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.promovidos}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 2px 0; color: #475569;">Meta Votantes:</td>
+                                        <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.meta}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 2px 0; color: #475569; font-weight: bold;">Avance:</td>
+                                        <td style="padding: 2px 0; text-align: right; font-weight: bold; color: ${stats.color}; font-size: 13px;">${stats.porcentaje}%</td>
+                                    </tr>
+                                </table>
                             </div>
-                            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
-                            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
-                                <tr>
-                                    <td style="padding: 2px 0; color: #475569;">Promovidos:</td>
-                                    <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.promovidos}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 2px 0; color: #475569;">Meta Votantes:</td>
-                                    <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.meta}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 2px 0; color: #475569; font-weight: bold;">Avance:</td>
-                                    <td style="padding: 2px 0; text-align: right; font-weight: bold; color: ${stats.color}; font-size: 13px;">${stats.porcentaje}%</td>
-                                </tr>
-                            </table>
-                        </div>
-                    `);
+                        `);
+                    } else {
+                        layer.bindPopup(`
+                            <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 160px;">
+                                <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: bold; color: #0f172a; text-transform: uppercase;">
+                                    Sección ${stats.numero}
+                                </h3>
+                                <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+                                    Demarcación ${stats.demarcacion_id}
+                                </div>
+                                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
+                                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 2px 0; color: #475569;">Promovidos:</td>
+                                        <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.promovidos}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 2px 0; color: #475569;">Meta Votantes:</td>
+                                        <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.meta}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 2px 0; color: #475569; font-weight: bold;">Avance:</td>
+                                        <td style="padding: 2px 0; text-align: right; font-weight: bold; color: ${stats.color}; font-size: 13px;">${stats.porcentaje}%</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        `);
+                    }
 
                     // Eventos de hover
                     layer.on({
@@ -174,9 +245,8 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
 
                     // Añadir etiqueta estática en el centro del polígono
                     const center = layer.getBounds().getCenter();
-                    const labelIcon = L.divIcon({
-                        className: 'custom-map-label-wrapper',
-                        html: `
+                    const labelHtml = viewMode === 'demarcacion'
+                        ? `
                             <div style="
                                 background-color: white; 
                                 border: 2px solid ${stats.color}; 
@@ -211,14 +281,53 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                                     ${stats.promovidos}/${stats.meta}
                                 </div>
                             </div>
-                        `,
+                        `
+                        : `
+                            <div style="
+                                background-color: white; 
+                                border: 2px solid ${stats.color}; 
+                                border-radius: 6px; 
+                                padding: 3px 6px; 
+                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15); 
+                                display: flex; 
+                                flex-direction: column; 
+                                align-items: center; 
+                                justify-content: center; 
+                                min-width: 66px; 
+                                font-family: system-ui, sans-serif;
+                            ">
+                                <div style="
+                                    background-color: ${stats.color}; 
+                                    color: white; 
+                                    border-radius: 4px; 
+                                    padding: 1px 4px;
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    font-weight: bold; 
+                                    font-size: 9px;
+                                ">
+                                    S-${stats.numero}
+                                </div>
+                                <div style="font-weight: 800; font-size: 11px; margin-top: 1px; color: #0f172a;">
+                                    ${stats.porcentaje}%
+                                </div>
+                                <div style="font-size: 9px; color: #64748b; font-weight: 600;">
+                                    ${stats.promovidos}/${stats.meta}
+                                </div>
+                            </div>
+                        `;
+
+                    const labelIcon = L.divIcon({
+                        className: 'custom-map-label-wrapper',
+                        html: labelHtml,
                         iconSize: [70, 50],
                         iconAnchor: [35, 25]
                     });
 
                     const labelMarker = L.marker(center, { icon: labelIcon, interactive: false });
 
-                    // Crear un grupo de capas específico para esta demarcación
+                    // Crear un grupo de capas específico para esta entidad
                     const group = L.layerGroup();
                     demarcacionGroups[id] = group;
 
@@ -228,14 +337,18 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 }
             });
 
-            // Definir capas overlay individuales por cada demarcación
+            // Definir capas overlay individuales por cada entidad
             const overlayMaps = {};
             Object.keys(demarcacionGroups)
                 .sort((a, b) => Number(a) - Number(b))
                 .forEach(id => {
                     const group = demarcacionGroups[id];
-                    const stats = demarcaciones.find(d => d.id === Number(id)) || {};
-                    const name = stats.nombre || `Demarcación ${id}`;
+                    const stats = viewMode === 'demarcacion'
+                        ? (demarcaciones.find(d => d.id === Number(id)) || {})
+                        : (secciones.find(s => s.id === Number(id)) || {});
+                    const name = viewMode === 'demarcacion'
+                        ? (stats.nombre || `Demarcación ${id}`)
+                        : `Sección ${stats.numero || id}`;
                     
                     // Añadir al mapa por defecto
                     group.addTo(mapInstance.current);
@@ -254,7 +367,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 mapInstance.current = null;
             }
         };
-    }, [demarcaciones]);
+    }, [demarcaciones, secciones, viewMode]);
 
     const focusDemarcacion = (id) => {
         setSelectedId(id);
@@ -266,7 +379,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                 group.addTo(mapInstance.current);
             }
             const bounds = layer.getBounds();
-            mapInstance.current.fitBounds(bounds, { maxZoom: 12, animate: true, padding: [30, 30] });
+            mapInstance.current.fitBounds(bounds, { maxZoom: 13, animate: true, padding: [30, 30] });
             layer.openPopup();
         }
     };
@@ -275,13 +388,29 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
         <MainLayout>
             <Head title="Mapa Territorial" />
 
-            <div className="mb-6">
-                <h2 className="text-xl font-bold m-0 flex items-center gap-2">
-                    <GlobalOutlined className="text-[#0f172a]" /> Mapa Territorial (Bahía de Banderas)
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">
-                    Visualiza en tiempo real el cumplimiento y metas de simpatizantes (promovidos) en las 9 demarcaciones municipales.
-                </p>
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 className="text-xl font-bold m-0 flex items-center gap-2">
+                        <GlobalOutlined className="text-[#0f172a]" /> Mapa Territorial (Bahía de Banderas)
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-1">
+                        Visualiza en tiempo real el cumplimiento y metas de simpatizantes (promovidos) en las 9 demarcaciones municipales o secciones electorales.
+                    </p>
+                </div>
+                <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+                    <Radio.Group 
+                        value={viewMode} 
+                        onChange={e => {
+                            setViewMode(e.target.value);
+                            setSelectedId(null);
+                        }} 
+                        buttonStyle="solid"
+                        size="middle"
+                    >
+                        <Radio.Button value="demarcacion">Demarcación</Radio.Button>
+                        <Radio.Button value="seccion">Sección Electoral</Radio.Button>
+                    </Radio.Group>
+                </div>
             </div>
 
             <Row gutter={[16, 16]}>
@@ -334,10 +463,15 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                         </div>
                     </Card>
 
-                    {/* Listado de Avance de Demarcaciones */}
-                    <Card title={<span className="text-xs uppercase tracking-wide font-bold font-sans">Avance por Demarcación</span>} size="small" bordered={false} className="shadow-sm flex-1 max-h-[380px] overflow-y-auto">
+                    {/* Listado de Avance de Demarcaciones o Secciones */}
+                    <Card 
+                        title={<span className="text-xs uppercase tracking-wide font-bold font-sans">Avance por {viewMode === 'demarcacion' ? 'Demarcación' : 'Sección Electoral'}</span>} 
+                        size="small" 
+                        bordered={false} 
+                        className="shadow-sm flex-1 max-h-[380px] overflow-y-auto"
+                    >
                         <List
-                            dataSource={demarcaciones}
+                            dataSource={viewMode === 'demarcacion' ? demarcaciones : secciones}
                             renderItem={(item) => (
                                 <List.Item 
                                     className={`cursor-pointer px-2.5 py-2 hover:bg-gray-50 rounded transition-colors ${selectedId === item.id ? 'bg-blue-50 hover:bg-blue-50 border-l-4 border-blue-600' : ''}`}
@@ -346,7 +480,7 @@ export default function MapaPage({ demarcaciones = [], globalStats = {} }) {
                                     <div className="w-full">
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="font-bold text-xs text-gray-800">
-                                                Demarcación {item.id}
+                                                {viewMode === 'demarcacion' ? `Demarcación ${item.id}` : `Sección ${item.numero}`}
                                             </span>
                                             <span style={{ color: item.color }} className="font-bold text-xs">
                                                 {item.porcentaje}%
