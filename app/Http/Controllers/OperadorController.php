@@ -38,7 +38,7 @@ class OperadorController extends BaseCrudController
             $rds = [];
             
             if ($user && strtolower($user->role) === 'presidente') {
-                $rds = User::where('role', 'rd')->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
+                $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
             }
             
             $response->with('availableRds', $rds);

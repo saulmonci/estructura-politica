@@ -10,6 +10,35 @@ class Apoyo extends Model
 {
     use HasFactory, LogsActivity;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($apoyo) {
+            if (empty($apoyo->presidente_id)) {
+                if (auth()->check()) {
+                    $apoyo->presidente_id = auth()->user()->getPresidenteId();
+                } else {
+                    $ownerPresidenteId = null;
+                    if ($apoyo->promovido_id) {
+                        $promovido = Promovido::find($apoyo->promovido_id);
+                        if ($promovido) {
+                            $ownerPresidenteId = $promovido->presidente_id;
+                        }
+                    } elseif ($apoyo->user_id) {
+                        $user = User::find($apoyo->user_id);
+                        if ($user) {
+                            $ownerPresidenteId = $user->presidente_id;
+                        }
+                    }
+                    if ($ownerPresidenteId) {
+                        $apoyo->presidente_id = $ownerPresidenteId;
+                    }
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'promovido_id',
         'user_id',
@@ -19,6 +48,7 @@ class Apoyo extends Model
         'estado',
         'evidencia',
         'cantidad_monetaria',
+        'presidente_id',
     ];
 
     /**
@@ -39,5 +69,10 @@ class Apoyo extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function presidente()
+    {
+        return $this->belongsTo(User::class, 'presidente_id');
     }
 }

@@ -12,6 +12,24 @@ class Promovido extends Model
 
     protected $table = 'promovidos';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($promovido) {
+            if (empty($promovido->presidente_id)) {
+                if (auth()->check()) {
+                    $promovido->presidente_id = auth()->user()->getPresidenteId();
+                } else if ($promovido->promotor_id) {
+                    $promotor = User::find($promovido->promotor_id);
+                    if ($promotor) {
+                        $promovido->presidente_id = $promotor->getPresidenteId();
+                    }
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'nombre',
         'apellidos',
@@ -26,6 +44,7 @@ class Promovido extends Model
         'codigo_postal',
         'foto',
         'promotor_id',
+        'presidente_id',
     ];
 
     /**
@@ -42,6 +61,14 @@ class Promovido extends Model
     public function getFotoUrlAttribute()
     {
         return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
+
+    /**
+     * Obtener el presidente raíz asignado a este promovido.
+     */
+    public function presidente()
+    {
+        return $this->belongsTo(User::class, 'presidente_id');
     }
 
     /**

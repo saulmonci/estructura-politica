@@ -14,7 +14,7 @@ use App\Models\Apoyo;
 use App\Traits\LogsActivity;
 
 #[Fillable([
-    'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id',
+    'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id', 'presidente_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
     'colonia', 'codigo_postal', 'demarcacion_id', 'seccion_electoral', 'clave_electoral', 'telefono',
     'curp', 'apodo', 'foto', 'estado', 'notas'
@@ -45,6 +45,66 @@ class User extends Authenticatable
         return $this->foto ? asset('storage/' . $this->foto) : null;
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->presidente_id)) {
+                if (auth()->check()) {
+                    $user->presidente_id = auth()->user()->getPresidenteId();
+                } else if ($user->parent_id) {
+                    $parent = User::find($user->parent_id);
+                    if ($parent) {
+                        $user->presidente_id = $parent->getPresidenteId();
+                    }
+                }
+            }
+        });
+
+        static::created(function ($user) {
+            if ($user->role === 'presidente' && empty($user->presidente_id)) {
+                $user->presidente_id = $user->id;
+                $user->saveQuietly();
+            }
+        });
+    }
+
+    /**
+     * Obtener el presidente raíz asignado a este usuario.
+     */
+    public function presidente()
+    {
+        return $this->belongsTo(User::class, 'presidente_id');
+    }
+
+    /**
+     * Resuelve el ID del presidente raíz.
+     */
+    public function getPresidenteId()
+    {
+        if ($this->role === 'presidente') {
+            return $this->id;
+        }
+        if ($this->presidente_id) {
+            return $this->presidente_id;
+        }
+        // Fallback: resolver a través del líder inmediato
+        $parent = $this->leader;
+        if ($parent) {
+            return $parent->getPresidenteId();
+        }
+        return null;
+    }
+
+    /**
+     * Scope para filtrar usuarios por presidente.
+     */
+    public function scopeForPresidente($query, $presidenteId)
+    {
+        return $query->where('presidente_id', $presidenteId);
+    }
+
     /**
      * Obtener la demarcación asignada a este usuario.
      */
@@ -58,7 +118,7 @@ class User extends Authenticatable
      */
     public function leader()
     {
-        return $this->belongsTo(User::class, 'parent_id')->select('id', 'name', 'email', 'role');
+        return $this->belongsTo(User::class, 'parent_id')->select('id', 'name', 'email', 'role', 'parent_id', 'presidente_id');
     }
 
     /**
@@ -97,7 +157,7 @@ class User extends Authenticatable
     public function queryOperadores()
     {
         if ($this->role === 'presidente') {
-            return User::where('role', 'operador');
+            return User::where('role', 'operador')->where('presidente_id', $this->id);
         }
 
         if ($this->role === 'rd') {
@@ -113,7 +173,7 @@ class User extends Authenticatable
     public function queryPromotores()
     {
         if ($this->role === 'presidente') {
-            return User::where('role', 'promotor');
+            return User::where('role', 'promotor')->where('presidente_id', $this->id);
         }
 
         if ($this->role === 'rd') {
@@ -190,8 +250,8 @@ class User extends Authenticatable
         }
 
         if ($this->role === 'presidente') {
-            // El presidente tiene visibilidad global de todos los promovidos
-            return Promovido::query();
+            // El presidente tiene visibilidad de todos los promovidos de su estructura
+            return Promovido::where('presidente_id', $this->id);
         }
 
         return Promovido::whereRaw('1 = 0');

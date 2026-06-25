@@ -122,6 +122,17 @@ trait LogsActivity
                 $modelRepresentation = $model->getKey();
             }
 
+            $presidenteId = null;
+            if ($user) {
+                $presidenteId = $user->getPresidenteId();
+            } elseif ($model) {
+                if (isset($model->presidente_id)) {
+                    $presidenteId = $model->presidente_id;
+                } elseif (get_class($model) === \App\Models\User::class && $model->role === 'presidente') {
+                    $presidenteId = $model->id;
+                }
+            }
+
             ActivityLog::create([
                 'user_id' => $user?->id,
                 'user_identifier' => $userIdentifier,
@@ -134,6 +145,7 @@ trait LogsActivity
                 'changed_data' => $changed,
                 'ip_address' => Request::ip(),
                 'user_agent' => Request::userAgent(),
+                'presidente_id' => $presidenteId,
             ]);
         } catch (\Exception $e) {
             // Log to laravel log files so it doesn't interrupt standard flow

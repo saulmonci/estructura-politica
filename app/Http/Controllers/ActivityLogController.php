@@ -16,7 +16,7 @@ class ActivityLogController extends Controller
         // Restrict access to President only
         abort_if($request->user()->role !== 'presidente', 403, 'Acceso denegado. Solo el Presidente puede acceder a esta información.');
 
-        $query = ActivityLog::query();
+        $query = ActivityLog::where('presidente_id', $request->user()->id);
 
         // Global search
         if ($search = $request->input('search')) {
@@ -76,7 +76,7 @@ class ActivityLogController extends Controller
     {
         abort_if($request->user()->role !== 'presidente', 403, 'Acceso denegado.');
 
-        $log = ActivityLog::findOrFail($id);
+        $log = ActivityLog::where('presidente_id', $request->user()->id)->findOrFail($id);
 
         return response()->json($log);
     }

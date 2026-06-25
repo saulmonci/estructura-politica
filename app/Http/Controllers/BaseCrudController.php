@@ -36,7 +36,11 @@ abstract class BaseCrudController extends Controller
         // restringimos la consulta a los registros que le pertenecen (jerarquía).
         $user = $request->user();
         if ($user && $user->role === 'presidente') {
-            $query->where('parent_id', $user->id);
+            if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class, \App\Models\ActivityLog::class])) {
+                $query->where('presidente_id', $user->id);
+            } else {
+                $query->where('parent_id', $user->id);
+            }
         }
 
         return $query;

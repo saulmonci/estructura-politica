@@ -9,6 +9,22 @@ class ActivityLog extends Model
 {
     protected $table = 'activity_logs';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($log) {
+            if (empty($log->presidente_id)) {
+                if ($log->user_id) {
+                    $user = User::find($log->user_id);
+                    if ($user) {
+                        $log->presidente_id = $user->getPresidenteId();
+                    }
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'user_identifier',
@@ -21,6 +37,7 @@ class ActivityLog extends Model
         'changed_data',
         'ip_address',
         'user_agent',
+        'presidente_id',
     ];
 
     /**
