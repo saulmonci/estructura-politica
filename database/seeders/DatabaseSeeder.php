@@ -33,6 +33,8 @@ class DatabaseSeeder extends Seeder
                 'parent_id' => null,
             ]
         );
+        $presidente->presidente_id = $presidente->id;
+        $presidente->save();
 
         // 2. Crear 2 RDs asignados a ese Presidente
         $rds = [];
@@ -44,6 +46,7 @@ class DatabaseSeeder extends Seeder
                     'password' => Hash::make('secret'),
                     'role' => 'rd',
                     'parent_id' => $presidente->id,
+                    'presidente_id' => $presidente->id,
                 ]
             );
         }
@@ -60,6 +63,7 @@ class DatabaseSeeder extends Seeder
                         'password' => Hash::make('secret'),
                         'role' => 'promotor',
                         'parent_id' => $rd->id,
+                        'presidente_id' => $presidente->id,
                     ]
                 );
                 $promotorCount++;
@@ -85,6 +89,7 @@ class DatabaseSeeder extends Seeder
                     'seccion_electoral' => $secciones[array_rand($secciones)],
                     'colonia' => $colonias[array_rand($colonias)],
                     'promotor_id' => $promotor->id,
+                    'presidente_id' => $presidente->id,
                 ]);
                 $promovidoCount++;
             }
