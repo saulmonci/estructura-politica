@@ -51,10 +51,29 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 3. Crear 4 Promotores (2 por cada RD)
+        // 3. Crear 4 Operadores (2 por cada RD)
+        $operadores = [];
+        $operadorCount = 1;
+        foreach ($rds as $rd) {
+            for ($o = 1; $o <= 2; $o++) {
+                $operadores[] = User::updateOrCreate(
+                    ['email' => "operador$operadorCount@estructura.com"],
+                    [
+                        'name' => "Operador Político $operadorCount",
+                        'password' => Hash::make('secret'),
+                        'role' => 'operador',
+                        'parent_id' => $rd->id,
+                        'presidente_id' => $presidente->id,
+                    ]
+                );
+                $operadorCount++;
+            }
+        }
+
+        // 4. Crear 8 Promotores (2 por cada Operador)
         $promotores = [];
         $promotorCount = 1;
-        foreach ($rds as $rd) {
+        foreach ($operadores as $operador) {
             for ($p = 1; $p <= 2; $p++) {
                 $promotores[] = User::updateOrCreate(
                     ['email' => "promotor$promotorCount@estructura.com"],
@@ -62,7 +81,7 @@ class DatabaseSeeder extends Seeder
                         'name' => "Promotor Electoral $promotorCount",
                         'password' => Hash::make('secret'),
                         'role' => 'promotor',
-                        'parent_id' => $rd->id,
+                        'parent_id' => $operador->id,
                         'presidente_id' => $presidente->id,
                     ]
                 );
@@ -70,13 +89,13 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // 4. Crear 20 Promovidos distribuidos entre los promotores
+        // 5. Crear 40 Promovidos distribuidos entre los promotores
         $colonias = ['Centro', 'Lomas Altas', 'San Rafael', 'Pedregal', 'Santa Cruz'];
         $secciones = ['0120', '0121', '0122', '0123', '0124'];
 
         $promovidoCount = 1;
         foreach ($promotores as $promotor) {
-            // 5 promovidos por promotor (total 4 * 5 = 20 promovidos)
+            // 5 promovidos por promotor (total 8 * 5 = 40 promovidos)
             for ($pr = 1; $pr <= 5; $pr++) {
                 // Generar una clave de elector simulada única (18 caracteres)
                 $claveElector = strtoupper(Str::random(6)) . rand(10, 99) . rand(10, 99) . rand(10, 99) . rand(10, 99) . strtoupper(Str::random(4));
