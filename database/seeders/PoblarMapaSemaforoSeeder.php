@@ -72,6 +72,12 @@ class PoblarMapaSemaforoSeeder extends Seeder
         $apellidos = ['Hernández', 'García', 'Martínez', 'López', 'González', 'Pérez', 'Rodríguez', 'Sánchez', 'Ramírez', 'Cruz', 'Gómez', 'Flores', 'Morales', 'Vázquez', 'Jiménez', 'Reyes'];
         $colonias = ['Centro', 'Lomas', 'Vista Hermosa', 'San Juan', 'Las Palmas', 'Pedregal', 'Santa Fe', 'Infonavit'];
 
+        $presidente = User::where('role', 'presidente')->first();
+        if (!$presidente) {
+            $this->command->error('No se encontró un presidente en la base de datos. Por favor corre el DatabaseSeeder primero.');
+            return;
+        }
+        
         foreach ($demarcaciones as $demarcacion) {
             $demId = $demarcacion->id;
             $quantity = $targets[$demId] ?? 50;
@@ -98,6 +104,7 @@ class PoblarMapaSemaforoSeeder extends Seeder
                     'colonia' => $colonias[array_rand($colonias)],
                     'promotor_id' => $promotores[array_rand($promotores)],
                     'demarcacion_id' => $demId,
+                    "presidente_id" => $presidente->id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
