@@ -55,6 +55,9 @@ class MexicoStatesAndMunicipalitiesSeeder extends Seeder
                     ->pluck('nombre')
                     ->toArray();
 
+                // Eliminar duplicados que puedan venir en el JSON (ej. Oaxaca tiene dos 'San Juan Mixtepec')
+                $municipios = array_unique($municipios);
+
                 foreach ($municipios as $muniNombre) {
                     if (!in_array($muniNombre, $nombresExistentes)) {
                         $municipiosParaInsertar[] = [
