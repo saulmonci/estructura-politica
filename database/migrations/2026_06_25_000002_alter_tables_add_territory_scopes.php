@@ -40,62 +40,56 @@ return new class extends Migration {
             $defaultMuniId = $defaultMuni->id;
             $defaultStateId = $defaultMuni->state_id;
 
-            // A) Actualizar promovidos existentes basándose en su demarcacion_id
-            $promovidos = DB::table('promovidos')->get();
-            foreach ($promovidos as $promovido) {
-                if ($promovido->demarcacion_id) {
-                    $demarcacion = DB::table('demarcaciones')->where('id', $promovido->demarcacion_id)->first();
-                    if ($demarcacion) {
-                        DB::table('promovidos')->where('id', $promovido->id)->update([
-                            'municipality_id' => $demarcacion->municipality_id,
-                            'state_id' => $defaultStateId
-                        ]);
-                        continue;
-                    }
-                }
-                
-                DB::table('promovidos')->where('id', $promovido->id)->update([
-                    'municipality_id' => $defaultMuniId,
-                    'state_id' => $defaultStateId
+            // A) Actualizar promovidos masivamente (Bulk Updates) para evitar problemas de memoria
+            // Primero asentar valores por defecto para todos
+            DB::table('promovidos')->update([
+                'municipality_id' => $defaultMuniId,
+                'state_id' => $defaultStateId
+            ]);
+
+            // Luego actualizar aquellos cuya demarcación pertenezca a un municipio específico
+            $demarcaciones = DB::table('demarcaciones')->get();
+            foreach ($demarcaciones as $demarcacion) {
+                DB::table('promovidos')->where('demarcacion_id', $demarcacion->id)->update([
+                    'municipality_id' => $demarcacion->municipality_id,
                 ]);
             }
 
-            // B) Actualizar usuarios existentes
-            $users = DB::table('users')->get();
-            foreach ($users as $user) {
-                if ($user->role === 'admin' || $user->role === 'superuser') {
-                    DB::table('users')->where('id', $user->id)->update([
-                        'scope_level' => 'estatal',
-                        'candidate_type' => 'gobernador',
-                        'state_id' => $defaultStateId,
-                        'municipality_id' => null,
-                        'demarcacion_id' => null
+            // B) Actualizar usuarios masivamente (Bulk Updates)
+            // Administradores y Superusuarios
+            DB::table('users')->whereIn('role', ['admin', 'superuser'])->update([
+                'scope_level' => 'estatal',
+                'candidate_type' => 'gobernador',
+                'state_id' => $defaultStateId,
+                'municipality_id' => null,
+                'demarcacion_id' => null
+            ]);
+
+            // Presidentes Municipales
+            DB::table('users')->where('role', 'presidente')->update([
+                'scope_level' => 'municipal',
+                'candidate_type' => 'presidente_municipal',
+                'state_id' => $defaultStateId,
+                'municipality_id' => $defaultMuniId,
+                'demarcacion_id' => null
+            ]);
+
+            // Demás usuarios (por defecto Regidores/Demarcación)
+            DB::table('users')->whereNotIn('role', ['admin', 'superuser', 'presidente'])->update([
+                'scope_level' => 'demarcacion',
+                'candidate_type' => 'regidor',
+                'state_id' => $defaultStateId,
+                'municipality_id' => $defaultMuniId
+            ]);
+
+            // Ajustar municipio a los demás usuarios si tienen demarcación
+            foreach ($demarcaciones as $demarcacion) {
+                DB::table('users')
+                    ->whereNotIn('role', ['admin', 'superuser', 'presidente'])
+                    ->where('demarcacion_id', $demarcacion->id)
+                    ->update([
+                        'municipality_id' => $demarcacion->municipality_id,
                     ]);
-                } 
-                elseif ($user->role === 'presidente') {
-                    DB::table('users')->where('id', $user->id)->update([
-                        'scope_level' => 'municipal',
-                        'candidate_type' => 'presidente_municipal',
-                        'state_id' => $defaultStateId,
-                        'municipality_id' => $defaultMuniId,
-                        'demarcacion_id' => null
-                    ]);
-                } 
-                else {
-                    $muniId = $defaultMuniId;
-                    if ($user->demarcacion_id) {
-                        $demarcacion = DB::table('demarcaciones')->where('id', $user->demarcacion_id)->first();
-                        if ($demarcacion) {
-                            $muniId = $demarcacion->municipality_id;
-                        }
-                    }
-                    DB::table('users')->where('id', $user->id)->update([
-                        'scope_level' => 'demarcacion',
-                        'candidate_type' => 'regidor',
-                        'state_id' => $defaultStateId,
-                        'municipality_id' => $muniId
-                    ]);
-                }
             }
         }
     }
