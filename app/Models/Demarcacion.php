@@ -17,7 +17,35 @@ class Demarcacion extends Model
         'nombre',
         'meta',
         'geom',
+        'municipality_id',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($demarcacion) {
+            if (empty($demarcacion->municipality_id)) {
+                $defaultMuni = Municipality::first();
+                if (!$defaultMuni) {
+                    $defaultState = State::firstOrCreate(['nombre' => 'Estado por Defecto']);
+                    $defaultMuni = Municipality::create([
+                        'state_id' => $defaultState->id,
+                        'nombre' => 'Municipio por Defecto'
+                    ]);
+                }
+                $demarcacion->municipality_id = $defaultMuni->id;
+            }
+        });
+    }
+
+    /**
+     * Get the municipality this demarcation belongs to.
+     */
+    public function municipality()
+    {
+        return $this->belongsTo(Municipality::class, 'municipality_id');
+    }
 
     /**
      * Get the sections for this demarcation.

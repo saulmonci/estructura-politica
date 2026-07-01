@@ -59,6 +59,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/apoyos/{apoyo}', [App\Http\Controllers\ApoyoController::class, 'destroy']);
 
     // Catálogos
+    Route::get('/catalogos/estados', [App\Http\Controllers\CatalogoController::class, 'getEstados']);
+    Route::get('/catalogos/municipios', [App\Http\Controllers\CatalogoController::class, 'getMunicipios']);
     Route::get('/catalogos/demarcaciones', [App\Http\Controllers\CatalogoController::class, 'getDemarcaciones']);
     Route::get('/catalogos/demarcaciones/{demarcacion}/secciones', [App\Http\Controllers\CatalogoController::class, 'getSecciones']);
 

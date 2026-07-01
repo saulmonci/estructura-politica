@@ -96,7 +96,7 @@ export default function PromovidosIndex({ availablePromotores }) {
             title: 'APELLIDOS',
             dataIndex: 'apellidos',
             key: 'apellidos',
-            hideInTable: true, // Solo se usa en el buscador
+            hideInTable: true,
         },
         {
             title: 'IDENTIFICACIÓN',
@@ -124,6 +124,72 @@ export default function PromovidosIndex({ availablePromotores }) {
                 </span>
             )
         },
+        
+        // ------------------ FILTROS TERRITORIALES EN CASCADA ------------------
+        {
+            title: 'Estado',
+            dataIndex: 'state_id',
+            key: 'state_id',
+            valueType: 'select',
+            hideInTable: true,
+            hideInSearch: auth?.user?.scope_level !== 'estatal' && auth?.user?.role !== 'superuser',
+            request: async () => {
+                const response = await axios.get('/catalogos/estados');
+                return response.data.map(e => ({ label: e.nombre, value: e.id }));
+            },
+            fieldProps: {
+                placeholder: 'Filtrar por Estado',
+                disabled: auth?.user?.scope_level === 'estatal' && auth?.user?.role !== 'superuser',
+            }
+        },
+        {
+            title: 'Municipio',
+            dataIndex: 'municipality_id',
+            key: 'municipality_id',
+            valueType: 'select',
+            hideInTable: true,
+            hideInSearch: auth?.user?.scope_level === 'demarcacion',
+            dependencies: ['state_id'],
+            request: async (params) => {
+                const isMunicipal = auth?.user?.scope_level === 'municipal' && auth?.user?.role !== 'superuser';
+                if (isMunicipal) {
+                    return [{ label: auth?.user?.municipality?.nombre || 'Mi Municipio', value: auth?.user?.municipality_id }];
+                }
+                const activeStateId = auth?.user?.scope_level === 'estatal' && auth?.user?.role !== 'superuser' 
+                    ? auth?.user?.state_id 
+                    : params.state_id;
+                
+                if (!activeStateId) return [];
+                const response = await axios.get(`/catalogos/municipios?state_id=${activeStateId}`);
+                return response.data.map(m => ({ label: m.nombre, value: m.id }));
+            },
+            fieldProps: {
+                placeholder: 'Filtrar por Municipio',
+                disabled: auth?.user?.scope_level === 'municipal' && auth?.user?.role !== 'superuser',
+            }
+        },
+        {
+            title: 'Demarcación',
+            dataIndex: 'demarcacion_id',
+            key: 'demarcacion_id',
+            valueType: 'select',
+            hideInTable: true,
+            hideInSearch: auth?.user?.scope_level === 'demarcacion',
+            dependencies: ['municipality_id'],
+            request: async (params) => {
+                const isMunicipal = auth?.user?.scope_level === 'municipal' && auth?.user?.role !== 'superuser';
+                const activeMuniId = isMunicipal ? auth?.user?.municipality_id : params.municipality_id;
+                
+                if (!activeMuniId) return [];
+                const response = await axios.get(`/catalogos/demarcaciones?municipality_id=${activeMuniId}`);
+                return response.data.map(d => ({ label: d.nombre, value: d.id }));
+            },
+            fieldProps: {
+                placeholder: 'Filtrar por Demarcación',
+            }
+        },
+        // ------------------ FIN FILTROS TERRITORIALES ------------------
+
         {
             title: 'DIRECCIÓN / UBICACIÓN',
             key: 'direccion',
@@ -136,9 +202,11 @@ export default function PromovidosIndex({ availablePromotores }) {
                     <span className="text-gray-500 text-xs flex items-center">
                         <EnvironmentOutlined className="mr-1" /> {record.colonia || 'Sin colonia'} {record.codigo_postal ? `(CP: ${record.codigo_postal})` : ''}
                     </span>
-                    <div className="flex gap-2 mt-0.5">
-                        {record.demarcacion && <span className="text-xs text-orange-500">Demarcación: {record.demarcacion.nombre}</span>}
-                        {record.seccion_electoral && <span className="text-xs text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
+                    <div className="flex flex-col gap-0.5 mt-1 text-xs">
+                        {record.state && <span className="text-gray-500">Estado: {record.state.nombre}</span>}
+                        {record.municipality && <span className="text-gray-500">Municipio: {record.municipality.nombre}</span>}
+                        {record.demarcacion && <span className="text-orange-500">Demarcación: {record.demarcacion.nombre}</span>}
+                        {record.seccion_electoral && <span className="text-blue-500 font-bold">Sección: {record.seccion_electoral}</span>}
                     </div>
                 </div>
             )

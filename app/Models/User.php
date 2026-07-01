@@ -12,9 +12,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Apoyo;
 use App\Traits\LogsActivity;
+use App\Models\Scopes\TerritoryScope;
 
 #[Fillable([
-    'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'parent_id', 'presidente_id',
+    'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'scope_level', 'candidate_type',
+    'state_id', 'municipality_id', 'parent_id', 'presidente_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
     'colonia', 'codigo_postal', 'demarcacion_id', 'seccion_electoral', 'clave_electoral', 'telefono',
     'curp', 'apodo', 'foto', 'estado', 'notas'
@@ -49,6 +51,8 @@ class User extends Authenticatable
     {
         parent::boot();
 
+        static::addGlobalScope(new TerritoryScope);
+
         static::creating(function ($user) {
             if (empty($user->presidente_id)) {
                 if (auth()->check()) {
@@ -58,6 +62,38 @@ class User extends Authenticatable
                     if ($parent) {
                         $user->presidente_id = $parent->getPresidenteId();
                     }
+                }
+            }
+
+            // Resolver automáticamente desde demarcación
+            if ($user->demarcacion_id) {
+                $demarcacion = Demarcacion::find($user->demarcacion_id);
+                if ($demarcacion) {
+                    $user->municipality_id = $demarcacion->municipality_id;
+                    $user->state_id = $demarcacion->municipality?->state_id;
+                }
+            }
+
+            // O resolver desde el municipio
+            if ($user->municipality_id && empty($user->state_id)) {
+                $municipality = Municipality::find($user->municipality_id);
+                if ($municipality) {
+                    $user->state_id = $municipality->state_id;
+                }
+            }
+        });
+
+        static::saving(function ($user) {
+            if ($user->isDirty('demarcacion_id') && $user->demarcacion_id) {
+                $demarcacion = Demarcacion::find($user->demarcacion_id);
+                if ($demarcacion) {
+                    $user->municipality_id = $demarcacion->municipality_id;
+                    $user->state_id = $demarcacion->municipality?->state_id;
+                }
+            } elseif ($user->isDirty('municipality_id') && $user->municipality_id) {
+                $municipality = Municipality::find($user->municipality_id);
+                if ($municipality) {
+                    $user->state_id = $municipality->state_id;
                 }
             }
         });
@@ -103,6 +139,22 @@ class User extends Authenticatable
     public function scopeForPresidente($query, $presidenteId)
     {
         return $query->where('presidente_id', $presidenteId);
+    }
+
+    /**
+     * Obtener el estado asignado a este usuario.
+     */
+    public function state()
+    {
+        return $this->belongsTo(State::class, 'state_id');
+    }
+
+    /**
+     * Obtener el municipio asignado a este usuario.
+     */
+    public function municipality()
+    {
+        return $this->belongsTo(Municipality::class, 'municipality_id');
     }
 
     /**

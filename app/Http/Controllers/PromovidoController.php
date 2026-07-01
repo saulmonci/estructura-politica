@@ -18,11 +18,16 @@ class PromovidoController extends BaseCrudController
         $user = $request->user();
         
         if (!$user) {
-            return Promovido::query()->with('demarcacion');
+            return Promovido::query()->with(['state', 'municipality', 'demarcacion']);
+        }
+
+        // Si es un rol administrativo/campaña, cargamos todos bajo su scope territorial
+        if (in_array($user->role, ['superuser', 'admin', 'campana_admin'])) {
+            return Promovido::query()->with(['state', 'municipality', 'demarcacion']);
         }
 
         // Usamos la función optimizada del modelo User para obtener promovidos
-        return $user->queryPromovidos()->with('demarcacion');
+        return $user->queryPromovidos()->with(['state', 'municipality', 'demarcacion']);
     }
 
     public function index(Request $request)
@@ -85,6 +90,10 @@ class PromovidoController extends BaseCrudController
             
             if ($field === 'promotor_id') {
                 $query->where('promotor_id', $value);
+            }
+
+            if (in_array($field, ['state_id', 'municipality_id', 'demarcacion_id'])) {
+                $query->where($field, $value);
             }
 
             if ($field === 'created_at' && is_array($value) && count($value) === 2) {

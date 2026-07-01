@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use App\Models\Scopes\TerritoryScope;
 
 class Promovido extends Model
 {
@@ -15,6 +16,8 @@ class Promovido extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::addGlobalScope(new TerritoryScope);
 
         static::creating(function ($promovido) {
             if (empty($promovido->presidente_id)) {
@@ -27,6 +30,25 @@ class Promovido extends Model
                     }
                 }
             }
+
+            // Resolver automáticamente state_id y municipality_id desde la demarcación
+            if ($promovido->demarcacion_id) {
+                $demarcacion = Demarcacion::find($promovido->demarcacion_id);
+                if ($demarcacion) {
+                    $promovido->municipality_id = $demarcacion->municipality_id;
+                    $promovido->state_id = $demarcacion->municipality?->state_id;
+                }
+            }
+        });
+
+        static::saving(function ($promovido) {
+            if ($promovido->isDirty('demarcacion_id') && $promovido->demarcacion_id) {
+                $demarcacion = Demarcacion::find($promovido->demarcacion_id);
+                if ($demarcacion) {
+                    $promovido->municipality_id = $demarcacion->municipality_id;
+                    $promovido->state_id = $demarcacion->municipality?->state_id;
+                }
+            }
         });
     }
 
@@ -37,6 +59,8 @@ class Promovido extends Model
         'curp',
         'telefono',
         'demarcacion_id',
+        'state_id',
+        'municipality_id',
         'seccion_electoral',
         'colonia',
         'calle',
@@ -69,6 +93,22 @@ class Promovido extends Model
     public function presidente()
     {
         return $this->belongsTo(User::class, 'presidente_id');
+    }
+
+    /**
+     * Obtener el estado asignado a este promovido.
+     */
+    public function state()
+    {
+        return $this->belongsTo(State::class, 'state_id');
+    }
+
+    /**
+     * Obtener el municipio asignado a este promovido.
+     */
+    public function municipality()
+    {
+        return $this->belongsTo(Municipality::class, 'municipality_id');
     }
 
     /**
