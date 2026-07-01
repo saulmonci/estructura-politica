@@ -208,6 +208,10 @@ class User extends Authenticatable
      */
     public function queryOperadores()
     {
+        if (in_array($this->role, ['admin', 'superuser'])) {
+            return User::where('role', 'operador'); // TerritoryScope applies automatically
+        }
+
         if ($this->role === 'presidente') {
             return User::where('role', 'operador')->where('presidente_id', $this->id);
         }
@@ -224,6 +228,10 @@ class User extends Authenticatable
      */
     public function queryPromotores()
     {
+        if (in_array($this->role, ['admin', 'superuser'])) {
+            return User::where('role', 'promotor'); // TerritoryScope applies automatically
+        }
+
         if ($this->role === 'presidente') {
             return User::where('role', 'promotor')->where('presidente_id', $this->id);
         }
@@ -254,6 +262,10 @@ class User extends Authenticatable
      */
     public function queryPromovidos()
     {
+        if (in_array($this->role, ['admin', 'superuser'])) {
+            return Promovido::query(); // TerritoryScope applies automatically
+        }
+
         if ($this->role === 'promotor') {
             return Promovido::where('promotor_id', $this->id);
         }
