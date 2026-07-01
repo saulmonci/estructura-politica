@@ -16,7 +16,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if($request->user()->role !== 'presidente', 403, 'Acceso denegado. Solo el Presidente puede ver esto.');
+        abort_if(!in_array($request->user()->role, ['presidente', 'admin', 'superuser']), 403, 'Acceso denegado. Solo los administradores pueden ver esto.');
     }
 
     protected function getBaseQuery(Request $request): Builder

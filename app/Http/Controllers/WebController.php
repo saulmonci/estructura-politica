@@ -261,7 +261,7 @@ class WebController extends Controller
     public function mapa(Request $request)
     {
         $user = $request->user();
-        if ($user->role !== 'presidente') {
+        if (!in_array($user->role, ['presidente', 'admin', 'superuser'])) {
             abort(403, 'No autorizado.');
         }
 

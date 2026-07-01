@@ -14,7 +14,7 @@ class SeccionElectoralController extends Controller
     protected function checkAccess(Request $request): void
     {
         abort_if(
-            !$request->user() || $request->user()->role !== 'presidente',
+            !$request->user() || !in_array($request->user()->role, ['presidente', 'admin', 'superuser']),
             403,
             'Acceso denegado. Solo el Presidente puede administrar las secciones electorales.'
         );
