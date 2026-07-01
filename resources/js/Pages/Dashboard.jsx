@@ -88,7 +88,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         />
                         <div className="mt-4 flex justify-between items-center">
                             <span className="text-xs text-green-600 font-medium">Activos</span>
-                            {user.role === 'presidente' && (
+                            {['presidente', 'admin', 'superuser'].includes(user.role) && (
                                 <Link href="/representantes" className="text-blue-600 text-sm hover:underline">Ver todos →</Link>
                             )}
                         </div>
@@ -249,11 +249,11 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
 
     return (
         <MainLayout>
-            <Head title={`Panel de ${user.role === 'presidente' ? 'Presidente' : (user.role === 'rd' ? 'Representante de Demarcación' : 'Promotor')}`} />
+            <Head title={`Panel de ${['presidente', 'admin', 'superuser'].includes(user.role) ? 'Administración' : (user.role === 'rd' ? 'Representante de Demarcación' : 'Promotor')}`} />
             
             <div className="mb-6">
                 <h1 className="text-2xl font-bold mb-1">
-                    {user.role === 'presidente' && 'Panel del Presidente'}
+                    {['presidente', 'admin', 'superuser'].includes(user.role) && 'Panel General'}
                     {user.role === 'rd' && 'Panel de Representante de Demarcación'}
                     {user.role === 'promotor' && 'Panel de Promotor'}
                 </h1>

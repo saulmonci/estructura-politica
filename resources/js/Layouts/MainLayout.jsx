@@ -101,17 +101,17 @@ export default function MainLayout({ children }) {
                                         name: 'Dashboard',
                                         icon: <DashboardOutlined />,
                                     },
-                                    user.role === 'presidente' && {
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/representantes',
                                         name: 'Representantes (RD)',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    ['presidente', 'rd'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'rd'].includes(user.role) && {
                                         path: '/operadores',
                                         name: 'Operadores',
                                         icon: <TeamOutlined />,
                                     },
-                                    ['presidente', 'rd', 'operador'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'rd', 'operador'].includes(user.role) && {
                                         path: '/promotores',
                                         name: 'Promotores',
                                         icon: <TeamOutlined />,
@@ -121,23 +121,23 @@ export default function MainLayout({ children }) {
                                         name: 'Promovidos',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    user.role === 'presidente' && {
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/mapa',
                                         name: 'Mapa Territorial',
                                         icon: <EnvironmentOutlined />,
                                     },
-                                    user.role === 'presidente' && {
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/demarcaciones',
                                         name: 'Demarcaciones',
                                         icon: <EnvironmentOutlined />,
                                     },
 
-                                    user.role === 'presidente' && {
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/estadisticas',
                                         name: 'Estadísticas',
                                         icon: <BarChartOutlined />,
                                     },
-                                    user.role === 'presidente' && {
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/logs',
                                         name: 'Bitácora',
                                         icon: <HistoryOutlined />,
