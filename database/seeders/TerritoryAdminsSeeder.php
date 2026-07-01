@@ -37,6 +37,7 @@ class TerritoryAdminsSeeder extends Seeder
                     'role' => 'admin',
                     'scope_level' => 'estatal',
                     'state_id' => $state->id,
+                    'municipality_id' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
