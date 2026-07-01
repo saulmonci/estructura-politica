@@ -16,7 +16,7 @@ class OperadorController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'rd']), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, ['presidente', 'rd', "superadmin"]), 403, 'Acceso denegado.');
     }
 
     protected function getBaseQuery(Request $request): Builder
@@ -36,11 +36,11 @@ class OperadorController extends BaseCrudController
         if ($response instanceof \Inertia\Response) {
             $user = $request->user();
             $rds = [];
-            
+
             if ($user && strtolower($user->role) === 'presidente') {
                 $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
             }
-            
+
             $response->with('availableRds', $rds);
         }
 
@@ -50,12 +50,12 @@ class OperadorController extends BaseCrudController
     protected function applySearch(Builder $query, string $search): void
     {
         $searchLower = strtolower($search);
-        $query->where(function($q) use ($searchLower, $search) {
+        $query->where(function ($q) use ($searchLower, $search) {
             $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$searchLower}%"])
-              ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('telefono', 'like', "%{$search}%")
-              ->orWhere('curp', 'like', "%{$search}%");
+                ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('telefono', 'like', "%{$search}%")
+                ->orWhere('curp', 'like', "%{$search}%");
         });
     }
 
@@ -66,9 +66,9 @@ class OperadorController extends BaseCrudController
 
             if ($field === 'name') {
                 $valLower = strtolower($value);
-                $query->where(function($q) use ($valLower) {
+                $query->where(function ($q) use ($valLower) {
                     $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
-                      ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
+                        ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
                 });
             } elseif (in_array($field, ['telefono', 'colonia'])) {
                 $query->where($field, 'like', "%{$value}%");
@@ -117,7 +117,7 @@ class OperadorController extends BaseCrudController
 
         return $rules;
     }
-    
+
     public function store(Request $request)
     {
         if ($request->has('nombre') && $request->has('apellidos')) {
@@ -128,7 +128,7 @@ class OperadorController extends BaseCrudController
             $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
             $request->merge(['email' => $identificador . '@sistema.local']);
         }
-        
+
         if ($request->filled('password')) {
             $request->merge(['password' => Hash::make($request->password)]);
         } else {
@@ -171,7 +171,7 @@ class OperadorController extends BaseCrudController
     protected function afterStore(Request $request, $item): void
     {
         $user = $request->user();
-        
+
         if ($user && strtolower($user->role) === 'rd') {
             $item->parent_id = $user->id;
         } elseif ($user && strtolower($user->role) === 'presidente') {
@@ -179,7 +179,7 @@ class OperadorController extends BaseCrudController
                 $item->parent_id = $request->input('parent_id');
             }
         }
-        
+
         $item->save();
         $this->handlePhotoUpload($request, $item);
     }
@@ -193,9 +193,26 @@ class OperadorController extends BaseCrudController
     protected function getExportHeaders(): array
     {
         return [
-            'ID', 'Asignado a (RD)', 'Nombre', 'Apellidos', 'Email', 'Sexo', 'Calle', 'No. Exterior', 'No. Interior', 
-            'Colonia', 'Código Postal', 'Demarcación', 'Sección Electoral', 'Clave Electoral', 
-            'Teléfono', 'CURP', 'Apodo', 'Estatus', 'Notas', 'Fecha de Registro'
+            'ID',
+            'Asignado a (RD)',
+            'Nombre',
+            'Apellidos',
+            'Email',
+            'Sexo',
+            'Calle',
+            'No. Exterior',
+            'No. Interior',
+            'Colonia',
+            'Código Postal',
+            'Demarcación',
+            'Sección Electoral',
+            'Clave Electoral',
+            'Teléfono',
+            'CURP',
+            'Apodo',
+            'Estatus',
+            'Notas',
+            'Fecha de Registro'
         ];
     }
 

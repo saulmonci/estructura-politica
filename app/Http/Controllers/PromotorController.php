@@ -16,7 +16,7 @@ class PromotorController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'rd', 'operador']), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, ['presidente', 'rd', 'operador', "superadmin"]), 403, 'Acceso denegado.');
     }
 
     protected function getBaseQuery(Request $request): Builder
@@ -37,7 +37,7 @@ class PromotorController extends BaseCrudController
             $user = $request->user();
             $operadores = [];
             $rds = [];
-            
+
             if ($user) {
                 $role = strtolower($user->role);
                 if ($role === 'presidente') {
@@ -47,7 +47,7 @@ class PromotorController extends BaseCrudController
                     $operadores = User::where('role', 'operador')->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
                 }
             }
-            
+
             $response->with('availableOperadores', $operadores);
             $response->with('availableRds', $rds);
         }
@@ -58,12 +58,12 @@ class PromotorController extends BaseCrudController
     protected function applySearch(Builder $query, string $search): void
     {
         $searchLower = strtolower($search);
-        $query->where(function($q) use ($searchLower, $search) {
+        $query->where(function ($q) use ($searchLower, $search) {
             $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$searchLower}%"])
-              ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('telefono', 'like', "%{$search}%")
-              ->orWhere('curp', 'like', "%{$search}%");
+                ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('telefono', 'like', "%{$search}%")
+                ->orWhere('curp', 'like', "%{$search}%");
         });
     }
 
@@ -74,9 +74,9 @@ class PromotorController extends BaseCrudController
 
             if ($field === 'name') {
                 $valLower = strtolower($value);
-                $query->where(function($q) use ($valLower) {
+                $query->where(function ($q) use ($valLower) {
                     $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
-                      ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
+                        ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
                 });
             } elseif (in_array($field, ['telefono', 'colonia'])) {
                 $query->where($field, 'like', "%{$value}%");
@@ -85,7 +85,7 @@ class PromotorController extends BaseCrudController
             if ($field === 'estado') {
                 $query->where('estado', $value);
             }
-            
+
             if ($field === 'rd_id') {
                 $opsIds = User::where('role', 'operador')->where('parent_id', $value)->pluck('id');
                 $query->whereIn('parent_id', $opsIds);
@@ -130,7 +130,7 @@ class PromotorController extends BaseCrudController
                 $rules['parent_id'] = ['required', 'exists:users,id'];
             } elseif ($role === 'rd') {
                 $rules['parent_id'] = [
-                    'required', 
+                    'required',
                     Rule::exists('users', 'id')->where('parent_id', $user->id)->where('role', 'operador')
                 ];
             }
@@ -138,7 +138,7 @@ class PromotorController extends BaseCrudController
 
         return $rules;
     }
-    
+
     public function store(Request $request)
     {
         if ($request->has('nombre') && $request->has('apellidos')) {
@@ -149,7 +149,7 @@ class PromotorController extends BaseCrudController
             $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
             $request->merge(['email' => $identificador . '@sistema.local']);
         }
-        
+
         if ($request->filled('password')) {
             $request->merge(['password' => Hash::make($request->password)]);
         } else {
@@ -192,7 +192,7 @@ class PromotorController extends BaseCrudController
     protected function afterStore(Request $request, $item): void
     {
         $user = $request->user();
-        
+
         if ($user && strtolower($user->role) === 'operador') {
             $item->parent_id = $user->id;
         } elseif ($user && in_array(strtolower($user->role), ['presidente', 'rd'])) {
@@ -200,7 +200,7 @@ class PromotorController extends BaseCrudController
                 $item->parent_id = $request->input('parent_id');
             }
         }
-        
+
         $item->save();
         $this->handlePhotoUpload($request, $item);
     }
@@ -214,9 +214,26 @@ class PromotorController extends BaseCrudController
     protected function getExportHeaders(): array
     {
         return [
-            'ID', 'Asignado a (Operador)', 'Nombre', 'Apellidos', 'Email', 'Sexo', 'Calle', 'No. Exterior', 'No. Interior', 
-            'Colonia', 'Código Postal', 'Demarcación', 'Sección Electoral', 'Clave Electoral', 
-            'Teléfono', 'CURP', 'Apodo', 'Estatus', 'Notas', 'Fecha de Registro'
+            'ID',
+            'Asignado a (Operador)',
+            'Nombre',
+            'Apellidos',
+            'Email',
+            'Sexo',
+            'Calle',
+            'No. Exterior',
+            'No. Interior',
+            'Colonia',
+            'Código Postal',
+            'Demarcación',
+            'Sección Electoral',
+            'Clave Electoral',
+            'Teléfono',
+            'CURP',
+            'Apodo',
+            'Estatus',
+            'Notas',
+            'Fecha de Registro'
         ];
     }
 
