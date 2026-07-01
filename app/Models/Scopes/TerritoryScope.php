@@ -14,8 +14,8 @@ class TerritoryScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        // Prevent scope application in console commands (artisan seed/migrate) or when no user is logged in, but ALLOW during tests
-        if ((app()->runningInConsole() && !app()->runningUnitTests()) || !Auth::check()) {
+        // Prevent scope application in console commands (artisan seed/migrate) or when user is not yet resolved, but ALLOW during tests
+        if ((app()->runningInConsole() && !app()->runningUnitTests()) || !Auth::hasUser()) {
             return;
         }
 
