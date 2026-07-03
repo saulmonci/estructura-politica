@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ActivityLog extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'activity_logs';
 
     protected static function boot()
@@ -14,11 +17,17 @@ class ActivityLog extends Model
         parent::boot();
 
         static::creating(function ($log) {
-            if (empty($log->presidente_id)) {
-                if ($log->user_id) {
-                    $user = User::find($log->user_id);
-                    if ($user) {
+            if ($log->user_id) {
+                $user = User::find($log->user_id);
+                if ($user) {
+                    if (empty($log->presidente_id)) {
                         $log->presidente_id = $user->getPresidenteId();
+                    }
+                    if (empty($log->state_id)) {
+                        $log->state_id = $user->state_id;
+                    }
+                    if (empty($log->municipality_id)) {
+                        $log->municipality_id = $user->municipality_id;
                     }
                 }
             }

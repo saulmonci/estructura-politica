@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\LogsActivity;
 
 class Demarcacion extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $table = 'demarcaciones';
 
@@ -25,16 +26,22 @@ class Demarcacion extends Model
         parent::boot();
 
         static::creating(function ($demarcacion) {
+            if (empty($demarcacion->state_id) && $demarcacion->municipality_id) {
+                $municipality = Municipality::find($demarcacion->municipality_id);
+                if ($municipality) {
+                    $demarcacion->state_id = $municipality->state_id;
+                }
+            }
+
             if (empty($demarcacion->municipality_id)) {
                 $defaultMuni = Municipality::first();
                 if (!$defaultMuni) {
+                    // Create default if none exists
                     $defaultState = State::firstOrCreate(['nombre' => 'Estado por Defecto']);
-                    $defaultMuni = Municipality::create([
-                        'state_id' => $defaultState->id,
-                        'nombre' => 'Municipio por Defecto'
-                    ]);
+                    $defaultMuni = Municipality::create(['state_id' => $defaultState->id, 'nombre' => 'Municipio por Defecto']);
                 }
                 $demarcacion->municipality_id = $defaultMuni->id;
+                $demarcacion->state_id = $defaultMuni->state_id;
             }
         });
     }

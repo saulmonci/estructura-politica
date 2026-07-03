@@ -4,36 +4,50 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\LogsActivity;
 
 class Apoyo extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($apoyo) {
+            $promovido = $apoyo->promovido_id ? Promovido::find($apoyo->promovido_id) : null;
+            $user = $apoyo->user_id ? User::find($apoyo->user_id) : null;
+
             if (empty($apoyo->presidente_id)) {
                 if (auth()->check()) {
                     $apoyo->presidente_id = auth()->user()->getPresidenteId();
                 } else {
                     $ownerPresidenteId = null;
-                    if ($apoyo->promovido_id) {
-                        $promovido = Promovido::find($apoyo->promovido_id);
-                        if ($promovido) {
-                            $ownerPresidenteId = $promovido->presidente_id;
-                        }
-                    } elseif ($apoyo->user_id) {
-                        $user = User::find($apoyo->user_id);
-                        if ($user) {
-                            $ownerPresidenteId = $user->presidente_id;
-                        }
+                    if ($promovido) {
+                        $ownerPresidenteId = $promovido->presidente_id;
+                    } elseif ($user) {
+                        $ownerPresidenteId = $user->presidente_id;
                     }
                     if ($ownerPresidenteId) {
                         $apoyo->presidente_id = $ownerPresidenteId;
                     }
+                }
+            }
+
+            if (empty($apoyo->state_id)) {
+                if ($promovido) {
+                    $apoyo->state_id = $promovido->state_id;
+                } elseif ($user) {
+                    $apoyo->state_id = $user->state_id;
+                }
+            }
+
+            if (empty($apoyo->municipality_id)) {
+                if ($promovido) {
+                    $apoyo->municipality_id = $promovido->municipality_id;
+                } elseif ($user) {
+                    $apoyo->municipality_id = $user->municipality_id;
                 }
             }
         });

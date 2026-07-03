@@ -15,6 +15,10 @@ return new class extends Migration {
         Schema::table('users', function (Blueprint $table) {
             $table->string('role')->change();
         });
+        // Postgres no elimina la restricción CHECK de un enum automáticamente al pasarlo a string.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check');
+        }
 
         // 1. Modificar tabla de Usuarios
         Schema::table('users', function (Blueprint $table) {
