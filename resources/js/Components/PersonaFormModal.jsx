@@ -647,7 +647,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <Image 
                                             src={URL.createObjectURL(fileList[0].originFileObj)} 
                                             alt="avatar" 
-                                            className="w-24 h-24 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            width={96}
+                                            height={96}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Button danger size="small" onClick={() => setFileList([])}>Eliminar foto</Button>
                                     </div>
@@ -656,7 +659,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <Image 
                                             src={existingFoto} 
                                             alt="avatar" 
-                                            className="w-24 h-24 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            width={96}
+                                            height={96}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
                                             beforeUpload={handleBeforeUpload}
@@ -701,7 +707,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <Image 
                                             src={URL.createObjectURL(fileListIneFrente[0].originFileObj)} 
                                             alt="ine frente" 
-                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            width={128}
+                                            height={80}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Button danger size="small" onClick={() => setFileListIneFrente([])}>Eliminar foto</Button>
                                     </div>
@@ -710,7 +719,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <Image 
                                             src={existingIneFrente} 
                                             alt="ine frente" 
-                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            width={128}
+                                            height={80}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
                                             beforeUpload={handleBeforeUpload}
@@ -755,7 +767,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <Image 
                                             src={URL.createObjectURL(fileListIneReverso[0].originFileObj)} 
                                             alt="ine reverso" 
-                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            width={128}
+                                            height={80}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Button danger size="small" onClick={() => setFileListIneReverso([])}>Eliminar foto</Button>
                                     </div>
@@ -764,7 +779,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         <Image 
                                             src={existingIneReverso} 
                                             alt="ine reverso" 
-                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            width={128}
+                                            height={80}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
                                             beforeUpload={handleBeforeUpload}
