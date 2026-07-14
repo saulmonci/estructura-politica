@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ModalForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
-import { Row, Col, message, Alert, Button, Divider, Upload, Form } from 'antd';
+import { Row, Col, message, Alert, Button, Divider, Upload, Form, Image } from 'antd';
 import { 
     UserOutlined, 
     EnvironmentOutlined, 
@@ -559,7 +559,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                 <span className="text-gray-500 font-bold mb-2">FOTO DE PERFIL</span>
                                 {fileList.length > 0 ? (
                                     <div className="w-full flex flex-col items-center justify-center">
-                                        <img 
+                                        <Image 
                                             src={URL.createObjectURL(fileList[0].originFileObj)} 
                                             alt="avatar" 
                                             className="w-24 h-24 object-cover rounded-lg border-4 border-white shadow-md mb-3"
@@ -568,7 +568,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                     </div>
                                 ) : existingFoto ? (
                                     <div className="w-full flex flex-col items-center justify-center">
-                                        <img 
+                                        <Image 
                                             src={existingFoto} 
                                             alt="avatar" 
                                             className="w-24 h-24 object-cover rounded-lg border-4 border-white shadow-md mb-3"
@@ -613,7 +613,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                 <span className="text-gray-500 font-bold mb-2">INE FRENTE</span>
                                 {fileListIneFrente.length > 0 ? (
                                     <div className="w-full flex flex-col items-center justify-center">
-                                        <img 
+                                        <Image 
                                             src={URL.createObjectURL(fileListIneFrente[0].originFileObj)} 
                                             alt="ine frente" 
                                             className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
@@ -622,7 +622,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                     </div>
                                 ) : existingIneFrente ? (
                                     <div className="w-full flex flex-col items-center justify-center">
-                                        <img 
+                                        <Image 
                                             src={existingIneFrente} 
                                             alt="ine frente" 
                                             className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
@@ -667,7 +667,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                 <span className="text-gray-500 font-bold mb-2">INE REVERSO</span>
                                 {fileListIneReverso.length > 0 ? (
                                     <div className="w-full flex flex-col items-center justify-center">
-                                        <img 
+                                        <Image 
                                             src={URL.createObjectURL(fileListIneReverso[0].originFileObj)} 
                                             alt="ine reverso" 
                                             className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
@@ -676,7 +676,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                     </div>
                                 ) : existingIneReverso ? (
                                     <div className="w-full flex flex-col items-center justify-center">
-                                        <img 
+                                        <Image 
                                             src={existingIneReverso} 
                                             alt="ine reverso" 
                                             className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
