@@ -215,10 +215,14 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
             }}
             submitter={{
                 render: (props) => {
+                    const requiresParent = (entityType === 'Operador' && auth?.user?.role === 'presidente') || (entityType === 'Promotor' && ['presidente', 'rd'].includes(auth?.user?.role));
+                    const isDisabled = requiresParent && availableRds.length === 0;
+                    
                     return (
                         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                             <Button 
                                 key="cancel" 
+                                htmlType="button"
                                 onClick={() => setOpen(false)}
                                 icon={<CloseOutlined />}
                                 className="border-gray-300 text-gray-700"
@@ -228,9 +232,11 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                             <Button 
                                 key="submit" 
                                 type="primary" 
+                                htmlType="button"
                                 onClick={() => props.form?.submit?.()}
                                 icon={<SaveOutlined />}
                                 className="bg-[#0f172a]"
+                                disabled={isDisabled}
                             >
                                 Guardar registro
                             </Button>
