@@ -215,7 +215,8 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
             }}
             submitter={{
                 render: (props) => {
-                    const requiresParent = (entityType === 'Operador' && auth?.user?.role === 'presidente') || (entityType === 'Promotor' && ['presidente', 'rd'].includes(auth?.user?.role));
+                    const userRole = auth?.user?.role?.toLowerCase() || '';
+                    const requiresParent = (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
                     const isDisabled = requiresParent && availableRds.length === 0;
                     
                     return (
@@ -340,7 +341,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                         <Divider className="my-2 border-gray-300" />
 
                         <div className="mt-4">
-                            {(entityType === 'Operador' && auth?.user?.role === 'presidente') || (entityType === 'Promotor' && ['presidente', 'rd'].includes(auth?.user?.role)) ? (
+                            {(() => {
+                                const userRole = auth?.user?.role?.toLowerCase() || '';
+                                const requiresParent = (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
+                                return requiresParent ? (
                                 <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
                                     <Col span={24}>
                                         <ProFormSelect
@@ -356,7 +360,8 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                         />
                                     </Col>
                                 </Row>
-                            ) : null}
+                            ) : null;
+                            })()}
                             <Row gutter={16}>
                                 <Col xs={24} md={8}>
                                     <ProFormText

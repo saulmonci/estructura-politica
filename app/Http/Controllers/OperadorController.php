@@ -37,8 +37,13 @@ class OperadorController extends BaseCrudController
             $user = $request->user();
             $rds = [];
 
-            if ($user && strtolower($user->role) === 'presidente') {
-                $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
+            if ($user) {
+                $role = strtolower($user->role);
+                if ($role === 'presidente') {
+                    $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
+                } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
+                    $rds = User::where('role', 'rd')->get(['id', 'name', 'apodo']);
+                }
             }
 
             $response->with('availableRds', $rds);
@@ -113,8 +118,11 @@ class OperadorController extends BaseCrudController
             'role' => ['nullable', 'string'],
         ];
 
-        if ($user && strtolower($user->role) === 'presidente') {
-            $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', 'rd')];
+        if ($user) {
+            $role = strtolower($user->role);
+            if (in_array($role, ['presidente', 'admin', 'superadmin', 'superuser'])) {
+                $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', 'rd')];
+            }
         }
 
         return $rules;
@@ -192,11 +200,14 @@ class OperadorController extends BaseCrudController
     {
         $user = $request->user();
 
-        if ($user && strtolower($user->role) === 'rd') {
-            $item->parent_id = $user->id;
-        } elseif ($user && strtolower($user->role) === 'presidente') {
-            if ($request->has('parent_id')) {
-                $item->parent_id = $request->input('parent_id');
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'rd') {
+                $item->parent_id = $user->id;
+            } elseif (in_array($role, ['presidente', 'admin', 'superadmin', 'superuser'])) {
+                if ($request->has('parent_id')) {
+                    $item->parent_id = $request->input('parent_id');
+                }
             }
         }
 
