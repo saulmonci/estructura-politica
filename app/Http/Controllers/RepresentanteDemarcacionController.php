@@ -167,8 +167,47 @@ class RepresentanteDemarcacionController extends BaseCrudController
 
     protected function afterStore(Request $request, $item): void
     {
-        // Ejecutamos la lógica base (que ya asocia el parent_id al presidente)
+        // Ejecutamos la lógica base (que ya asocia el parent_id al presidente si lo crea él mismo)
         parent::afterStore($request, $item);
+
+        // Si lo crea un admin, el parent_id quedará nulo por defecto en la lógica base.
+        // Asignamos el parent_id al presidente correspondiente al admin.
+        if (empty($item->parent_id)) {
+            $user = $request->user();
+            $presidente = null;
+            
+            if ($user) {
+                // Si el admin ya tiene un presidente asociado (gracias a AssociateAdminsToPresidentesSeeder)
+                if ($user->presidente_id) {
+                    $presidente = User::find($user->presidente_id);
+                } 
+                // Fallback dinámico por municipio
+                elseif ($user->scope_level === 'municipal' && $user->municipality_id) {
+                    $presidente = User::where('role', 'presidente')
+                                      ->where('scope_level', 'municipal')
+                                      ->where('municipality_id', $user->municipality_id)
+                                      ->first();
+                }
+                // Fallback dinámico por estado
+                elseif (in_array($user->scope_level, ['municipal', 'estatal']) && $user->state_id) {
+                    $presidente = User::where('role', 'presidente')
+                                      ->where('scope_level', 'estatal')
+                                      ->where('state_id', $user->state_id)
+                                      ->first();
+                }
+            }
+            
+            // Fallback al presidente global si no hay específicos
+            if (!$presidente) {
+                $presidente = User::where('role', 'presidente')->first();
+            }
+
+            if ($presidente) {
+                $item->parent_id = $presidente->id;
+                $item->presidente_id = $presidente->id;
+                $item->save();
+            }
+        }
 
         $this->handlePhotoUpload($request, $item);
     }

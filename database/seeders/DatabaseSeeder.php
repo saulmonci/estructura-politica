@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
         // 0. Sembrar Catálogos de Demarcación y Sección
         $this->call([
             CatalogoSeeder::class,
+            TerritoryPresidentesSeeder::class,
+            TerritoryAdminsSeeder::class, // In case this isn't there already
         ]);
 
         // 1. Crear Presidente

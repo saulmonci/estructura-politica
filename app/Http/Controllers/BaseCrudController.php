@@ -167,7 +167,7 @@ abstract class BaseCrudController extends Controller
     {
         // Asignación de jerarquía por defecto al crear registros
         $user = $request->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === 'presidente' && empty($item->parent_id)) {
             $item->parent_id = $user->id;
             $item->save();
         }

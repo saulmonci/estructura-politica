@@ -72,7 +72,10 @@ class CatalogoSeeder extends Seeder
         ];
 
         $driver = DB::getDriverName();
-        $defaultMunicipalityId = DB::table('municipalities')->first()->id ?? 1;
+        // Las demarcaciones de este seeder corresponden a Bahía de Banderas, Nayarit.
+        // Buscamos Bahía de Banderas, o usamos el ID 949 por defecto.
+        $bahiaDeBanderas = DB::table('municipalities')->where('nombre', 'like', '%Banderas%')->first();
+        $defaultMunicipalityId = $bahiaDeBanderas ? $bahiaDeBanderas->id : 949;
 
         foreach ($data as $demarcacionId => $info) {
             if ($driver === 'mysql') {

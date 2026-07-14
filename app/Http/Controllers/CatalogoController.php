@@ -34,12 +34,37 @@ class CatalogoController extends Controller
         return response()->json($municipios);
     }
 
-    /**
-     * Get demarcaciones (optionally filtered by municipality_id).
-     */
     public function getDemarcaciones(Request $request)
     {
         $query = Demarcacion::query();
+
+        $user = $request->user();
+
+        // Aplicar filtro territorial del usuario
+        if ($user && !in_array($user->role, ['superuser', 'admin'])) {
+            if ($user->scope_level === 'estatal' && $user->state_id) {
+                // Filtrar demarcaciones por el estado del usuario
+                $query->whereHas('municipality', function($q) use ($user) {
+                    $q->where('state_id', $user->state_id);
+                });
+            } elseif ($user->scope_level === 'municipal' && $user->municipality_id) {
+                // Filtrar demarcaciones por el municipio del usuario
+                $query->where('municipality_id', $user->municipality_id);
+            } elseif ($user->scope_level === 'demarcacion' && $user->demarcacion_id) {
+                // Filtrar para que solo vea su propia demarcación
+                $query->where('id', $user->demarcacion_id);
+            }
+        }
+        
+        // Si el admin estatal está solicitando, también lo filtramos por default
+        if ($user && $user->role === 'admin' && $user->scope_level === 'estatal' && $user->state_id) {
+            $query->whereHas('municipality', function($q) use ($user) {
+                $q->where('state_id', $user->state_id);
+            });
+        }
+        if ($user && $user->role === 'admin' && $user->scope_level === 'municipal' && $user->municipality_id) {
+            $query->where('municipality_id', $user->municipality_id);
+        }
 
         if ($municipalityId = $request->input('municipality_id')) {
             $query->where('municipality_id', $municipalityId);

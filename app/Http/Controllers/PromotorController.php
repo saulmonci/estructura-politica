@@ -129,11 +129,19 @@ class PromotorController extends BaseCrudController
         if ($user) {
             $role = strtolower($user->role);
             if ($role === 'presidente') {
-                $rules['parent_id'] = ['required', 'exists:users,id'];
+                $rules['parent_id'] = [
+                    'required',
+                    Rule::exists('users', 'id')->where('role', 'operador')->where('presidente_id', $user->id)
+                ];
             } elseif ($role === 'rd') {
                 $rules['parent_id'] = [
                     'required',
                     Rule::exists('users', 'id')->where('parent_id', $user->id)->where('role', 'operador')
+                ];
+            } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
+                $rules['parent_id'] = [
+                    'required',
+                    Rule::exists('users', 'id')->where('role', 'operador')
                 ];
             }
         }

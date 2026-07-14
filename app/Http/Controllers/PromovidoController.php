@@ -152,8 +152,33 @@ class PromovidoController extends BaseCrudController
             'ine_reverso'       => ['nullable', 'image', 'max:10240'],
         ];
 
-        if ($user && in_array($user->role, ['presidente', 'rd', 'operador'])) {
-            $rules['promotor_id'] = ['required', 'exists:users,id'];
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'presidente') {
+                $rules['promotor_id'] = [
+                    'required', 
+                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', 'promotor')->where('presidente_id', $user->id)
+                ];
+            } elseif ($role === 'rd') {
+                // RD solo puede asignar a un promotor de su red
+                $operadoresIds = \App\Models\User::where('role', 'operador')->where('parent_id', $user->id)->pluck('id')->toArray();
+                $rules['promotor_id'] = [
+                    'required', 
+                    \Illuminate\Validation\Rule::exists('users', 'id')
+                        ->where('role', 'promotor')
+                        ->where(function ($query) use ($user, $operadoresIds) {
+                            $query->where('parent_id', $user->id)
+                                  ->orWhereIn('parent_id', $operadoresIds);
+                        })
+                ];
+            } elseif ($role === 'operador') {
+                $rules['promotor_id'] = [
+                    'required', 
+                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', 'promotor')->where('parent_id', $user->id)
+                ];
+            } elseif (in_array($role, ['admin', 'superadmin', 'superuser', 'campana_admin'])) {
+                $rules['promotor_id'] = ['required', \Illuminate\Validation\Rule::exists('users', 'id')->where('role', 'promotor')];
+            }
         }
 
         return $rules;

@@ -120,7 +120,12 @@ class OperadorController extends BaseCrudController
 
         if ($user) {
             $role = strtolower($user->role);
-            if (in_array($role, ['presidente', 'admin', 'superadmin', 'superuser'])) {
+            if ($role === 'presidente') {
+                $rules['parent_id'] = [
+                    'required',
+                    Rule::exists('users', 'id')->where('role', 'rd')->where('presidente_id', $user->id)
+                ];
+            } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
                 $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', 'rd')];
             }
         }

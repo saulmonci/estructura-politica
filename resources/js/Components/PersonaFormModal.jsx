@@ -112,7 +112,16 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                 setLoadingDemarcaciones(true);
                 try {
                     const res = await axios.get('/catalogos/demarcaciones');
-                    setDemarcaciones(res.data || []);
+                    const data = res.data || [];
+                    setDemarcaciones(data);
+                    
+                    // Auto-seleccionar si solo hay una demarcación disponible (ej. para RDs)
+                    if (data.length === 1 && !editId) {
+                        const demId = String(data[0].id);
+                        form.setFieldsValue({ demarcacion_id: demId });
+                        setSelectedDemarcacion(demId);
+                        fetchSecciones(demId);
+                    }
                 } catch (err) {
                     message.error('Error al cargar las demarcaciones');
                 } finally {
