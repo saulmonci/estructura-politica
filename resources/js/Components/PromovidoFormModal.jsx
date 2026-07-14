@@ -26,11 +26,19 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
     const [fetchUrl, setFetchUrl] = useState(null);
     const [fileList, setFileList] = useState([]);
     const [existingFoto, setExistingFoto] = useState(null);
+    const [fileListIneFrente, setFileListIneFrente] = useState([]);
+    const [existingIneFrente, setExistingIneFrente] = useState(null);
+    const [fileListIneReverso, setFileListIneReverso] = useState([]);
+    const [existingIneReverso, setExistingIneReverso] = useState(null);
 
     useImperativeHandle(ref, () => ({
         open(id = null, url = null) {
             setFileList([]);
             setExistingFoto(null);
+            setFileListIneFrente([]);
+            setExistingIneFrente(null);
+            setFileListIneReverso([]);
+            setExistingIneReverso(null);
             setEditingId(id);
             setFetchUrl(url);
             setOpen(true);
@@ -67,6 +75,10 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
         if (open) {
             setFileList([]);
             setExistingFoto(null);
+            setFileListIneFrente([]);
+            setExistingIneFrente(null);
+            setFileListIneReverso([]);
+            setExistingIneReverso(null);
             setSelectedDemarcacion(null);
             setSecciones([]);
 
@@ -110,6 +122,16 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                         } else {
                             setExistingFoto(null);
                         }
+                        if (data.ine_frente) {
+                            setExistingIneFrente(`/storage/${data.ine_frente}`);
+                        } else {
+                            setExistingIneFrente(null);
+                        }
+                        if (data.ine_reverso) {
+                            setExistingIneReverso(`/storage/${data.ine_reverso}`);
+                        } else {
+                            setExistingIneReverso(null);
+                        }
 
                         if (data.demarcacion_id) {
                             const demId = String(data.demarcacion_id);
@@ -145,6 +167,14 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
 
     const handleUploadChange = (info) => {
         setFileList(info.fileList.slice(-1));
+    };
+
+    const handleUploadIneFrenteChange = (info) => {
+        setFileListIneFrente(info.fileList.slice(-1));
+    };
+
+    const handleUploadIneReversoChange = (info) => {
+        setFileListIneReverso(info.fileList.slice(-1));
     };
 
     const handleBeforeUpload = (file) => {
@@ -201,9 +231,15 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                 if (fileList.length > 0 && fileList[0].originFileObj) {
                     values.foto = fileList[0].originFileObj;
                 } else {
-                    // Si no hay archivo nuevo, eliminamos el campo foto para evitar que 
-                    // la cadena de texto (ruta de la BD) cause un error de validación 'image'
                     delete values.foto;
+                }
+
+                if (fileListIneFrente.length > 0 && fileListIneFrente[0].originFileObj) {
+                    values.ine_frente = fileListIneFrente[0].originFileObj;
+                }
+                
+                if (fileListIneReverso.length > 0 && fileListIneReverso[0].originFileObj) {
+                    values.ine_reverso = fileListIneReverso[0].originFileObj;
                 }
 
                 if (editId) {
@@ -503,7 +539,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             <div className="bg-[#0f172a] text-white p-1 rounded">
                                 <CameraOutlined />
                             </div>
-                            <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">FOTOGRAFÍA</h3>
+                            <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">FOTOGRAFÍAS</h3>
                         </div>
                         <Divider className="my-2 border-gray-300" />
                         
@@ -516,21 +552,22 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             />
 
                             <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px]">
+                                <span className="text-gray-500 font-bold mb-2">FOTO DE PERFIL</span>
                                 {fileList.length > 0 ? (
-                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                    <div className="w-full flex flex-col items-center justify-center">
                                         <img 
                                             src={URL.createObjectURL(fileList[0].originFileObj)} 
                                             alt="avatar" 
-                                            className="w-28 h-28 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            className="w-24 h-24 object-cover rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Button danger size="small" onClick={() => setFileList([])}>Eliminar foto</Button>
                                     </div>
                                 ) : existingFoto ? (
-                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                    <div className="w-full flex flex-col items-center justify-center">
                                         <img 
                                             src={existingFoto} 
                                             alt="avatar" 
-                                            className="w-28 h-28 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                            className="w-24 h-24 object-cover rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
                                             beforeUpload={handleBeforeUpload}
@@ -540,16 +577,16 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                             capture="environment"
                                         >
                                             <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Cambiar fotografía
+                                                Cambiar
                                             </Button>
                                         </Upload>
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="w-28 h-28 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
+                                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
                                             <UserOutlined className="text-6xl text-gray-400" />
-                                            <div className="absolute bottom-2 right-2 bg-[#0f172a] w-10 h-10 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
-                                                <CameraOutlined className="text-white text-lg" />
+                                            <div className="absolute bottom-1 right-1 bg-[#0f172a] w-8 h-8 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
+                                                <CameraOutlined className="text-white text-sm" />
                                             </div>
                                         </div>
                                         <Upload
@@ -560,10 +597,118 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                             capture="environment"
                                         >
                                             <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Tomar fotografía
+                                                Tomar
                                             </Button>
                                         </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Formatos permitidos: JPG, PNG (Max: 5MB)</p>
+                                        <p className="text-gray-400 text-xs mt-2">Max: 10MB</p>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px] mt-4">
+                                <span className="text-gray-500 font-bold mb-2">INE FRENTE</span>
+                                {fileListIneFrente.length > 0 ? (
+                                    <div className="w-full flex flex-col items-center justify-center">
+                                        <img 
+                                            src={URL.createObjectURL(fileListIneFrente[0].originFileObj)} 
+                                            alt="ine frente" 
+                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                        />
+                                        <Button danger size="small" onClick={() => setFileListIneFrente([])}>Eliminar foto</Button>
+                                    </div>
+                                ) : existingIneFrente ? (
+                                    <div className="w-full flex flex-col items-center justify-center">
+                                        <img 
+                                            src={existingIneFrente} 
+                                            alt="ine frente" 
+                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                        />
+                                        <Upload
+                                            beforeUpload={handleBeforeUpload}
+                                            onChange={handleUploadIneFrenteChange}
+                                            showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
+                                        >
+                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
+                                                Cambiar
+                                            </Button>
+                                        </Upload>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
+                                            <IdcardOutlined className="text-4xl text-gray-400" />
+                                            <div className="absolute -bottom-2 -right-2 bg-[#0f172a] w-8 h-8 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
+                                                <CameraOutlined className="text-white text-sm" />
+                                            </div>
+                                        </div>
+                                        <Upload
+                                            beforeUpload={handleBeforeUpload}
+                                            onChange={handleUploadIneFrenteChange}
+                                            showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
+                                        >
+                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
+                                                Tomar
+                                            </Button>
+                                        </Upload>
+                                        <p className="text-gray-400 text-xs mt-2">Max: 10MB</p>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px] mt-4">
+                                <span className="text-gray-500 font-bold mb-2">INE REVERSO</span>
+                                {fileListIneReverso.length > 0 ? (
+                                    <div className="w-full flex flex-col items-center justify-center">
+                                        <img 
+                                            src={URL.createObjectURL(fileListIneReverso[0].originFileObj)} 
+                                            alt="ine reverso" 
+                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                        />
+                                        <Button danger size="small" onClick={() => setFileListIneReverso([])}>Eliminar foto</Button>
+                                    </div>
+                                ) : existingIneReverso ? (
+                                    <div className="w-full flex flex-col items-center justify-center">
+                                        <img 
+                                            src={existingIneReverso} 
+                                            alt="ine reverso" 
+                                            className="w-32 h-20 object-cover rounded-lg border-4 border-white shadow-md mb-3"
+                                        />
+                                        <Upload
+                                            beforeUpload={handleBeforeUpload}
+                                            onChange={handleUploadIneReversoChange}
+                                            showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
+                                        >
+                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
+                                                Cambiar
+                                            </Button>
+                                        </Upload>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
+                                            <IdcardOutlined className="text-4xl text-gray-400" />
+                                            <div className="absolute -bottom-2 -right-2 bg-[#0f172a] w-8 h-8 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
+                                                <CameraOutlined className="text-white text-sm" />
+                                            </div>
+                                        </div>
+                                        <Upload
+                                            beforeUpload={handleBeforeUpload}
+                                            onChange={handleUploadIneReversoChange}
+                                            showUploadList={false}
+                                            accept="image/*"
+                                            capture="environment"
+                                        >
+                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
+                                                Tomar
+                                            </Button>
+                                        </Upload>
+                                        <p className="text-gray-400 text-xs mt-2">Max: 10MB</p>
                                     </>
                                 )}
                             </div>

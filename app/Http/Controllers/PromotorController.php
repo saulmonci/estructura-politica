@@ -121,6 +121,8 @@ class PromotorController extends BaseCrudController
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
             'foto' => ['nullable', 'image', 'max:10240'],
+            'ine_frente' => ['nullable', 'image', 'max:10240'],
+            'ine_reverso' => ['nullable', 'image', 'max:10240'],
             'role' => ['nullable', 'string'],
         ];
 
@@ -182,9 +184,27 @@ class PromotorController extends BaseCrudController
 
     protected function handlePhotoUpload(Request $request, $item): void
     {
+        $hasChanges = false;
+        
         if ($request->hasFile('foto')) {
             $path = $request->file('foto')->store('fotos', 'public');
             $item->foto = $path;
+            $hasChanges = true;
+        }
+        
+        if ($request->hasFile('ine_frente')) {
+            $path = $request->file('ine_frente')->store('fotos', 'public');
+            $item->ine_frente = $path;
+            $hasChanges = true;
+        }
+        
+        if ($request->hasFile('ine_reverso')) {
+            $path = $request->file('ine_reverso')->store('fotos', 'public');
+            $item->ine_reverso = $path;
+            $hasChanges = true;
+        }
+        
+        if ($hasChanges) {
             $item->save();
         }
     }

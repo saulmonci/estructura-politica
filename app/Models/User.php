@@ -20,7 +20,7 @@ use App\Models\Scopes\TerritoryScope;
     'state_id', 'municipality_id', 'parent_id', 'presidente_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
     'colonia', 'codigo_postal', 'demarcacion_id', 'seccion_electoral', 'clave_electoral', 'telefono',
-    'curp', 'apodo', 'foto', 'estado', 'notas'
+    'curp', 'apodo', 'foto', 'ine_frente', 'ine_reverso', 'estado', 'notas'
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -41,11 +41,21 @@ class User extends Authenticatable
         ];
     }
 
-    protected $appends = ['foto_url'];
+    protected $appends = ['foto_url', 'ine_frente_url', 'ine_reverso_url'];
 
     public function getFotoUrlAttribute()
     {
         return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
+
+    public function getIneFrenteUrlAttribute()
+    {
+        return $this->ine_frente ? asset('storage/' . $this->ine_frente) : null;
+    }
+
+    public function getIneReversoUrlAttribute()
+    {
+        return $this->ine_reverso ? asset('storage/' . $this->ine_reverso) : null;
     }
 
     protected static function boot()

@@ -68,6 +68,8 @@ class Promovido extends Model
         'numero',
         'codigo_postal',
         'foto',
+        'ine_frente',
+        'ine_reverso',
         'promotor_id',
         'presidente_id',
     ];
@@ -76,7 +78,7 @@ class Promovido extends Model
      * Accessor para compatibilidad: devuelve nombre + apellidos juntos.
      * Esto permite que el ApoyosDrawer siga mostrando el nombre completo.
      */
-    protected $appends = ['nombre_completo', 'foto_url'];
+    protected $appends = ['nombre_completo', 'foto_url', 'ine_frente_url', 'ine_reverso_url'];
 
     public function getNombreCompletoAttribute(): string
     {
@@ -86,6 +88,16 @@ class Promovido extends Model
     public function getFotoUrlAttribute()
     {
         return $this->foto ? asset('storage/' . $this->foto) : null;
+    }
+
+    public function getIneFrenteUrlAttribute()
+    {
+        return $this->ine_frente ? asset('storage/' . $this->ine_frente) : null;
+    }
+
+    public function getIneReversoUrlAttribute()
+    {
+        return $this->ine_reverso ? asset('storage/' . $this->ine_reverso) : null;
     }
 
     /**
