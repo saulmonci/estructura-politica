@@ -72,6 +72,7 @@ class CatalogoSeeder extends Seeder
         ];
 
         $driver = DB::getDriverName();
+        $defaultMunicipalityId = DB::table('municipalities')->first()->id ?? 1;
 
         foreach ($data as $demarcacionId => $info) {
             if ($driver === 'mysql') {
@@ -85,7 +86,8 @@ class CatalogoSeeder extends Seeder
                 [
                     'nombre' => $info['nombre'],
                     'meta' => $info['total'],
-                    'geom' => DB::raw($geomSql)
+                    'geom' => DB::raw($geomSql),
+                    'municipality_id' => $defaultMunicipalityId
                 ]
             );
 

@@ -16,7 +16,7 @@ class PromotorController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'rd', 'operador', "superadmin"]), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, ['presidente', 'rd', 'operador', "superadmin", "admin"]), 403, 'Acceso denegado.');
     }
 
     protected function getBaseQuery(Request $request): Builder

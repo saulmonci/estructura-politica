@@ -12,11 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('states', function (Blueprint $table) {
-            $table->string('inegi_clave', 2)->nullable()->after('nombre')->comment('Clave de entidad INEGI (01-32)');
+            $table
+                ->string('inegi_clave', 2)
+                ->nullable()
+                ->after('nombre')
+                ->comment('Clave de entidad INEGI (01-32)');
         });
 
         Schema::table('municipalities', function (Blueprint $table) {
-            $table->string('inegi_clave', 3)->nullable()->after('nombre')->comment('Clave de municipio INEGI (001+)');
+            $table
+                ->string('inegi_clave', 3)
+                ->nullable()
+                ->after('nombre')
+                ->comment('Clave de municipio INEGI (001+)');
         });
     }
 
