@@ -552,12 +552,14 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             { required: true, message: 'Requerido' },
                                             { len: 18, message: 'Debe contener exactamente 18 caracteres' }
                                         ]}
+                                        formItemProps={{
+                                            getValueFromEvent: (e) => e.target.value.toUpperCase().replace(/[^A-Z0-9Ñ]/ig, '')
+                                        }}
                                         fieldProps={{ 
                                             prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
                                             maxLength: 18,
                                             style: { textTransform: 'uppercase' }
                                         }}
-                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
                                 <Col xs={24} md={12}>
@@ -569,12 +571,14 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             { required: true, message: 'Requerido' },
                                             { len: 18, message: 'Debe contener exactamente 18 caracteres' }
                                         ]}
+                                        formItemProps={{
+                                            getValueFromEvent: (e) => e.target.value.toUpperCase().replace(/[^A-Z0-9]/ig, '')
+                                        }}
                                         fieldProps={{ 
                                             prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
                                             maxLength: 18,
                                             style: { textTransform: 'uppercase' }
                                         }}
-                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
                             </Row>

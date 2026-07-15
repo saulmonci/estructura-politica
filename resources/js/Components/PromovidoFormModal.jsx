@@ -389,12 +389,14 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                         rules={[
                                             { max: 18, message: 'Máximo 18 caracteres' }
                                         ]}
+                                        formItemProps={{
+                                            getValueFromEvent: (e) => e.target.value.toUpperCase().replace(/[^A-Z0-9]/ig, '')
+                                        }}
                                         fieldProps={{
                                             prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
                                             maxLength: 18,
                                             style: { textTransform: 'uppercase' }
                                         }}
-                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
                                 <Col xs={24} md={12}>
@@ -403,15 +405,16 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                         label="CURP"
                                         placeholder="18 caracteres"
                                         rules={[
-                                            { max: 18, message: 'Máximo 18 caracteres' },
-                                            { pattern: /^[A-Z]{4}[0-9]{6}[A-Z]{6}[0-9A-Z]{2}$/i, message: 'Formato de CURP inválido' }
+                                            { len: 18, message: 'Debe contener exactamente 18 caracteres' }
                                         ]}
+                                        formItemProps={{
+                                            getValueFromEvent: (e) => e.target.value.toUpperCase().replace(/[^A-Z0-9Ñ]/ig, '')
+                                        }}
                                         fieldProps={{
                                             prefix: <IdcardOutlined className="text-gray-400 mr-2" />,
                                             maxLength: 18,
                                             style: { textTransform: 'uppercase' }
                                         }}
-                                        transform={(val) => val ? val.toUpperCase() : val}
                                     />
                                 </Col>
                             </Row>
