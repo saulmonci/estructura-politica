@@ -132,27 +132,27 @@ export default function MainLayout({ children }) {
                                         icon: <EnvironmentOutlined />,
                                     },
 
-                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
-                                        path: '/estadisticas',
-                                        name: 'Estadísticas',
-                                        icon: <BarChartOutlined />,
-                                    },
+                                    // ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                    //     path: '/estadisticas',
+                                    //     name: 'Estadísticas',
+                                    //     icon: <BarChartOutlined />,
+                                    // },
                                     ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/logs',
                                         name: 'Bitácora',
                                         icon: <HistoryOutlined />,
                                     },
-                                    {
-                                        path: '/mensajes',
-                                        name: 'Mensajes',
-                                        icon: <MessageOutlined />,
-                                        badge: 8,
-                                    },
-                                    {
-                                        path: '/configuracion',
-                                        name: 'Configuración',
-                                        icon: <SettingOutlined />,
-                                    },
+                                    // {
+                                    //     path: '/mensajes',
+                                    //     name: 'Mensajes',
+                                    //     icon: <MessageOutlined />,
+                                    //     badge: 8,
+                                    // },
+                                    // {
+                                    //     path: '/configuracion',
+                                    //     name: 'Configuración',
+                                    //     icon: <SettingOutlined />,
+                                    // },
                                 ].filter(Boolean)
                             }
                         ],
