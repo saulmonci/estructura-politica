@@ -713,7 +713,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                                 Tomar
                                             </Button>
                                         </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Max: 10MB</p>
+                                        <p className="text-gray-400 text-xs mt-2">Max: 4MB</p>
                                     </>
                                 )}
                             </div>
@@ -773,7 +773,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                                 Tomar
                                             </Button>
                                         </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Max: 10MB</p>
+                                        <p className="text-gray-400 text-xs mt-2">Max: 4MB</p>
                                     </>
                                 )}
                             </div>
@@ -833,7 +833,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                                 Tomar
                                             </Button>
                                         </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Max: 10MB</p>
+                                        <p className="text-gray-400 text-xs mt-2">Max: 4MB</p>
                                     </>
                                 )}
                             </div>
