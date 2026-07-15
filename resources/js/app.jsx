@@ -8,10 +8,8 @@ import { ConfigProvider } from 'antd';
 import esES from 'antd/locale/es_ES';
 import { ProConfigProvider, esESIntl } from '@ant-design/pro-components';
 
-const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Estructura Política';
-
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => `${title} - Estructura Política`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);

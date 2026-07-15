@@ -112,9 +112,9 @@ class OperadorController extends BaseCrudController
             'notas' => ['nullable', 'string'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
-            'foto' => ['nullable', 'image', 'max:10240'],
-            'ine_frente' => ['nullable', 'image', 'max:10240'],
-            'ine_reverso' => ['nullable', 'image', 'max:10240'],
+            'foto' => ['nullable', 'image', 'max:4096'],
+            'ine_frente' => ['nullable', 'image', 'max:4096'],
+            'ine_reverso' => ['nullable', 'image', 'max:4096'],
             'role' => ['nullable', 'string'],
         ];
 
