@@ -128,6 +128,17 @@ export default function RepresentantesIndex({ representantes }) {
             )
         },
         {
+            title: 'OPERADORES',
+            dataIndex: 'operadores_count',
+            key: 'operadores_count',
+            search: false,
+            sorter: true,
+            align: 'center',
+            render: (count) => (
+                <Badge count={count || 0} showZero color="#108ee9" />
+            )
+        },
+        {
             title: 'ESTADO',
             dataIndex: 'estado',
             key: 'estado',
@@ -220,6 +231,13 @@ export default function RepresentantesIndex({ representantes }) {
                             {record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
                             {record.demarcacion ? ` (Dem: ${record.demarcacion.nombre})` : ''}
                             {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <UserOutlined className="text-gray-400 shrink-0" /> 
+                        <span className="w-18 text-gray-400 shrink-0">Operadores:</span> 
+                        <span className="truncate flex-1">
+                            <Badge count={record.operadores_count || 0} showZero color="#108ee9" />
                         </span>
                     </div>
                 </div>

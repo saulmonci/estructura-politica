@@ -22,7 +22,11 @@ class RepresentanteDemarcacionController extends BaseCrudController
     protected function getBaseQuery(Request $request): Builder
     {
         // El filtrado por jerarquía (parent_id) ya se hereda de BaseCrudController
-        return parent::getBaseQuery($request)->where('role', 'rd')->with('demarcacion');
+        return parent::getBaseQuery($request)->where('role', 'rd')
+            ->with('demarcacion')
+            ->withCount(['subordinates as operadores_count' => function ($query) {
+                $query->where('role', 'operador');
+            }]);
     }
 
     protected function applySearch(Builder $query, string $search): void
@@ -223,7 +227,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
         return [
             'ID', 'Nombre', 'Apellidos', 'Email', 'Sexo', 'Calle', 'No. Exterior', 'No. Interior', 
             'Colonia', 'Código Postal', 'Demarcación', 'Sección Electoral', 'Clave Electoral', 
-            'Teléfono', 'CURP', 'Apodo', 'Estatus', 'Notas', 'Fecha de Registro'
+            'Teléfono', 'CURP', 'Apodo', 'Estatus', 'Notas', 'Fecha de Registro', 'Total Operadores'
         ];
     }
 
@@ -249,6 +253,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             $item->estado ? 'Activo' : 'Inactivo',
             $item->notas,
             $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '',
+            $item->operadores_count ?? 0,
         ];
     }
 }
