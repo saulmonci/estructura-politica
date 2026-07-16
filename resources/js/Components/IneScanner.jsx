@@ -75,6 +75,7 @@ const IneScanner = ({ onDataExtracted }) => {
                                 showUploadList={false}
                                 beforeUpload={handleUpload}
                                 accept="image/jpeg,image/png,image/jpg"
+                                capture="environment"
                             >
                                 <Button 
                                     type="primary" 
