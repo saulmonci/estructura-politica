@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
+import IneScanner from './IneScanner';
 
 const { Dragger } = Upload;
 
@@ -348,6 +349,30 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                             <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">DATOS PERSONALES</h3>
                         </div>
                         <Divider className="my-2 border-gray-300" />
+                        
+                        <IneScanner onDataExtracted={(data) => {
+                            // Si Gemini devuelve sexo H o M, mapearlo a Masculino/Femenino
+                            if (data.sexo) {
+                                if (data.sexo.toUpperCase() === 'H') data.sexo = 'Masculino';
+                                if (data.sexo.toUpperCase() === 'M') data.sexo = 'Femenino';
+                            }
+                            
+                            // Mapear clave_elector a clave_electoral que es como se llama en el formulario
+                            if (data.clave_elector) {
+                                data.clave_electoral = data.clave_elector;
+                            }
+                            
+                            form.setFieldsValue(data);
+
+                            // Si la IA logró deducir la demarcación basada en la sección, actualizar los combos
+                            if (data.demarcacion_id) {
+                                const demId = String(data.demarcacion_id);
+                                setSelectedDemarcacion(demId);
+                                fetchSecciones(demId);
+                            }
+                            
+                            message.success('Campos llenados automáticamente');
+                        }} />
 
                         <div className="mt-4">
                             {(() => {
