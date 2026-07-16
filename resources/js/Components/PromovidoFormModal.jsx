@@ -331,6 +331,16 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             if (data.clave_elector) {
                                 data.clave_electoral = data.clave_elector;
                             }
+
+                            // Mapear numero_exterior e interior al campo "numero"
+                            if (data.numero_exterior) {
+                                data.numero = data.numero_exterior;
+                                if (data.numero_interior && String(data.numero_interior).trim() !== '') {
+                                    data.numero += ' Int ' + data.numero_interior;
+                                }
+                            } else if (data.numero_interior && String(data.numero_interior).trim() !== '') {
+                                data.numero = 'Int ' + data.numero_interior;
+                            }
                             
                             form.setFieldsValue(data);
 
