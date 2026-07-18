@@ -229,16 +229,28 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             }
         },
         {
-            title: 'RD',
-            dataIndex: 'rd_id',
-            key: 'rd_id',
-            hideInTable: true,
-            hideInSearch: auth?.user?.role !== 'presidente',
+            title: 'ASIGNADO A (OPERADOR)',
+            dataIndex: 'parent_id',
+            key: 'parent_id',
+            hideInTable: !['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role),
+            hideInSearch: !['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role),
             valueType: 'select',
-            valueEnum: (availableRds || []).reduce((acc, rd) => {
-                acc[rd.id] = { text: rd.name };
-                return acc;
-            }, {})
+            request: async () => {
+                return (availableOperadores || []).map(op => ({ 
+                    label: op.apodo ? `${op.name} (${op.apodo})` : op.name, 
+                    value: op.id 
+                }));
+            },
+            render: (_, record) => {
+                if (record.leader) {
+                    return <span className="font-medium text-orange-700">{record.leader.name} {record.leader.apodo ? `(${record.leader.apodo})` : ''}</span>;
+                }
+                return <span className="text-gray-400 text-xs italic">Sin asignar</span>;
+            },
+            fieldProps: {
+                showSearch: true,
+                placeholder: 'Filtrar por Operador',
+            }
         }
     ];
 
@@ -303,6 +315,15 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                             {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
                         </span>
                     </div>
+                    {['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role) && (
+                        <div className="flex items-center gap-2">
+                            <TeamOutlined className="text-gray-400 shrink-0" /> 
+                            <span className="w-20 text-gray-400 shrink-0">Operador:</span> 
+                            <span className="truncate flex-1 font-medium text-orange-700">
+                                {record.leader ? `${record.leader.name} ${record.leader.apodo ? `(${record.leader.apodo})` : ''}` : 'Sin asignar'}
+                            </span>
+                        </div>
+                    )}
                 </div>
                 
                 <div className="pt-3 border-t border-gray-100 flex justify-between flex-wrap">

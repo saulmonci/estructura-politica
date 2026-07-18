@@ -23,9 +23,9 @@ class PromotorController extends BaseCrudController
     {
         $user = $request->user();
         if (!$user) {
-            return $this->modelClass::query()->where('role', 'promotor')->with('demarcacion');
+            return $this->modelClass::query()->where('role', 'promotor')->with(['demarcacion', 'leader']);
         }
-        return $user->queryPromotores()->with('demarcacion');
+        return $user->queryPromotores()->with(['demarcacion', 'leader']);
     }
 
     public function index(Request $request)
@@ -90,9 +90,8 @@ class PromotorController extends BaseCrudController
                 $query->where('demarcacion_id', $value);
             }
 
-            if ($field === 'rd_id') {
-                $opsIds = User::where('role', 'operador')->where('parent_id', $value)->pluck('id');
-                $query->whereIn('parent_id', $opsIds);
+            if ($field === 'operador_id' || $field === 'parent_id') {
+                $query->where('parent_id', $value);
             }
 
             if ($field === 'created_at' && is_array($value) && count($value) === 2) {
