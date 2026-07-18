@@ -142,6 +142,7 @@ export default function RepresentantesIndex({ representantes }) {
             key: 'demarcacion_id',
             valueType: 'select',
             hideInTable: true,
+            hideInSearch: auth?.user?.role !== 'presidente',
             request: async () => {
                 const response = await axios.get('/catalogos/demarcaciones');
                 return response.data.map(d => ({ label: d.nombre, value: d.id }));

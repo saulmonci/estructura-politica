@@ -189,19 +189,14 @@ export default function PromovidosIndex({ availablePromotores }) {
             }
         },
         {
-            title: 'Demarcación',
+            title: 'DEMARCACIÓN',
             dataIndex: 'demarcacion_id',
             key: 'demarcacion_id',
             valueType: 'select',
             hideInTable: true,
-            hideInSearch: auth?.user?.scope_level === 'demarcacion',
-            dependencies: ['municipality_id'],
-            request: async (params) => {
-                const isMunicipal = auth?.user?.scope_level === 'municipal' && auth?.user?.role !== 'superuser';
-                const activeMuniId = isMunicipal ? auth?.user?.municipality_id : params.municipality_id;
-                
-                if (!activeMuniId) return [];
-                const response = await axios.get(`/catalogos/demarcaciones?municipality_id=${activeMuniId}`);
+            hideInSearch: auth?.user?.role !== 'presidente',
+            request: async () => {
+                const response = await axios.get('/catalogos/demarcaciones');
                 return response.data.map(d => ({ label: d.nombre, value: d.id }));
             },
             fieldProps: {

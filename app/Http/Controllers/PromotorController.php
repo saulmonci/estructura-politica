@@ -86,6 +86,10 @@ class PromotorController extends BaseCrudController
                 $query->where('estado', $value);
             }
 
+            if ($field === 'demarcacion_id') {
+                $query->where('demarcacion_id', $value);
+            }
+
             if ($field === 'rd_id') {
                 $opsIds = User::where('role', 'operador')->where('parent_id', $value)->pluck('id');
                 $query->whereIn('parent_id', $opsIds);

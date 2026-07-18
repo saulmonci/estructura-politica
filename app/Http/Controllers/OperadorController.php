@@ -83,6 +83,10 @@ class OperadorController extends BaseCrudController
                 $query->where('estado', $value);
             }
 
+            if ($field === 'demarcacion_id') {
+                $query->where('demarcacion_id', $value);
+            }
+
             if ($field === 'created_at' && is_array($value) && count($value) === 2) {
                 $query->whereBetween('created_at', [$value[0] . ' 00:00:00', $value[1] . ' 23:59:59']);
             }
