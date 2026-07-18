@@ -40,9 +40,9 @@ class OperadorController extends BaseCrudController
             if ($user) {
                 $role = strtolower($user->role);
                 if ($role === 'presidente') {
-                    $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
+                    $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
                 } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
-                    $rds = User::where('role', 'rd')->get(['id', 'name', 'apodo']);
+                    $rds = User::where('role', 'rd')->get(['id', 'name', 'apodo', 'demarcacion_id']);
                 }
             }
 

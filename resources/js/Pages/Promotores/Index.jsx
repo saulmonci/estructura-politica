@@ -186,6 +186,35 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             }
         },
         {
+            title: 'ASIGNADO A (OPERADOR)',
+            dataIndex: 'parent_id',
+            key: 'parent_id',
+            dependencies: ['demarcacion_id'],
+            hideInTable: !['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role),
+            hideInSearch: !['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role),
+            valueType: 'select',
+            request: async (params) => {
+                let ops = availableOperadores || [];
+                if (params && params.demarcacion_id) {
+                    ops = ops.filter(op => op.demarcacion_id == params.demarcacion_id);
+                }
+                return ops.map(op => ({ 
+                    label: op.apodo ? `${op.name} (${op.apodo})` : op.name, 
+                    value: op.id 
+                }));
+            },
+            render: (_, record) => {
+                if (record.leader) {
+                    return <span className="font-medium text-orange-700">{record.leader.name} {record.leader.apodo ? `(${record.leader.apodo})` : ''}</span>;
+                }
+                return <span className="text-gray-400 text-xs italic">Sin asignar</span>;
+            },
+            fieldProps: {
+                showSearch: true,
+                placeholder: 'Filtrar por Operador',
+            }
+        },
+        {
             title: 'ACCIONES',
             key: 'acciones',
             width: 150,
@@ -226,30 +255,6 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                         />
                     </Space>
                 );
-            }
-        },
-        {
-            title: 'ASIGNADO A (OPERADOR)',
-            dataIndex: 'parent_id',
-            key: 'parent_id',
-            hideInTable: !['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role),
-            hideInSearch: !['presidente', 'admin', 'superadmin', 'rd'].includes(auth?.user?.role),
-            valueType: 'select',
-            request: async () => {
-                return (availableOperadores || []).map(op => ({ 
-                    label: op.apodo ? `${op.name} (${op.apodo})` : op.name, 
-                    value: op.id 
-                }));
-            },
-            render: (_, record) => {
-                if (record.leader) {
-                    return <span className="font-medium text-orange-700">{record.leader.name} {record.leader.apodo ? `(${record.leader.apodo})` : ''}</span>;
-                }
-                return <span className="text-gray-400 text-xs italic">Sin asignar</span>;
-            },
-            fieldProps: {
-                showSearch: true,
-                placeholder: 'Filtrar por Operador',
             }
         }
     ];

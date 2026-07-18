@@ -155,11 +155,16 @@ export default function OperadoresIndex({ availableRds }) {
             title: 'ASIGNADO A (RD)',
             dataIndex: 'parent_id',
             key: 'parent_id',
+            dependencies: ['demarcacion_id'],
             hideInTable: !['presidente', 'admin', 'superadmin'].includes(auth?.user?.role),
             hideInSearch: !['presidente', 'admin', 'superadmin'].includes(auth?.user?.role),
             valueType: 'select',
-            request: async () => {
-                return (availableRds || []).map(rd => ({ 
+            request: async (params) => {
+                let rds = availableRds || [];
+                if (params && params.demarcacion_id) {
+                    rds = rds.filter(rd => rd.demarcacion_id == params.demarcacion_id);
+                }
+                return rds.map(rd => ({ 
                     label: rd.apodo ? `${rd.name} (${rd.apodo})` : rd.name, 
                     value: rd.id 
                 }));
