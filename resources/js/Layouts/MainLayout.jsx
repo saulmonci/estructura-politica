@@ -13,7 +13,8 @@ import {
   BellOutlined,
   SearchOutlined,
   MenuOutlined,
-  HistoryOutlined
+  HistoryOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
@@ -64,7 +65,7 @@ export default function MainLayout({ children }) {
                     menuExtraRender={({ collapsed }) =>
                         !collapsed && (
                             <div className="flex items-center gap-3 px-4 py-6 border-b border-gray-800 mb-2">
-                                <Avatar size={48} src="https://i.pravatar.cc/150?u=a042581f4e29026024d" />
+                                <Avatar size={48} icon={<UserOutlined />} className="bg-gray-700" />
                                 <div className="flex flex-col">
                                     <span className="font-bold text-white leading-tight">{user.id || 'PRES-0001'}</span>
                                     <span className="text-gray-300 text-sm capitalize leading-tight mb-1">{user.role}</span>
@@ -200,7 +201,7 @@ export default function MainLayout({ children }) {
                                     }}
                                 >
                                     <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 md:p-1.5 rounded transition-colors">
-                                        <Avatar src="https://i.pravatar.cc/150?u=a042581f4e29026024d" />
+                                        <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
                                         <div className="hidden sm:flex flex-col leading-none text-left">
                                             <span className="font-bold text-gray-800 text-sm">{user.id || 'PRES-0001'}</span>
                                             <span className="text-xs text-gray-500 capitalize">{user.role}</span>
