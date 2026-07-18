@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal, Image } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 
@@ -11,6 +11,7 @@ export default function OperadoresIndex({ availableRds }) {
     const modalRef = React.useRef();
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
+    const [showTrashed, setShowTrashed] = useState(false);
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -29,6 +30,25 @@ export default function OperadoresIndex({ availableRds }) {
             cancelText: 'Cancelar',
             onOk: () => {
                 router.delete(`/operadores/${id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        if (actionRef.current) {
+                            actionRef.current.reload();
+                        }
+                    }
+                });
+            }
+        });
+    };
+
+    const handleRestore = (id) => {
+        modal.confirm({
+            title: '¿Estás seguro de restaurar este operador?',
+            content: 'El operador volverá a estar activo.',
+            okText: 'Sí, restaurar',
+            cancelText: 'Cancelar',
+            onOk: () => {
+                router.post(`/operadores/${id}/restore`, {}, {
                     preserveScroll: true,
                     onSuccess: () => {
                         if (actionRef.current) {
@@ -147,21 +167,36 @@ export default function OperadoresIndex({ availableRds }) {
             width: 120,
             align: 'center',
             search: false,
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button 
-                        type="text" 
-                        icon={<EditOutlined className="text-purple-600" />} 
-                        onClick={() => handleEdit(record.id)}
-                    />
-                    <Button 
-                        type="text" 
-                        danger 
-                        icon={<DeleteOutlined />} 
-                        onClick={() => handleDelete(record.id)}
-                    />
-                </Space>
-            )
+            render: (_, record) => {
+                if (record.deleted_at) {
+                    return (
+                        <Space size="middle">
+                            <Button 
+                                type="text" 
+                                className="text-green-600"
+                                icon={<ReloadOutlined />} 
+                                onClick={() => handleRestore(record.id)}
+                                title="Restaurar"
+                            />
+                        </Space>
+                    );
+                }
+                return (
+                    <Space size="middle">
+                        <Button 
+                            type="text" 
+                            icon={<EditOutlined className="text-purple-600" />} 
+                            onClick={() => handleEdit(record.id)}
+                        />
+                        <Button 
+                            type="text" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            onClick={() => handleDelete(record.id)}
+                        />
+                    </Space>
+                );
+            }
         }
     ];
 
@@ -193,7 +228,11 @@ export default function OperadoresIndex({ availableRds }) {
                             <div className="text-xs text-gray-500">{record.apodo ? `"${record.apodo}"` : 'Operador Político'}</div>
                         </div>
                     </div>
-                    <Badge status={isActive ? 'success' : 'error'} text={isActive ? 'Activo' : 'Inactivo'} className="bg-gray-50 px-2 py-1 rounded text-xs border border-gray-200" />
+                    {record.deleted_at ? (
+                        <Badge status="error" text="Eliminado" className="bg-red-50 px-2 py-1 rounded text-xs border border-red-200" />
+                    ) : (
+                        <Badge status={isActive ? 'success' : 'error'} text={isActive ? 'Activo' : 'Inactivo'} className="bg-gray-50 px-2 py-1 rounded text-xs border border-gray-200" />
+                    )}
                 </div>
                 
                 <div className="space-y-2 mb-4 text-sm text-gray-600">
@@ -225,9 +264,15 @@ export default function OperadoresIndex({ availableRds }) {
                 </div>
                 
                 <div className="pt-3 border-t border-gray-100 flex justify-between">
-                    <Button type="text" icon={<EditOutlined />} className="text-purple-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
-                    <div className="w-px bg-gray-200 my-1"></div>
-                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                    {record.deleted_at ? (
+                        <Button type="text" className="text-green-600 w-full flex justify-center items-center" icon={<ReloadOutlined />} onClick={() => handleRestore(record.id)}>Restaurar</Button>
+                    ) : (
+                        <>
+                            <Button type="text" icon={<EditOutlined />} className="text-purple-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                            <div className="w-px bg-gray-200 my-1"></div>
+                            <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                        </>
+                    )}
                 </div>
             </Card>
         );
@@ -244,7 +289,13 @@ export default function OperadoresIndex({ availableRds }) {
                         <h2 className="text-xl font-bold m-0">Operadores Políticos</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de operadores políticos asignados a tu red.</p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center">
+                        {auth?.user?.role === 'presidente' && (
+                            <div className="flex items-center gap-2 mr-0 sm:mr-4 text-sm text-gray-600">
+                                <span>Ver eliminados</span>
+                                <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
+                            </div>
+                        )}
                         {['presidente', 'rd'].includes(auth?.user?.role) && (
                             <Button 
                                 type="default" 
@@ -268,6 +319,7 @@ export default function OperadoresIndex({ availableRds }) {
                     rowKey="id"
                     search={true} 
                     mobileCardRender={renderMobileCard}
+                    params={{ trashed: showTrashed ? '1' : '0' }}
                 />
 
                 <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">

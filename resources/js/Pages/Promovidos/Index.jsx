@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal, Image } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined, MailOutlined, DownloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
+import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined, MailOutlined, DownloadOutlined, SafetyCertificateOutlined, ReloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PromovidoFormModal from '@/Components/PromovidoFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
@@ -15,6 +15,7 @@ export default function PromovidosIndex({ availablePromotores }) {
     const [selectedPromovido, setSelectedPromovido] = useState(null);
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
+    const [showTrashed, setShowTrashed] = useState(false);
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -38,6 +39,25 @@ export default function PromovidosIndex({ availablePromotores }) {
             cancelText: 'Cancelar',
             onOk: () => {
                 router.delete(`/promovidos/${id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        if (actionRef.current) {
+                            actionRef.current.reload();
+                        }
+                    }
+                });
+            }
+        });
+    };
+
+    const handleRestore = (id) => {
+        modal.confirm({
+            title: '¿Estás seguro de restaurar este promovido?',
+            content: 'El promovido volverá a estar activo.',
+            okText: 'Sí, restaurar',
+            cancelText: 'Cancelar',
+            onOk: () => {
+                router.post(`/promovidos/${id}/restore`, {}, {
                     preserveScroll: true,
                     onSuccess: () => {
                         if (actionRef.current) {
@@ -229,29 +249,44 @@ export default function PromovidosIndex({ availablePromotores }) {
             width: 150,
             align: 'center',
             search: false,
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button 
-                        type="text" 
-                        icon={<GiftOutlined className="text-green-600" />} 
-                        title="Kardex de Apoyos"
-                        onClick={() => handleOpenApoyos(record)}
-                    />
-                    <Button 
-                        type="text" 
-                        icon={<EditOutlined className="text-blue-600" />} 
-                        title="Editar"
-                        onClick={() => handleEdit(record.id)}
-                    />
-                    <Button 
-                        type="text" 
-                        danger 
-                        icon={<DeleteOutlined />} 
-                        title="Eliminar"
-                        onClick={() => handleDelete(record.id)}
-                    />
-                </Space>
-            )
+            render: (_, record) => {
+                if (record.deleted_at) {
+                    return (
+                        <Space size="middle">
+                            <Button 
+                                type="text" 
+                                className="text-green-600"
+                                icon={<ReloadOutlined />} 
+                                onClick={() => handleRestore(record.id)}
+                                title="Restaurar"
+                            />
+                        </Space>
+                    );
+                }
+                return (
+                    <Space size="middle">
+                        <Button 
+                            type="text" 
+                            icon={<GiftOutlined className="text-green-600" />} 
+                            title="Kardex de Apoyos"
+                            onClick={() => handleOpenApoyos(record)}
+                        />
+                        <Button 
+                            type="text" 
+                            icon={<EditOutlined className="text-blue-600" />} 
+                            title="Editar"
+                            onClick={() => handleEdit(record.id)}
+                        />
+                        <Button 
+                            type="text" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            title="Eliminar"
+                            onClick={() => handleDelete(record.id)}
+                        />
+                    </Space>
+                );
+            }
         },
         {
             title: 'PROMOTOR ASIGNADO',
@@ -299,6 +334,9 @@ export default function PromovidosIndex({ availablePromotores }) {
                             <div className="text-xs text-gray-500">Promovido (Simpatizante)</div>
                         </div>
                     </div>
+                    {record.deleted_at && (
+                        <Badge status="error" text="Eliminado" className="bg-red-50 px-2 py-1 rounded text-xs border border-red-200" />
+                    )}
                 </div>
                 
                 <div className="max-h-56 overflow-y-auto pr-2 space-y-2.5 mb-4 text-sm text-gray-600 scrollable-card-content">
@@ -392,11 +430,17 @@ export default function PromovidosIndex({ availablePromotores }) {
                 </div>
                 
                 <div className="pt-3 border-t border-gray-100 flex justify-between flex-wrap">
-                    <Button type="text" icon={<GiftOutlined />} className="text-green-600 w-1/3 flex justify-center items-center" onClick={() => handleOpenApoyos(record)}>Kardex</Button>
-                    <div className="w-px bg-gray-200 my-1"></div>
-                    <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/3 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
-                    <div className="w-px bg-gray-200 my-1"></div>
-                    <Button type="text" danger icon={<DeleteOutlined />} className="w-1/3 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                    {record.deleted_at ? (
+                        <Button type="text" className="text-green-600 w-full flex justify-center items-center" icon={<ReloadOutlined />} onClick={() => handleRestore(record.id)}>Restaurar</Button>
+                    ) : (
+                        <>
+                            <Button type="text" icon={<GiftOutlined />} className="text-green-600 w-1/3 flex justify-center items-center" onClick={() => handleOpenApoyos(record)}>Kardex</Button>
+                            <div className="w-px bg-gray-200 my-1"></div>
+                            <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/3 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                            <div className="w-px bg-gray-200 my-1"></div>
+                            <Button type="text" danger icon={<DeleteOutlined />} className="w-1/3 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                        </>
+                    )}
                 </div>
             </Card>
         );
@@ -413,7 +457,13 @@ export default function PromovidosIndex({ availablePromotores }) {
                         <h2 className="text-xl font-bold m-0">Promovidos (Simpatizantes)</h2>
                         <p className="text-gray-500 text-sm mt-1">Lista de personas registradas por los promotores.</p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center">
+                        {auth?.user?.role === 'presidente' && (
+                            <div className="flex items-center gap-2 mr-0 sm:mr-4 text-sm text-gray-600">
+                                <span>Ver eliminados</span>
+                                <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
+                            </div>
+                        )}
                         {['presidente', 'rd'].includes(auth?.user?.role) && (
                             <Button 
                                 type="default" 
@@ -437,6 +487,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     rowKey="id"
                     search={true} 
                     mobileCardRender={renderMobileCard}
+                    params={{ trashed: showTrashed ? '1' : '0' }}
                 />
 
                 <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">

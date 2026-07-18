@@ -65,6 +65,12 @@ abstract class BaseCrudController extends Controller
         $this->checkAccess($request);
         $query = $this->getBaseQuery($request);
 
+        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && $request->user()?->role === 'presidente') {
+            if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
+                $query->onlyTrashed();
+            }
+        }
+
         // Búsqueda genérica si se requiere
         if ($search = $request->input('search')) {
             $this->applySearch($query, $search);
@@ -157,6 +163,31 @@ abstract class BaseCrudController extends Controller
         $item->delete();
 
         return redirect()->back()->with('success', 'Registro eliminado exitosamente.');
+    }
+
+    public function restore(Request $request, string $id)
+    {
+        $user = $request->user();
+        if (!$user || $user->role !== 'presidente') {
+            abort(403, 'Solo el presidente puede restaurar registros.');
+        }
+
+        if (!in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
+            abort(400, 'Este registro no soporta restauración.');
+        }
+
+        $item = $this->modelClass::onlyTrashed()->findOrFail($id);
+        
+        // Verificación de seguridad adicional
+        if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class]) && isset($item->presidente_id) && $item->presidente_id !== $user->id) {
+            abort(403, 'Acceso denegado.');
+        }
+
+        if (method_exists($item, 'restore')) {
+            $item->restore();
+        }
+
+        return redirect()->back()->with('success', 'Registro restaurado exitosamente.');
     }
 
     // Hooks opcionales

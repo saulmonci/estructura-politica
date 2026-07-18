@@ -28,21 +28,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // CRUD para Representantes de Demarcación (Solo Presidente)
     Route::get('/representantes/export', [RepresentanteDemarcacionController::class, 'export']);
+    Route::post('/representantes/{id}/restore', [RepresentanteDemarcacionController::class, 'restore']);
     Route::resource('representantes', RepresentanteDemarcacionController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
     // CRUD para Operadores (Solo Presidente y RD)
     Route::get('/operadores/export', [OperadorController::class, 'export']);
+    Route::post('/operadores/{id}/restore', [OperadorController::class, 'restore']);
     Route::resource('operadores', OperadorController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
     // CRUD para Promotores (Solo Presidente, RD y Operador)
     Route::get('/promotores/export', [PromotorController::class, 'export']);
+    Route::post('/promotores/{id}/restore', [PromotorController::class, 'restore']);
     Route::resource('promotores', PromotorController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
     // CRUD para Promovidos (Todos)
     Route::get('/promovidos/export', [PromovidoController::class, 'export']);
+    Route::post('/promovidos/{id}/restore', [PromovidoController::class, 'restore']);
     Route::resource('promovidos', PromovidoController::class)
          ->only(['index', 'store', 'update', 'destroy', 'show']);
 
