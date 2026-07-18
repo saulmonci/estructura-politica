@@ -269,12 +269,12 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                         label: 'Vista General',
                         children: vistaGeneralContent,
                     },
-                    {
+                    user.role === 'presidente' ? {
                         key: '2',
                         label: 'Reportes Estadísticos',
                         children: reportesContent,
-                    }
-                ]}
+                    } : null
+                ].filter(Boolean)}
             />
 
 
