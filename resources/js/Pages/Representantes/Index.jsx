@@ -5,6 +5,7 @@ import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
 import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, MailOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
+import axios from 'axios';
 
 export default function RepresentantesIndex({ representantes }) {
     const { auth } = usePage().props;
@@ -134,6 +135,20 @@ export default function RepresentantesIndex({ representantes }) {
                     </div>
                 </div>
             )
+        },
+        {
+            title: 'DEMARCACIÓN',
+            dataIndex: 'demarcacion_id',
+            key: 'demarcacion_id',
+            valueType: 'select',
+            hideInTable: true,
+            request: async () => {
+                const response = await axios.get('/catalogos/demarcaciones');
+                return response.data.map(d => ({ label: d.nombre, value: d.id }));
+            },
+            fieldProps: {
+                placeholder: 'Filtrar por Demarcación',
+            }
         },
         {
             title: 'FECHA REGISTRO',
