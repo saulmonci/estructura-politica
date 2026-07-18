@@ -16,6 +16,29 @@ export default function PromovidosIndex({ availablePromotores }) {
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
     const [showTrashed, setShowTrashed] = useState(false);
+    const [currentParams, setCurrentParams] = useState({});
+
+    const handleExport = () => {
+        const queryParams = new URLSearchParams();
+        
+        // Agregar params actuales
+        Object.entries(currentParams).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '' && key !== 'page' && key !== 'per_page') {
+                if (Array.isArray(value)) {
+                    value.forEach(v => queryParams.append(`${key}[]`, v));
+                } else {
+                    queryParams.append(key, value);
+                }
+            }
+        });
+
+        // Agregar estado de eliminados
+        if (showTrashed) {
+            queryParams.append('trashed', '1');
+        }
+
+        window.location.href = `/promovidos/export?${queryParams.toString()}`;
+    };
 
     const handleCreate = () => {
         modalRef.current?.open();
@@ -463,7 +486,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                             <Button 
                                 type="default" 
                                 icon={<DownloadOutlined />} 
-                                onClick={() => window.location.href = '/promovidos/export'}
+                                onClick={handleExport}
                                 className="w-full sm:w-auto border-gray-300"
                             >
                                 Descargar Excel
@@ -483,6 +506,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     search={true} 
                     mobileCardRender={renderMobileCard}
                     params={{ trashed: showTrashed ? '1' : '0' }}
+                    onParamsChange={setCurrentParams}
                 />
 
                 <div className="mt-6 bg-blue-50 p-4 rounded-lg flex flex-col lg:flex-row items-center justify-between border border-blue-100 gap-4">

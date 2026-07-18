@@ -17,11 +17,13 @@ export default function TableCrud({
     headerTitle,
     toolBarRender,
     url = null, // URL para peticiones Inertia
+    formRef: externalFormRef, // Referencia opcional para el formulario
     ...props
 }) {
     const { mobileCardRender, ...restProps } = props;
     const isAsync = !!endpoint;
-    const formRef = React.useRef();
+    const internalFormRef = React.useRef();
+    const formRef = externalFormRef || internalFormRef;
     const screens = useBreakpoint();
 
     // Debounce de 500ms para enviar el formulario automáticamente
@@ -33,7 +35,6 @@ export default function TableCrud({
         }, 500)
     ).current;
     
-    // Request interno asíncrono para delegarlo a ProTable
     const internalRequest = async (params, sort, filter) => {
         const { current, pageSize, ...rest } = params;
         
@@ -44,15 +45,21 @@ export default function TableCrud({
             sortParams.sort_direction = sort[field] === 'ascend' ? 'asc' : 'desc';
         }
 
+        const requestParams = {
+            page: current,
+            per_page: pageSize,
+            ...rest,
+            ...filter,
+            ...sortParams
+        };
+
+        if (props.onParamsChange) {
+            props.onParamsChange(requestParams);
+        }
+
         try {
             const response = await axios.get(endpoint, {
-                params: {
-                    page: current,
-                    per_page: pageSize,
-                    ...rest,
-                    ...filter,
-                    ...sortParams
-                },
+                params: requestParams,
                 headers: {
                     'Accept': 'application/json'
                 }
