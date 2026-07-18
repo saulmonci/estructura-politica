@@ -11,7 +11,7 @@ class IneExtractionController extends Controller
     public function extract(Request $request)
     {
         $request->validate([
-            'ine_image' => 'required|image|max:2048',
+            'ine_image' => 'required|image',
         ]);
 
         try {

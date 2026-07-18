@@ -19,6 +19,7 @@ import {
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
 import IneScanner from './IneScanner';
+import imageCompression from 'browser-image-compression';
 
 const { Dragger } = Upload;
 
@@ -188,25 +189,40 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
         }
     }, [open, editId, fetchUrl]);
 
-    const handleUploadChange = (info) => {
-        setFileList(info.fileList.slice(-1));
-    };
-
-    const handleUploadIneFrenteChange = (info) => {
-        setFileListIneFrente(info.fileList.slice(-1));
-    };
-
-    const handleUploadIneReversoChange = (info) => {
-        setFileListIneReverso(info.fileList.slice(-1));
-    };
-
-    const handleBeforeUpload = (file) => {
-        const maxSizeMB = 4;
-        if (file.size / 1024 / 1024 > maxSizeMB) {
-            message.error(`❌ La foto es demasiado pesada. El tamaño máximo es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
-            return Upload.LIST_IGNORE;
+    const compressImage = async (file) => {
+        const options = {
+            maxSizeMB: 3.8, // Ligeramente debajo de 4MB para estar seguros
+            maxWidthOrHeight: 1920,
+            useWebWorker: true
+        };
+        try {
+            message.loading({ content: 'Procesando y comprimiendo imagen...', key: 'compress' });
+            const compressedFile = await imageCompression(file, options);
+            message.success({ content: 'Imagen procesada', key: 'compress' });
+            return compressedFile;
+        } catch (error) {
+            console.error(error);
+            message.error({ content: 'Error procesando imagen', key: 'compress' });
+            return file;
         }
-        return false;
+    };
+
+    const handleBeforeUploadFoto = async (file) => {
+        const compressedFile = await compressImage(file);
+        setFileList([{ originFileObj: compressedFile }]);
+        return Upload.LIST_IGNORE;
+    };
+
+    const handleBeforeUploadIneFrente = async (file) => {
+        const compressedFile = await compressImage(file);
+        setFileListIneFrente([{ originFileObj: compressedFile }]);
+        return Upload.LIST_IGNORE;
+    };
+
+    const handleBeforeUploadIneReverso = async (file) => {
+        const compressedFile = await compressImage(file);
+        setFileListIneReverso([{ originFileObj: compressedFile }]);
+        return Upload.LIST_IGNORE;
     };
 
     return (
@@ -708,8 +724,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
-                                            beforeUpload={handleBeforeUpload}
-                                            onChange={handleUploadChange}
+                                            beforeUpload={handleBeforeUploadFoto}
                                             showUploadList={false}
                                             accept="image/*"
                                             capture="environment"
@@ -728,8 +743,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             </div>
                                         </div>
                                         <Upload
-                                            beforeUpload={handleBeforeUpload}
-                                            onChange={handleUploadChange}
+                                            beforeUpload={handleBeforeUploadFoto}
                                             showUploadList={false}
                                             accept="image/*"
                                             capture="environment"
@@ -768,8 +782,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
-                                            beforeUpload={handleBeforeUpload}
-                                            onChange={handleUploadIneFrenteChange}
+                                            beforeUpload={handleBeforeUploadIneFrente}
                                             showUploadList={false}
                                             accept="image/*"
                                             capture="environment"
@@ -788,8 +801,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             </div>
                                         </div>
                                         <Upload
-                                            beforeUpload={handleBeforeUpload}
-                                            onChange={handleUploadIneFrenteChange}
+                                            beforeUpload={handleBeforeUploadIneFrente}
                                             showUploadList={false}
                                             accept="image/*"
                                             capture="environment"
@@ -828,8 +840,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
                                         <Upload
-                                            beforeUpload={handleBeforeUpload}
-                                            onChange={handleUploadIneReversoChange}
+                                            beforeUpload={handleBeforeUploadIneReverso}
                                             showUploadList={false}
                                             accept="image/*"
                                             capture="environment"
@@ -848,8 +859,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             </div>
                                         </div>
                                         <Upload
-                                            beforeUpload={handleBeforeUpload}
-                                            onChange={handleUploadIneReversoChange}
+                                            beforeUpload={handleBeforeUploadIneReverso}
                                             showUploadList={false}
                                             accept="image/*"
                                             capture="environment"
