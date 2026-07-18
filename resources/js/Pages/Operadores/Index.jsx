@@ -152,6 +152,30 @@ export default function OperadoresIndex({ availableRds }) {
             }
         },
         {
+            title: 'ASIGNADO A (RD)',
+            dataIndex: 'parent_id',
+            key: 'parent_id',
+            hideInTable: !['presidente', 'admin', 'superadmin'].includes(auth?.user?.role),
+            hideInSearch: !['presidente', 'admin', 'superadmin'].includes(auth?.user?.role),
+            valueType: 'select',
+            request: async () => {
+                return (availableRds || []).map(rd => ({ 
+                    label: rd.apodo ? `${rd.name} (${rd.apodo})` : rd.name, 
+                    value: rd.id 
+                }));
+            },
+            render: (_, record) => {
+                if (record.leader) {
+                    return <span className="font-medium text-blue-700">{record.leader.name} {record.leader.apodo ? `(${record.leader.apodo})` : ''}</span>;
+                }
+                return <span className="text-gray-400 text-xs italic">Sin asignar</span>;
+            },
+            fieldProps: {
+                showSearch: true,
+                placeholder: 'Filtrar por RD',
+            }
+        },
+        {
             title: 'FECHA REGISTRO',
             dataIndex: 'created_at',
             key: 'created_at',
@@ -277,6 +301,15 @@ export default function OperadoresIndex({ availableRds }) {
                             {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
                         </span>
                     </div>
+                    {['presidente', 'admin', 'superadmin'].includes(auth?.user?.role) && (
+                        <div className="flex items-center gap-2">
+                            <TeamOutlined className="text-gray-400 shrink-0" /> 
+                            <span className="w-18 text-gray-400 shrink-0">RD:</span> 
+                            <span className="truncate flex-1 font-medium text-blue-700">
+                                {record.leader ? `${record.leader.name} ${record.leader.apodo ? `(${record.leader.apodo})` : ''}` : 'Sin asignar'}
+                            </span>
+                        </div>
+                    )}
                 </div>
                 
                 <div className="pt-3 border-t border-gray-100 flex justify-between">

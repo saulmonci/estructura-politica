@@ -23,9 +23,9 @@ class OperadorController extends BaseCrudController
     {
         $user = $request->user();
         if (!$user) {
-            return $this->modelClass::query()->where('role', 'operador')->with('demarcacion');
+            return $this->modelClass::query()->where('role', 'operador')->with(['demarcacion', 'leader']);
         }
-        return $user->queryOperadores()->with('demarcacion');
+        return $user->queryOperadores()->with(['demarcacion', 'leader']);
     }
 
     public function index(Request $request)
@@ -85,6 +85,10 @@ class OperadorController extends BaseCrudController
 
             if ($field === 'demarcacion_id') {
                 $query->where('demarcacion_id', $value);
+            }
+
+            if ($field === 'rd_id' || $field === 'parent_id') {
+                $query->where('parent_id', $value);
             }
 
             if ($field === 'created_at' && is_array($value) && count($value) === 2) {
