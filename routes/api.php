@@ -24,3 +24,17 @@ Route::middleware('auth:sanctum')->prefix('v1/dashboard')->group(function () {
     Route::get('/colonia-distribution', [DashboardController::class, 'getColoniaDistribution']);
     Route::get('/promovidos-table', [DashboardController::class, 'getPromovidosTable']);
 });
+
+use App\Http\Controllers\Api\MobileSyncController;
+use App\Http\Controllers\IneExtractionController;
+
+// Rutas para App Móvil Offline-First
+Route::prefix('mobile')->group(function () {
+    Route::post('/login', [DashboardController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/catalogos', [MobileSyncController::class, 'getCatalogos']);
+        Route::post('/sync', [MobileSyncController::class, 'syncPromovidos']);
+        Route::post('/ine-extract', [IneExtractionController::class, 'extract']);
+    });
+});
