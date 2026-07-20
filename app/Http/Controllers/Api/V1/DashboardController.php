@@ -49,6 +49,9 @@ class DashboardController extends Controller
         
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Cargar el municipio para devolverlo en el login (útil para la app móvil)
+        $user->load('municipality');
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -58,6 +61,8 @@ class DashboardController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'municipality_id' => $user->municipality_id,
+                    'municipality' => $user->municipality,
                 ]
             ]
         ], 200);
