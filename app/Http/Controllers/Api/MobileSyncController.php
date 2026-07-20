@@ -74,28 +74,17 @@ class MobileSyncController extends Controller
                     $ineFrentePath = $this->processBase64Image($data['ine_frente'] ?? null, 'promovidos/ine');
                     $ineReversoPath = $this->processBase64Image($data['ine_reverso'] ?? null, 'promovidos/ine');
 
+                    $data['foto'] = $fotoPath;
+                    $data['ine_frente'] = $ineFrentePath;
+                    $data['ine_reverso'] = $ineReversoPath;
+
                     $promovido = new Promovido();
-                    $promovido->promotor_id = $user->id;
-                    
-                    if (isset($user->presidente_id)) {
-                         $promovido->presidente_id = $user->presidente_id;
+                    $promovido->fill($data);
+
+                    // Asignamos el usuario actual si no viene un promotor_id en el request
+                    if (empty($promovido->promotor_id)) {
+                        $promovido->promotor_id = $user->id;
                     }
-
-                    $camposPermitidos = [
-                        'nombre', 'apellidos', 'curp', 'calle', 'numero_exterior', 'numero_interior',
-                        'colonia', 'codigo_postal', 'demarcacion_id', 'seccion_electoral', 'clave_elector',
-                        'telefono', 'sexo'
-                    ];
-
-                    foreach ($camposPermitidos as $campo) {
-                        if (isset($data[$campo])) {
-                            $promovido->{$campo} = $data[$campo];
-                        }
-                    }
-
-                    $promovido->foto = $fotoPath;
-                    $promovido->ine_frente = $ineFrentePath;
-                    $promovido->ine_reverso = $ineReversoPath;
 
                     $promovido->save();
 
