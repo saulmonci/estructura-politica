@@ -97,8 +97,6 @@ class MobileSyncController extends Controller
                     $promovido->ine_frente = $ineFrentePath;
                     $promovido->ine_reverso = $ineReversoPath;
 
-                    $promovido->nombre_completo = trim(($data['nombre'] ?? '') . ' ' . ($data['apellidos'] ?? ''));
-
                     $promovido->save();
 
                     if (isset($data['local_id'])) {
