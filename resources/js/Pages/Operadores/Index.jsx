@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, GiftOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
+import ApoyosDrawer from '@/Components/ApoyosDrawer';
 import axios from 'axios';
 
 export default function OperadoresIndex({ availableRds }) {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
+    const [isApoyosOpen, setIsApoyosOpen] = useState(false);
+    const [selectedOperador, setSelectedOperador] = useState(null);
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
     const [showTrashed, setShowTrashed] = useState(false);
@@ -39,6 +42,11 @@ export default function OperadoresIndex({ availableRds }) {
 
     const handleCreate = () => {
         modalRef.current?.open();
+    };
+
+    const handleOpenApoyos = (record) => {
+        setSelectedOperador(record);
+        setIsApoyosOpen(true);
     };
 
     const handleEdit = (id) => {
@@ -253,6 +261,12 @@ export default function OperadoresIndex({ availableRds }) {
                     <Space size="middle">
                         <Button 
                             type="text" 
+                            icon={<GiftOutlined className="text-green-600" />} 
+                            title="Kardex de Apoyos"
+                            onClick={() => handleOpenApoyos(record)}
+                        />
+                        <Button 
+                            type="text" 
                             icon={<EditOutlined className="text-purple-600" />} 
                             onClick={() => handleEdit(record.id)}
                         />
@@ -345,9 +359,11 @@ export default function OperadoresIndex({ availableRds }) {
                         <Button type="text" className="text-green-600 w-full flex justify-center items-center" icon={<ReloadOutlined />} onClick={() => handleRestore(record.id)}>Restaurar</Button>
                     ) : (
                         <>
-                            <Button type="text" icon={<EditOutlined />} className="text-purple-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                            <Button type="text" icon={<GiftOutlined />} className="text-green-600 w-1/3 flex justify-center items-center" onClick={() => handleOpenApoyos(record)}>Kardex</Button>
                             <div className="w-px bg-gray-200 my-1"></div>
-                            <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
+                            <Button type="text" icon={<EditOutlined />} className="text-purple-600 w-1/3 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
+                            <div className="w-px bg-gray-200 my-1"></div>
+                            <Button type="text" danger icon={<DeleteOutlined />} className="w-1/3 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
                         </>
                     )}
                 </div>
@@ -434,6 +450,13 @@ export default function OperadoresIndex({ availableRds }) {
                         actionRef.current.reload();
                     }
                 }}
+            />
+
+            <ApoyosDrawer 
+                visible={isApoyosOpen}
+                onClose={() => setIsApoyosOpen(false)}
+                entity={selectedOperador}
+                apiBasePath={selectedOperador ? `/operadores/${selectedOperador.id}` : null}
             />
         </MainLayout>
     );
