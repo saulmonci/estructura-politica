@@ -28,7 +28,7 @@ class MobileSyncController extends Controller
             $states = State::select('id', 'nombre as name')->get();
             $municipalities = Municipality::select('id', 'nombre as name', 'state_id')->get();
             $demarcaciones = Demarcacion::select('id', 'nombre as name', 'municipality_id')->get();
-            $secciones = SeccionElectoral::select('id', 'numero as seccion', 'municipality_id')->get();
+            $secciones = SeccionElectoral::select('id', 'numero as seccion', 'municipality_id', 'demarcacion_id')->get();
 
             return response()->json([
                 'success' => true,
