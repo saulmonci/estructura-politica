@@ -74,19 +74,44 @@ class MobileSyncController extends Controller
                     $ineFrentePath = $this->processBase64Image($data['ine_frente'] ?? null, 'promovidos/ine');
                     $ineReversoPath = $this->processBase64Image($data['ine_reverso'] ?? null, 'promovidos/ine');
 
-                    $data['foto'] = $fotoPath;
-                    $data['ine_frente'] = $ineFrentePath;
-                    $data['ine_reverso'] = $ineReversoPath;
-
-                    $promovido = new Promovido();
-                    $promovido->fill($data);
-
-                    // Asignamos el usuario actual si no viene un promotor_id en el request
-                    if (empty($promovido->promotor_id)) {
-                        $promovido->promotor_id = $user->id;
+                    if ($fotoPath) {
+                        $data['foto'] = $fotoPath;
+                    } else {
+                        unset($data['foto']);
                     }
 
-                    $promovido->save();
+                    if ($ineFrentePath) {
+                        $data['ine_frente'] = $ineFrentePath;
+                    } else {
+                        unset($data['ine_frente']);
+                    }
+
+                    if ($ineReversoPath) {
+                        $data['ine_reverso'] = $ineReversoPath;
+                    } else {
+                        unset($data['ine_reverso']);
+                    }
+
+                    // Asignamos el usuario actual si no viene un promotor_id en el request
+                    if (empty($data['promotor_id'])) {
+                        $data['promotor_id'] = $user->id;
+                    }
+
+                    // Buscar primero por CURP, si no hay, por Clave de Elector
+                    $searchCriteria = [];
+                    if (!empty($data['curp'])) {
+                        $searchCriteria['curp'] = $data['curp'];
+                    } elseif (!empty($data['clave_elector'])) {
+                        $searchCriteria['clave_elector'] = $data['clave_elector'];
+                    } else {
+                        $searchCriteria['nombre'] = $data['nombre'] ?? '';
+                        $searchCriteria['apellidos'] = $data['apellidos'] ?? '';
+                    }
+
+                    $promovido = Promovido::updateOrCreate(
+                        $searchCriteria,
+                        $data
+                    );
 
                     if (isset($data['local_id'])) {
                         $syncedIds[] = $data['local_id'];
