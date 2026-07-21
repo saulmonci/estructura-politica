@@ -124,7 +124,7 @@ class MobileSyncController extends Controller
         }
     }
 
-    private function processBase64Image($base64String, $folder)
+    private function processBase64Image(?string $base64String, string $folder)
     {
         if (empty($base64String)) {
             return null;

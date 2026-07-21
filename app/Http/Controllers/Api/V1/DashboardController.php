@@ -42,6 +42,7 @@ class DashboardController extends Controller
             ], 401);
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         
         // Revocar tokens anteriores para evitar acumulación de sesiones (Seguridad)

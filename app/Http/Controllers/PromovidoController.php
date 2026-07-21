@@ -186,6 +186,7 @@ class PromovidoController extends BaseCrudController
 
     protected function handlePhotoUpload(Request $request, $item): void
     {
+        /** @var \App\Models\Promovido $item */
         $hasChanges = false;
         
         if ($request->hasFile('foto')) {
@@ -213,6 +214,7 @@ class PromovidoController extends BaseCrudController
 
     protected function afterStore(Request $request, $item): void
     {
+        /** @var \App\Models\Promovido $item */
         $user = $request->user();
         
         if ($user && $user->role === 'promotor') {
@@ -230,6 +232,7 @@ class PromovidoController extends BaseCrudController
 
     protected function afterUpdate(Request $request, $item): void
     {
+        /** @var \App\Models\Promovido $item */
         parent::afterUpdate($request, $item);
         $this->handlePhotoUpload($request, $item);
     }
@@ -244,6 +247,7 @@ class PromovidoController extends BaseCrudController
 
     protected function getExportRow($item): array
     {
+        /** @var \App\Models\Promovido $item */
         $promotor = $item->promotor;
         return [
             '#' . str_pad($item->id, 5, '0', STR_PAD_LEFT),

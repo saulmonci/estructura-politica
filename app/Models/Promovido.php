@@ -22,8 +22,10 @@ class Promovido extends Model
 
         static::creating(function ($promovido) {
             if (empty($promovido->presidente_id)) {
-                if (auth()->check()) {
-                    $promovido->presidente_id = auth()->user()->getPresidenteId();
+                if (\Illuminate\Support\Facades\Auth::check()) {
+                    /** @var \App\Models\User $user */
+                    $user = \Illuminate\Support\Facades\Auth::user();
+                    $promovido->presidente_id = $user->getPresidenteId();
                 } else if ($promovido->promotor_id) {
                     $promotor = User::find($promovido->promotor_id);
                     if ($promotor) {
