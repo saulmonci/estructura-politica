@@ -78,3 +78,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
     Route::get('/logs/{log}', [App\Http\Controllers\ActivityLogController::class, 'show'])->name('logs.show');
 });
+
+// Ruta comodín para la App de Promotores en React (PWA)
+Route::get('/app-promotores/{any?}', function () {
+    $path = public_path('app-promotores/index.html');
+    if (file_exists($path)) {
+        return file_get_contents($path);
+    }
+    abort(404, 'La aplicación de promotores no ha sido instalada o el build no se encuentra.');
+})->where('any', '.*');
