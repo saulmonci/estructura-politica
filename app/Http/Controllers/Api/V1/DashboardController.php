@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Demarcacion;
 use App\Models\User;
 use App\Models\Promovido;
 use Illuminate\Http\Request;
@@ -44,14 +45,17 @@ class DashboardController extends Controller
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        
+
         // Revocar tokens anteriores para evitar acumulación de sesiones (Seguridad)
         $user->tokens()->delete();
-        
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Cargar el municipio para devolverlo en el login (útil para la app móvil)
         $user->load('municipality');
+        //necesito obtener la demarcacion que pertenece el usuario
+        $demarcacion = Demarcacion::where('municipality_id', $user->municipality_id)->first();
+        $user->demarcacion = $demarcacion;
 
         return response()->json([
             'success' => true,
@@ -64,6 +68,7 @@ class DashboardController extends Controller
                     'role' => $user->role,
                     'municipality_id' => $user->municipality_id,
                     'municipality' => $user->municipality,
+                    'demarcacion' => $user->demarcacion,
                 ]
             ]
         ], 200);
@@ -97,7 +102,7 @@ class DashboardController extends Controller
     public function getStats(Request $request)
     {
         $user = $request->user();
-        
+
         $operadores = 0;
         $promotores = $user->queryPromotores()->count();
         $promovidos = $user->queryPromovidos()->count();
@@ -107,23 +112,20 @@ class DashboardController extends Controller
             // RDs del Presidente
             $rdIds = User::where('parent_id', $user->id)->where('role', 'rd')->pluck('id')->toArray();
             $rdCount = count($rdIds);
-            
+
             $operadores = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->count();
-            
+
             // Total estructura: RDs + Operadores + Promotores + Promovidos
             $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;
-
         } elseif ($user->role === 'rd') {
             // Operadores
             $operadores = User::where('parent_id', $user->id)->where('role', 'operador')->count();
-            
+
             // Total estructura: Operadores + Promotores + Promovidos
             $totalEstructura = $operadores + $promotores + $promovidos;
-
         } elseif ($user->role === 'operador') {
             // Total estructura: Promotores + Promovidos
             $totalEstructura = $promotores + $promovidos;
-
         } elseif ($user->role === 'promotor') {
             $totalEstructura = $promovidos;
         }
@@ -178,7 +180,7 @@ class DashboardController extends Controller
     {
         try {
             $user = $request->user();
-            
+
             // Iniciar query base según la jerarquía
             $query = $user->queryPromovidos();
 
@@ -199,7 +201,7 @@ class DashboardController extends Controller
             // Paginación de ProTable
             $pageSize = (int) $request->input('pageSize', 10);
             $current = (int) $request->input('current', 1);
-            
+
             // Asegurar límites razonables para evitar ataques DoS por sobrecarga de memoria
             if ($pageSize < 1 || $pageSize > 100) {
                 $pageSize = 10;
@@ -221,7 +223,6 @@ class DashboardController extends Controller
                 'data' => $data,
                 'total' => $total
             ], 200);
-
         } catch (\Exception $e) {
             // TODO(security): Log execution exceptions and return generic message
             return response()->json([
