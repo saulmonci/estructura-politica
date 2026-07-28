@@ -23,7 +23,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
     {
         // El filtrado por jerarquía (parent_id) ya se hereda de BaseCrudController
         return parent::getBaseQuery($request)->where('role', 'rd')
-            ->with('demarcacion')
+            ->with(['demarcacion', 'demarcacionAsignada'])
             ->withCount(['subordinates as operadores_count' => function ($query) {
                 $query->where('role', 'operador');
             }]);
@@ -89,6 +89,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             'colonia' => ['nullable', 'string', 'max:255'],
             'codigo_postal' => ['nullable', 'digits:5'],
             'demarcacion_id' => ['nullable', 'exists:demarcaciones,id'],
+            'demarcacion_asignada_id' => ['nullable', 'exists:demarcaciones,id'],
             'seccion_electoral' => ['nullable', 'string', 'max:255'],
             'clave_electoral' => ['nullable', 'string', 'size:18', Rule::unique('users', 'clave_electoral')->ignore($id)],
             'telefono' => ['nullable', 'digits:10'],
@@ -231,7 +232,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
     {
         return [
             'ID', 'Nombre', 'Apellidos', 'Email', 'Sexo', 'Calle', 'No. Exterior', 'No. Interior', 
-            'Colonia', 'Código Postal', 'Demarcación', 'Sección Electoral', 'Clave Electoral', 
+            'Colonia', 'Código Postal', 'Demarcación Personal', 'Demarcación Asignada', 'Sección Electoral', 'Clave Electoral', 
             'Teléfono', 'CURP', 'Apodo', 'Estatus', 'Notas', 'Fecha de Registro', 'Total Operadores'
         ];
     }
@@ -250,6 +251,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             $item->colonia,
             $item->codigo_postal,
             $item->demarcacion?->nombre,
+            $item->demarcacionAsignada?->nombre,
             $item->seccion_electoral,
             $item->clave_electoral,
             $item->telefono,

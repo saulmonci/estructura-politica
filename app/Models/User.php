@@ -19,7 +19,7 @@ use App\Models\Scopes\TerritoryScope;
     'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'scope_level', 'candidate_type',
     'state_id', 'municipality_id', 'parent_id', 'presidente_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
-    'colonia', 'codigo_postal', 'demarcacion_id', 'seccion_electoral', 'clave_electoral', 'telefono',
+    'colonia', 'codigo_postal', 'demarcacion_id', 'demarcacion_asignada_id', 'seccion_electoral', 'clave_electoral', 'telefono',
     'curp', 'apodo', 'foto', 'ine_frente', 'ine_reverso', 'estado', 'notas'
 ])]
 #[Hidden(['password', 'remember_token'])]
@@ -174,6 +174,14 @@ class User extends Authenticatable
     public function demarcacion()
     {
         return $this->belongsTo(Demarcacion::class, 'demarcacion_id');
+    }
+
+    /**
+     * Obtener la demarcación que el RD tiene a cargo.
+     */
+    public function demarcacionAsignada()
+    {
+        return $this->belongsTo(Demarcacion::class, 'demarcacion_asignada_id');
     }
 
     /**

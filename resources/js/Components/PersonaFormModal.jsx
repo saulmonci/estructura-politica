@@ -102,6 +102,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                 colonia: '',
                 codigo_postal: '',
                 demarcacion_id: undefined,
+                demarcacion_asignada_id: undefined,
                 seccion_electoral: undefined,
                 curp: '',
                 clave_electoral: '',
@@ -158,6 +159,10 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                         }
 
                         if (data.demarcacion_id) {
+                            if (data.demarcacion_asignada_id) {
+                                data.demarcacion_asignada_id = String(data.demarcacion_asignada_id);
+                            }
+                            
                             const demId = String(data.demarcacion_id);
                             setSelectedDemarcacion(demId);
                             setLoadingSecciones(true);
@@ -542,11 +547,40 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                 </Col>
                             </Row>
 
+                            {entityType === 'RD' && (
+                                <Row gutter={16} className="mb-4">
+                                    <Col span={24}>
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                            <h4 className="text-blue-800 font-bold mb-2 flex items-center">
+                                                <TeamOutlined className="mr-2" /> ZONA DE RESPONSABILIDAD
+                                            </h4>
+                                            <p className="text-sm text-blue-700 mb-3">
+                                                Selecciona la demarcación de la cual este Representante será responsable. Esta demarcación determinará los datos que el RD podrá visualizar.
+                                            </p>
+                                            <ProFormSelect
+                                                name="demarcacion_asignada_id"
+                                                label="Demarcación Asignada / A Cargo"
+                                                placeholder="Seleccionar demarcación asignada"
+                                                rules={[{ required: true, message: 'Requerido' }]}
+                                                fieldProps={{
+                                                    prefix: <EnvironmentOutlined className="text-blue-500 mr-2" />,
+                                                    loading: loadingDemarcaciones,
+                                                }}
+                                                options={demarcaciones.map(d => ({
+                                                    label: d.nombre,
+                                                    value: String(d.id)
+                                                }))}
+                                            />
+                                        </div>
+                                    </Col>
+                                </Row>
+                            )}
+
                             <Row gutter={16}>
                                 <Col xs={24} md={12}>
                                     <ProFormSelect
                                         name="demarcacion_id"
-                                        label="Demarcación"
+                                        label={entityType === 'RD' ? "Demarcación (Info Personal)" : "Demarcación"}
                                         placeholder="Seleccionar demarcación"
                                         rules={[{ required: true, message: 'Requerido' }]}
                                         fieldProps={{

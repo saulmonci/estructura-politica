@@ -160,8 +160,9 @@ export default function RepresentantesIndex({ representantes }) {
                     <span className="text-gray-600 flex items-center">
                         <EnvironmentOutlined className="mr-2" /> {record.colonia || 'Sin colonia'}{record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
                     </span>
-                    <div className="flex gap-2 mt-0.5">
-                        {record.demarcacion && <span className="text-xs text-blue-500">Demarcación: {record.demarcacion.nombre}</span>}
+                    <div className="flex gap-2 mt-0.5 flex-wrap">
+                        {record.demarcacion_asignada && <span className="text-xs text-green-600 font-bold border border-green-200 bg-green-50 px-1 rounded">A cargo: {record.demarcacion_asignada.nombre}</span>}
+                        {record.demarcacion && <span className="text-xs text-blue-500">Info: {record.demarcacion.nombre}</span>}
                         {record.seccion_electoral && <span className="text-xs text-purple-500 font-bold">Sección: {record.seccion_electoral}</span>}
                     </div>
                 </div>
@@ -321,7 +322,8 @@ export default function RepresentantesIndex({ representantes }) {
                         <span className="truncate flex-1">
                             {record.colonia || 'Sin colonia'}
                             {record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
-                            {record.demarcacion ? ` (Dem: ${record.demarcacion.nombre})` : ''}
+                            {record.demarcacion_asignada ? ` (Cargo: ${record.demarcacion_asignada.nombre})` : ''}
+                            {record.demarcacion ? ` (Info: ${record.demarcacion.nombre})` : ''}
                             {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
                         </span>
                     </div>
