@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/presidentes', [PresidenteController::class, 'store'])->name('presidentes.store');
     Route::get('/presidentes/export', [PresidenteController::class, 'export']);
     Route::post('/presidentes/{id}/restore', [PresidenteController::class, 'restore']);
+    Route::post('/presidentes/{id}/toggle-status', [PresidenteController::class, 'toggleStatus']);
     Route::get('/presidentes/{id}', [PresidenteController::class, 'show']);
     Route::put('/presidentes/{id}', [PresidenteController::class, 'update']);
     Route::post('/presidentes/{id}', [PresidenteController::class, 'update']);

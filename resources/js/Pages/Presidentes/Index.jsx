@@ -41,11 +41,7 @@ export default function PresidentesIndex({ presidentes }) {
     const handleStatusToggle = async (record, checked) => {
         setTogglingId(record.id);
         try {
-            await axios.post(`/presidentes/${record.id}`, {
-                _method: 'PUT',
-                nombre: record.nombre || record.name,
-                apellidos: record.apellidos || '',
-                email: record.email,
+            await axios.post(`/presidentes/${record.id}/toggle-status`, {
                 estado: checked ? 1 : 0,
             });
             message.success(`Estatus del presidente actualizado a ${checked ? 'Activo' : 'Inactivo'}`);

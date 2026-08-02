@@ -298,4 +298,21 @@ class PresidenteController extends BaseCrudController
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function toggleStatus(Request $request, string $id)
+    {
+        $this->checkAccess($request);
+
+        $user = User::where('role', 'presidente')->findOrFail($id);
+
+        $estado = filter_var($request->input('estado'), FILTER_VALIDATE_BOOLEAN);
+        $user->estado = $estado;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Estatus del presidente actualizado exitosamente.',
+            'estado' => $user->estado
+        ]);
+    }
 }
