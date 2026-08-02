@@ -55,7 +55,7 @@ class PresidenteController extends BaseCrudController
         foreach ($filters as $field => $value) {
             if ($value === null || $value === '') continue;
 
-            if ($field === 'name') {
+            if ($field === 'nombre') {
                 $valLower = strtolower($value);
                 $query->where(function ($q) use ($valLower) {
                     $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
