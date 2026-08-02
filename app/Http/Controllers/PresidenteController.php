@@ -140,6 +140,12 @@ class PresidenteController extends BaseCrudController
             $request->merge(['password' => Hash::make('secret123')]);
         }
 
+        if ($request->has('estado')) {
+            $request->merge([
+                'estado' => filter_var($request->input('estado'), FILTER_VALIDATE_BOOLEAN)
+            ]);
+        }
+
         $request->merge([
             'role' => 'presidente',
             'scope_level' => 'municipal',
@@ -163,6 +169,12 @@ class PresidenteController extends BaseCrudController
             $request->merge(['password' => Hash::make($request->password)]);
         } else {
             $request->request->remove('password');
+        }
+
+        if ($request->has('estado')) {
+            $request->merge([
+                'estado' => filter_var($request->input('estado'), FILTER_VALIDATE_BOOLEAN)
+            ]);
         }
 
         $request->merge([

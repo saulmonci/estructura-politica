@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal, Image, Tag, Form, Row, Col, Upload, message, Input, Select, Divider } from 'antd';
+import { Card, Button, Avatar, Space, Badge, Modal, Image, Tag, Form, Row, Col, Upload, message, Input, Select, Divider, Switch } from 'antd';
 import { 
     PlusOutlined, 
     UserOutlined, 
@@ -30,12 +30,33 @@ export default function PresidentesIndex({ presidentes }) {
     const [modal, contextHolder] = Modal.useModal();
     const [showTrashed, setShowTrashed] = useState(false);
     const [currentParams, setCurrentParams] = useState({});
+    const [togglingId, setTogglingId] = useState(null);
 
     // Form modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
+
+    const handleStatusToggle = async (record, checked) => {
+        setTogglingId(record.id);
+        try {
+            await axios.post(`/presidentes/${record.id}`, {
+                _method: 'PUT',
+                nombre: record.nombre || record.name,
+                apellidos: record.apellidos || '',
+                email: record.email,
+                estado: checked ? 1 : 0,
+            });
+            message.success(`Estatus del presidente actualizado a ${checked ? 'Activo' : 'Inactivo'}`);
+            actionRef.current?.reload();
+        } catch (err) {
+            console.error('Error al actualizar el estatus:', err);
+            message.error('No se pudo actualizar el estatus del presidente');
+        } finally {
+            setTogglingId(null);
+        }
+    };
 
     // Catalog state
     const [estados, setEstados] = useState([]);
@@ -108,6 +129,7 @@ export default function PresidentesIndex({ presidentes }) {
     const handleCreate = () => {
         setEditingId(null);
         form.resetFields();
+        form.setFieldsValue({ estado: true });
         setFileListFoto([]);
         setExistingFoto(null);
         setFileListIneFrente([]);
@@ -195,6 +217,8 @@ export default function PresidentesIndex({ presidentes }) {
         try {
             const values = await form.validateFields();
             setSubmitting(true);
+
+            values.estado = values.estado ? 1 : 0;
 
             if (fileListFoto.length > 0 && fileListFoto[0].originFileObj) {
                 values.foto = fileListFoto[0].originFileObj;
@@ -371,7 +395,7 @@ export default function PresidentesIndex({ presidentes }) {
             title: 'ESTATUS',
             dataIndex: 'estado',
             key: 'estado',
-            width: 100,
+            width: 130,
             valueType: 'select',
             valueEnum: {
                 true: { text: 'Activo', status: 'Success' },
@@ -381,7 +405,13 @@ export default function PresidentesIndex({ presidentes }) {
                 record.deleted_at ? (
                     <Badge status="default" text="Eliminado" />
                 ) : (
-                    <Badge status={record.estado ? 'success' : 'error'} text={record.estado ? 'Activo' : 'Inactivo'} />
+                    <Switch
+                        checked={Boolean(record.estado)}
+                        loading={togglingId === record.id}
+                        checkedChildren="Activo"
+                        unCheckedChildren="Inactivo"
+                        onChange={(checked) => handleStatusToggle(record, checked)}
+                    />
                 )
             ),
         },
@@ -614,13 +644,26 @@ export default function PresidentesIndex({ presidentes }) {
                                 <Input prefix={<IdcardOutlined />} placeholder="Clave INE" maxLength={18} />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        <Col span={6}>
                             <Form.Item name="sexo" label="Sexo">
                                 <Select placeholder="Selecciona" options={[
                                     { label: 'Masculino', value: 'Masculino' },
                                     { label: 'Femenino', value: 'Femenino' },
                                     { label: 'Otro', value: 'Otro' }
                                 ]} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item 
+                                name="estado" 
+                                label="Estatus" 
+                                valuePropName="checked"
+                                initialValue={true}
+                            >
+                                <Switch 
+                                    checkedChildren="Activo" 
+                                    unCheckedChildren="Inactivo" 
+                                />
                             </Form.Item>
                         </Col>
                     </Row>
