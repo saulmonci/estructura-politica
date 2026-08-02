@@ -435,8 +435,10 @@ export default function PresidentesIndex({ presidentes }) {
                     <TableCrud
                         actionRef={actionRef}
                         columns={columns}
-                        requestUrl="/presidentes"
-                        showTrashed={showTrashed}
+                        endpoint="/presidentes"
+                        rowKey="id"
+                        search={true}
+                        params={{ trashed: showTrashed ? '1' : '0' }}
                         onParamsChange={(params) => setCurrentParams(params)}
                     />
                 </Card>
