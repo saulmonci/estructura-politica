@@ -181,7 +181,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
                                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
                                     <tr>
-                                        <td style="padding: 2px 0; color: #475569;">Promovidos:</td>
+                                        <td style="padding: 2px 0; color: #475569;">Votantes:</td>
                                         <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.promovidos}</td>
                                     </tr>
                                     <tr>
@@ -207,7 +207,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
                                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
                                     <tr>
-                                        <td style="padding: 2px 0; color: #475569;">Promovidos:</td>
+                                        <td style="padding: 2px 0; color: #475569;">Votantes:</td>
                                         <td style="padding: 2px 0; text-align: right; font-weight: bold; color: #0f172a;">${stats.promovidos}</td>
                                     </tr>
                                     <tr>
@@ -395,7 +395,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                         <GlobalOutlined className="text-[#0f172a]" /> Mapa Territorial (Bahía de Banderas)
                     </h2>
                     <p className="text-gray-500 text-sm mt-1">
-                        Visualiza en tiempo real el cumplimiento y metas de simpatizantes (promovidos) en las 9 demarcaciones municipales o secciones electorales.
+                        Visualiza en tiempo real el cumplimiento y metas de votantes en las 9 demarcaciones municipales o secciones electorales.
                     </p>
                 </div>
                 <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
@@ -437,7 +437,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                         </div>
                         <Row className="mt-4 border-t border-gray-100 pt-4" gutter={16}>
                             <Col span={12}>
-                                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Total Promovidos</div>
+                                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Total Votantes</div>
                                 <div className="text-xl font-bold text-gray-800 mt-1">{globalStats.total_promovidos}</div>
                             </Col>
                             <Col span={12}>
@@ -516,7 +516,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-400 mb-2">
-                                            <span>{item.promovidos} integrantes</span>
+                                            <span>{item.promovidos} votantes</span>
                                             <span>Meta: {item.meta}</span>
                                         </div>
                                         <Progress 
