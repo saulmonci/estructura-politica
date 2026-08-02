@@ -519,6 +519,7 @@ export default function PresidentesIndex({ presidentes }) {
                                 rules={[{ required: true, message: 'Selecciona un municipio' }]}
                             >
                                 <Select
+                                    showSearch
                                     placeholder="Seleccionar Municipio"
                                     loading={loadingMunicipios}
                                     disabled={!form.getFieldValue('state_id') && municipios.length === 0}
