@@ -20,6 +20,7 @@ import {
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
 import ImpersonateBanner from '../Components/ImpersonateBanner';
+import HeaderImpersonateSearch from '../Components/HeaderImpersonateSearch';
 
 export default function MainLayout({ children }) {
     const { auth } = usePage().props;
@@ -188,11 +189,7 @@ export default function MainLayout({ children }) {
                             </div>
 
                             <div className="flex items-center gap-3 md:gap-6">
-                                <Input 
-                                    prefix={<SearchOutlined className="text-gray-400" />} 
-                                    placeholder="Buscar..." 
-                                    className="w-32 sm:w-48 md:w-80 rounded-md border-gray-200 hover:border-blue-400 focus:border-blue-500"
-                                />
+                                <HeaderImpersonateSearch />
                                 <Badge count={5} size="small" className="cursor-pointer hidden sm:block">
                                     <BellOutlined className="text-xl text-gray-600 hover:text-blue-600" />
                                 </Badge>

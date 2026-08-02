@@ -100,4 +100,72 @@ class ImpersonateController extends Controller
 
         return redirect()->route('dashboard')->with('success', "Has regresado a tu cuenta de {$originalUser->role}.");
     }
+
+    /**
+     * Buscar usuarios para la función de impersonate (con filtro de municipio).
+     */
+    public function search(Request $request)
+    {
+        $currentUser = $request->user();
+
+        if (!$currentUser || !$currentUser->canImpersonate()) {
+            return response()->json([], 403);
+        }
+
+        $query = $request->input('q');
+        $municipalityId = $request->input('municipality_id');
+
+        $usersQuery = User::withoutGlobalScopes()
+            ->with(['municipality:id,nombre', 'demarcacion:id,nombre'])
+            ->where('id', '!=', $currentUser->id);
+
+        // Si es presidente (para uso futuro si se habilita canImpersonate en presidente):
+        if ($currentUser->role === 'presidente') {
+            $usersQuery->where('presidente_id', $currentUser->id)
+                ->whereNotIn('role', ['superuser', 'admin', 'presidente']);
+        }
+
+        // Filtro por municipio
+        if ($municipalityId) {
+            $usersQuery->where('municipality_id', $municipalityId);
+        }
+
+        // Filtro por término de búsqueda (nombre, email, id, clave electoral)
+        if (!empty($query)) {
+            $usersQuery->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('nombre', 'like', "%{$query}%")
+                  ->orWhere('apellidos', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%")
+                  ->orWhere('clave_electoral', 'like', "%{$query}%")
+                  ->orWhere('id', 'like', "%{$query}%");
+            });
+        }
+
+        $users = $usersQuery
+            ->orderBy('name')
+            ->orderBy('nombre')
+            ->limit(15)
+            ->get();
+
+        $formatted = $users->map(function ($u) use ($currentUser) {
+            $displayName = $u->name ?? trim(($u->nombre ?? '') . ' ' . ($u->apellidos ?? ''));
+            if (empty($displayName)) {
+                $displayName = 'Usuario #' . $u->id;
+            }
+
+            return [
+                'id' => $u->id,
+                'name' => $displayName,
+                'email' => $u->email,
+                'role' => $u->role,
+                'municipality_name' => $u->municipality?->nombre,
+                'demarcacion_name' => $u->demarcacion?->nombre,
+                'can_be_impersonated' => $currentUser->canImpersonate($u),
+            ];
+        });
+
+        return response()->json($formatted);
+    }
 }
+

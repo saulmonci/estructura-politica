@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
 
     // Impersonación de Usuarios
+    Route::get('/impersonate/search', [App\Http\Controllers\ImpersonateController::class, 'search'])->name('impersonate.search');
     Route::post('/impersonate/leave', [App\Http\Controllers\ImpersonateController::class, 'leave'])->name('impersonate.leave');
     Route::post('/impersonate/{user}', [App\Http\Controllers\ImpersonateController::class, 'take'])->name('impersonate.take');
 
