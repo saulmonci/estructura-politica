@@ -18,10 +18,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
 
     // CRUD para Presidentes (Solo Superuser / Admin)
+    Route::get('/presidentes', [PresidenteController::class, 'index'])->name('presidentes.index');
+    Route::post('/presidentes', [PresidenteController::class, 'store'])->name('presidentes.store');
     Route::get('/presidentes/export', [PresidenteController::class, 'export']);
     Route::post('/presidentes/{id}/restore', [PresidenteController::class, 'restore']);
-    Route::resource('presidentes', PresidenteController::class)
-         ->only(['index', 'store', 'update', 'destroy', 'show']);
+    Route::get('/presidentes/{id}', [PresidenteController::class, 'show']);
+    Route::put('/presidentes/{id}', [PresidenteController::class, 'update']);
+    Route::post('/presidentes/{id}', [PresidenteController::class, 'update']);
+    Route::delete('/presidentes/{id}', [PresidenteController::class, 'destroy']);
     
     // CRUD para Demarcaciones (Solo Presidente)
     Route::get('/demarcaciones/export', [DemarcacionController::class, 'export']);
