@@ -59,7 +59,8 @@ class PresidenteController extends BaseCrudController
                 $valLower = strtolower($value);
                 $query->where(function ($q) use ($valLower) {
                     $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
-                        ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
+                        ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ["%{$valLower}%"]);
                 });
             } elseif (in_array($field, ['telefono', 'colonia'])) {
                 $query->where($field, 'like', "%{$value}%");
