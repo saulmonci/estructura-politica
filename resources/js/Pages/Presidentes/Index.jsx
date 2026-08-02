@@ -195,51 +195,59 @@ export default function PresidentesIndex({ presidentes }) {
             const values = await form.validateFields();
             setSubmitting(true);
 
-            const formData = new FormData();
-            Object.keys(values).forEach(key => {
-                if (values[key] !== undefined && values[key] !== null) {
-                    formData.append(key, values[key]);
-                }
-            });
-
             if (fileListFoto.length > 0 && fileListFoto[0].originFileObj) {
-                formData.append('foto', fileListFoto[0].originFileObj);
+                values.foto = fileListFoto[0].originFileObj;
             }
             if (fileListIneFrente.length > 0 && fileListIneFrente[0].originFileObj) {
-                formData.append('ine_frente', fileListIneFrente[0].originFileObj);
+                values.ine_frente = fileListIneFrente[0].originFileObj;
             }
             if (fileListIneReverso.length > 0 && fileListIneReverso[0].originFileObj) {
-                formData.append('ine_reverso', fileListIneReverso[0].originFileObj);
+                values.ine_reverso = fileListIneReverso[0].originFileObj;
             }
 
             if (editingId) {
-                formData.append('_method', 'PUT');
-                await axios.post(`/presidentes/${editingId}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                values._method = 'PUT';
+                router.post(`/presidentes/${editingId}`, values, {
+                    forceFormData: true,
+                    onSuccess: () => {
+                        message.success('Presidente actualizado correctamente');
+                        setIsModalOpen(false);
+                        actionRef.current?.reload();
+                    },
+                    onError: (errors) => {
+                        if (errors) {
+                            const fieldErrors = Object.keys(errors).map((key) => ({
+                                name: key,
+                                errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+                            }));
+                            form.setFields(fieldErrors);
+                        }
+                        message.error('Por favor revisa los campos en rojo');
+                    },
+                    onFinish: () => setSubmitting(false)
                 });
-                message.success('Presidente actualizado correctamente');
             } else {
-                await axios.post('/presidentes', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                router.post('/presidentes', values, {
+                    forceFormData: true,
+                    onSuccess: () => {
+                        message.success('Presidente registrado correctamente');
+                        setIsModalOpen(false);
+                        actionRef.current?.reload();
+                    },
+                    onError: (errors) => {
+                        if (errors) {
+                            const fieldErrors = Object.keys(errors).map((key) => ({
+                                name: key,
+                                errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+                            }));
+                            form.setFields(fieldErrors);
+                        }
+                        message.error('Por favor revisa los campos en rojo');
+                    },
+                    onFinish: () => setSubmitting(false)
                 });
-                message.success('Presidente registrado correctamente');
             }
-
-            setIsModalOpen(false);
-            actionRef.current?.reload();
         } catch (err) {
-            console.error('Error al guardar presidente:', err);
-            if (err.response?.data?.errors) {
-                const errors = err.response.data.errors;
-                Object.keys(errors).forEach(field => {
-                    message.error(errors[field][0]);
-                });
-            } else if (err.response?.data?.message) {
-                message.error(err.response.data.message);
-            } else {
-                message.error('Ocurrió un error al procesar la solicitud');
-            }
-        } finally {
             setSubmitting(false);
         }
     };
