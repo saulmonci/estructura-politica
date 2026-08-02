@@ -328,9 +328,9 @@ export default function PresidentesIndex({ presidentes }) {
                 <div className="flex flex-col text-xs">
                     <span className="font-medium text-gray-700">
                         <EnvironmentOutlined className="text-blue-500 mr-1" />
-                        {record.municipality?.name || 'N/A'}
+                        {record.municipality?.nombre || record.municipality?.name || 'N/A'}
                     </span>
-                    <span className="text-gray-400 pl-4">{record.state?.name || 'N/A'}</span>
+                    <span className="text-gray-400 pl-4">{record.state?.nombre || record.state?.name || 'N/A'}</span>
                 </div>
             ),
         },
@@ -505,10 +505,13 @@ export default function PresidentesIndex({ presidentes }) {
                                 rules={[{ required: true, message: 'Selecciona un estado' }]}
                             >
                                 <Select
+                                    showSearch
                                     placeholder="Seleccionar Estado"
                                     loading={loadingEstados}
                                     onChange={handleStateChange}
-                                    options={estados.map(e => ({ label: e.name, value: e.id }))}
+                                    optionFilterProp="label"
+                                    filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                                    options={estados.map(e => ({ label: e.nombre || e.name, value: e.id }))}
                                 />
                             </Form.Item>
                         </Col>
@@ -523,7 +526,9 @@ export default function PresidentesIndex({ presidentes }) {
                                     placeholder="Seleccionar Municipio"
                                     loading={loadingMunicipios}
                                     disabled={!form.getFieldValue('state_id') && municipios.length === 0}
-                                    options={municipios.map(m => ({ label: m.name, value: m.id }))}
+                                    optionFilterProp="label"
+                                    filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                                    options={municipios.map(m => ({ label: m.nombre || m.name, value: m.id }))}
                                 />
                             </Form.Item>
                         </Col>
