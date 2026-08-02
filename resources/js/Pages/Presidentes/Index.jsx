@@ -474,6 +474,129 @@ export default function PresidentesIndex({ presidentes }) {
         },
     ];
 
+    const renderMobileCard = (record) => {
+        return (
+            <Card styles={{ body: { padding: '16px' } }} className="mb-4 shadow-sm rounded-lg border border-gray-200 w-full">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                        {record.foto_url ? (
+                            <Image
+                                src={record.foto_url}
+                                width={48}
+                                height={48}
+                                className="object-cover rounded-md border border-blue-200"
+                                style={{ borderRadius: '6px' }}
+                            />
+                        ) : (
+                            <Avatar
+                                shape="square"
+                                size={48}
+                                icon={<UserOutlined />}
+                                className="bg-amber-100 text-amber-600 font-bold rounded-md"
+                            />
+                        )}
+                        <div>
+                            <div className="font-semibold text-base text-gray-800">
+                                {record.nombre || record.name} {record.apellidos || ''}
+                            </div>
+                            <div className="text-xs text-blue-600 font-medium">
+                                PRES-{String(record.id).padStart(4, '0')}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        {record.deleted_at ? (
+                            <Badge status="default" text="Eliminado" className="bg-gray-100 px-2 py-1 rounded text-xs border border-gray-200" />
+                        ) : (
+                            <Switch
+                                checked={Boolean(record.estado)}
+                                loading={togglingId === record.id}
+                                checkedChildren="Activo"
+                                unCheckedChildren="Inactivo"
+                                onChange={(checked) => handleStatusToggle(record, checked)}
+                            />
+                        )}
+                    </div>
+                </div>
+
+                <div className="space-y-2 mb-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                        <MailOutlined className="text-gray-400 shrink-0" />
+                        <span className="text-gray-400 shrink-0 w-16">Email:</span>
+                        <span className="truncate flex-1 text-gray-800" title={record.email}>{record.email || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <PhoneOutlined className="text-gray-400 shrink-0" />
+                        <span className="text-gray-400 shrink-0 w-16">Teléfono:</span>
+                        <span className="truncate flex-1 text-gray-800">{record.telefono || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <EnvironmentOutlined className="text-blue-500 shrink-0 mt-0.5" />
+                        <span className="text-gray-400 shrink-0 w-16">Ubicación:</span>
+                        <span className="truncate flex-1 text-gray-800">
+                            {record.municipality?.nombre || record.municipality?.name || 'N/A'}, {record.state?.nombre || record.state?.name || 'N/A'}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                        <TeamOutlined className="text-gray-400 shrink-0" />
+                        <span className="text-gray-400 shrink-0 w-16">Estructura:</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <Tag color="blue" className="mr-0">{record.rds_count || 0} RD</Tag>
+                            <Tag color="purple" className="mr-0">{record.operadores_count || 0} Op</Tag>
+                            <Tag color="cyan" className="mr-0">{record.promotores_count || 0} Prom</Tag>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
+                    {record.deleted_at ? (
+                        <Button
+                            type="default"
+                            icon={<ReloadOutlined className="text-green-600" />}
+                            onClick={() => handleRestore(record.id)}
+                            className="text-xs text-green-600 border-green-200"
+                        >
+                            Restaurar
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                type="default"
+                                icon={<EditOutlined className="text-blue-600" />}
+                                onClick={() => handleEdit(record)}
+                                size="small"
+                                className="text-xs border-gray-300"
+                            >
+                                Editar
+                            </Button>
+                            {auth?.can_impersonate && record.id !== auth.user?.id && (
+                                <Button
+                                    type="default"
+                                    icon={<SwapOutlined className="text-amber-600" />}
+                                    onClick={() => handleImpersonate(record)}
+                                    size="small"
+                                    className="text-xs border-amber-300 text-amber-700 bg-amber-50"
+                                >
+                                    Impersonar
+                                </Button>
+                            )}
+                            <Button
+                                type="default"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDelete(record.id)}
+                                size="small"
+                                className="text-xs"
+                            >
+                                Eliminar
+                            </Button>
+                        </>
+                    )}
+                </div>
+            </Card>
+        );
+    };
+
     return (
         <MainLayout>
             <Head title="Gestión de Presidentes Municipales" />
@@ -524,17 +647,16 @@ export default function PresidentesIndex({ presidentes }) {
                     </div>
                 </div>
 
-                <Card className="shadow-sm border-gray-200 rounded-lg">
-                    <TableCrud
-                        actionRef={actionRef}
-                        columns={columns}
-                        endpoint="/presidentes"
-                        rowKey="id"
-                        search={true}
-                        params={{ trashed: showTrashed ? '1' : '0' }}
-                        onParamsChange={(params) => setCurrentParams(params)}
-                    />
-                </Card>
+                <TableCrud
+                    actionRef={actionRef}
+                    columns={columns}
+                    endpoint="/presidentes"
+                    rowKey="id"
+                    search={true}
+                    mobileCardRender={renderMobileCard}
+                    params={{ trashed: showTrashed ? '1' : '0' }}
+                    onParamsChange={(params) => setCurrentParams(params)}
+                />
             </div>
 
             {/* Modal de Registro / Edición de Presidente */}
