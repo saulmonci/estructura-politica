@@ -177,6 +177,11 @@ export default function HeaderImpersonateSearch() {
     <div ref={containerRef} className="flex items-center gap-2">
       {/* Filtro de Municipio */}
       <Select
+        showSearch
+        optionFilterProp="label"
+        filterOption={(input, option) =>
+          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+        }
         placeholder="Todos los Municipios"
         allowClear
         value={selectedMunicipio}
