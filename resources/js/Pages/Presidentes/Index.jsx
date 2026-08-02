@@ -282,12 +282,43 @@ export default function PresidentesIndex({ presidentes }) {
             key: 'nombre',
             render: (_, record) => (
                 <div className="flex flex-col">
-                    <span className="font-semibold text-gray-800 text-sm">{record.nombre} {record.apellidos}</span>
+                    <span className="font-semibold text-gray-800 text-sm">{record.nombre || record.name} {record.apellidos || ''}</span>
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                         <MailOutlined className="text-gray-400" /> {record.email}
                     </span>
                 </div>
             ),
+        },
+        {
+            title: 'Estado',
+            dataIndex: 'state_id',
+            key: 'state_id',
+            valueType: 'select',
+            hideInTable: true,
+            request: async () => {
+                const response = await axios.get('/catalogos/estados');
+                return response.data.map(e => ({ label: e.name || e.nombre, value: e.id }));
+            },
+            fieldProps: {
+                placeholder: 'Filtrar por Estado',
+            }
+        },
+        {
+            title: 'Municipio',
+            dataIndex: 'municipality_id',
+            key: 'municipality_id',
+            valueType: 'select',
+            hideInTable: true,
+            dependencies: ['state_id'],
+            request: async (params) => {
+                const stateId = params?.state_id;
+                const url = stateId ? `/catalogos/municipios?state_id=${stateId}` : '/catalogos/municipios';
+                const response = await axios.get(url);
+                return response.data.map(m => ({ label: m.name || m.nombre, value: m.id }));
+            },
+            fieldProps: {
+                placeholder: 'Filtrar por Municipio',
+            }
         },
         {
             title: 'ESTADO / MUNICIPIO',
