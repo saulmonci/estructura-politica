@@ -102,9 +102,9 @@ class PresidenteController extends BaseCrudController
             'numero_interior' => ['nullable', 'string', 'max:50'],
             'colonia' => ['nullable', 'string', 'max:255'],
             'codigo_postal' => ['nullable', 'digits:5'],
-            'clave_electoral' => ['nullable', 'string', 'size:18', Rule::unique('users', 'clave_electoral')->ignore($id)],
-            'telefono' => ['nullable', 'digits:10'],
-            'curp' => ['nullable', 'string', 'size:18', Rule::unique('users', 'curp')->ignore($id)],
+            'clave_electoral' => ['nullable', 'string', 'max:255', Rule::unique('users', 'clave_electoral')->ignore($id)],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'curp' => ['nullable', 'string', 'max:255', Rule::unique('users', 'curp')->ignore($id)],
             'apodo' => ['nullable', 'string', 'max:100'],
             'notas' => ['nullable', 'string'],
             'foto' => ['nullable', 'image'],
@@ -112,6 +112,9 @@ class PresidenteController extends BaseCrudController
             'ine_reverso' => ['nullable', 'image'],
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
+            'role' => ['nullable', 'string'],
+            'scope_level' => ['nullable', 'string'],
+            'candidate_type' => ['nullable', 'string'],
         ];
     }
 
