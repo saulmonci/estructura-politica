@@ -68,7 +68,21 @@ class WebController extends Controller
             ];
         }
 
-        if ($user->role === 'presidente') {
+        if (in_array($user->role, ['superuser', 'admin'])) {
+            $rdCount = User::where('role', 'rd')->count();
+            $operadores = User::where('role', 'operador')->count();
+            $promotores = User::where('role', 'promotor')->count();
+            $promovidos = Promovido::count();
+            $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;
+
+            foreach ($dates as &$d) {
+                $d['rd'] = User::where('role', 'rd')->where('created_at', '<=', $d['date'])->count();
+                $d['operadores'] = User::where('role', 'operador')->where('created_at', '<=', $d['date'])->count();
+                $d['promotores'] = User::where('role', 'promotor')->where('created_at', '<=', $d['date'])->count();
+                $d['promovidos'] = Promovido::where('created_at', '<=', $d['date'])->count();
+            }
+
+        } elseif ($user->role === 'presidente') {
             $rdIds = User::where('presidente_id', $user->id)->where('role', 'rd')->pluck('id')->toArray();
             $rdCount = count($rdIds);
             
@@ -150,8 +164,12 @@ class WebController extends Controller
 
         // Para la tabla general de RD
         $rds = [];
-        if ($user->role === 'presidente') {
-            $rdsList = User::where('presidente_id', $user->id)->where('role', 'rd')->with('demarcacion')->get();
+        if (in_array($user->role, ['presidente', 'superuser', 'admin'])) {
+            $rdsQuery = User::where('role', 'rd')->with('demarcacion');
+            if ($user->role === 'presidente') {
+                $rdsQuery->where('presidente_id', $user->id);
+            }
+            $rdsList = $rdsQuery->get();
             foreach($rdsList as $rd) {
                 $op = User::where('parent_id', $rd->id)->where('role', 'operador')->count();
                 $pr = $rd->queryPromotores()->count();
@@ -184,35 +202,33 @@ class WebController extends Controller
 
         $presidenteId = $user->getPresidenteId();
 
-        $agrupadosQuery = User::whereNotNull('demarcacion_id');
-        if ($presidenteId) {
+        $agrupadosQuery = User::where(function($q) {
+            $q->whereNotNull('demarcacion_id')
+              ->orWhereNotNull('demarcacion_asignada_id');
+        })->whereIn('role', ['rd', 'operador', 'promotor']);
+
+        if ($presidenteId && !in_array($user->role, ['superuser', 'admin'])) {
             $agrupadosQuery->where('presidente_id', $presidenteId);
         }
-        $agrupados = $agrupadosQuery->select('demarcacion_id')
-            ->selectRaw("SUM(CASE WHEN role = 'rd' THEN 1 ELSE 0 END) as total_rds")
-            ->selectRaw("SUM(CASE WHEN role = 'operador' THEN 1 ELSE 0 END) as total_operadores")
-            ->selectRaw("SUM(CASE WHEN role = 'promotor' THEN 1 ELSE 0 END) as total_promotores")
-            ->groupBy('demarcacion_id')
-            ->get();
 
-        foreach ($agrupados as $datos) {
-            $demId = $datos->demarcacion_id;
-            if (isset($reporte[$demId])) {
-                $reporte[$demId]['rds'] = (int)$datos->total_rds;
-                $reporte[$demId]['operadores'] = (int)$datos->total_operadores;
-                $reporte[$demId]['promotores'] = (int)$datos->total_promotores;
+        $usersList = $agrupadosQuery->get(['role', 'demarcacion_id', 'demarcacion_asignada_id']);
+        foreach ($usersList as $u) {
+            $demId = $u->role === 'rd' ? ($u->demarcacion_asignada_id ?: $u->demarcacion_id) : $u->demarcacion_id;
+            if ($demId && isset($reporte[$demId])) {
+                if ($u->role === 'rd') $reporte[$demId]['rds']++;
+                elseif ($u->role === 'operador') $reporte[$demId]['operadores']++;
+                elseif ($u->role === 'promotor') $reporte[$demId]['promotores']++;
             }
         }
 
         $promovidosQuery = DB::table('promovidos')
-            ->join('users', 'promovidos.promotor_id', '=', 'users.id')
-            ->select('users.demarcacion_id')
-            ->selectRaw('COUNT(promovidos.id) as total_promovidos')
-            ->whereNotNull('users.demarcacion_id');
-        if ($presidenteId) {
-            $promovidosQuery->where('promovidos.presidente_id', $presidenteId);
+            ->select('demarcacion_id', DB::raw('COUNT(id) as total_promovidos'))
+            ->whereNotNull('demarcacion_id')
+            ->whereNull('deleted_at');
+        if ($presidenteId && !in_array($user->role, ['superuser', 'admin'])) {
+            $promovidosQuery->where('presidente_id', $presidenteId);
         }
-        $promovidosAgrupados = $promovidosQuery->groupBy('users.demarcacion_id')->get();
+        $promovidosAgrupados = $promovidosQuery->groupBy('demarcacion_id')->get();
 
         foreach ($promovidosAgrupados as $prom) {
             $demId = $prom->demarcacion_id;
@@ -265,6 +281,8 @@ class WebController extends Controller
             abort(403, 'No autorizado.');
         }
 
+        $presidenteId = $user->role === 'presidente' ? $user->id : $user->getPresidenteId();
+
         // Obtener todas las demarcaciones con sus metas y polígonos
         $demarcaciones = \App\Models\Demarcacion::select(
             'id',
@@ -273,21 +291,41 @@ class WebController extends Controller
             DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
         )->orderBy('id')->get();
 
-        // Contar promovidos por demarcación
-        $promovidosPorDemarcacion = DB::table('promovidos')
+        // 1. Contar promovidos por demarcación
+        $promovidosQuery = DB::table('promovidos')
             ->select('demarcacion_id', DB::raw('count(*) as total'))
-            ->where('presidente_id', $user->id)
             ->whereNotNull('demarcacion_id')
-            ->groupBy('demarcacion_id')
+            ->whereNull('deleted_at');
+        if ($presidenteId && !in_array($user->role, ['superuser', 'admin'])) {
+            $promovidosQuery->where('presidente_id', $presidenteId);
+        }
+        $promovidosPorDemarcacion = $promovidosQuery->groupBy('demarcacion_id')
             ->pluck('total', 'demarcacion_id')
             ->toArray();
+
+        // 2. Contar usuarios de la estructura (RD, Operador, Promotor) por demarcación
+        $usersDemarcacionQuery = DB::table('users')
+            ->whereIn('role', ['rd', 'operador', 'promotor'])
+            ->whereNull('deleted_at');
+        if ($presidenteId && !in_array($user->role, ['superuser', 'admin'])) {
+            $usersDemarcacionQuery->where('presidente_id', $presidenteId);
+        }
+        $usersEnDemarcacion = $usersDemarcacionQuery->get(['role', 'demarcacion_id', 'demarcacion_asignada_id']);
+
+        $estructuraPorDemarcacion = [];
+        foreach ($usersEnDemarcacion as $u) {
+            $targetDem = $u->role === 'rd' ? ($u->demarcacion_asignada_id ?: $u->demarcacion_id) : $u->demarcacion_id;
+            if ($targetDem) {
+                $estructuraPorDemarcacion[$targetDem] = ($estructuraPorDemarcacion[$targetDem] ?? 0) + 1;
+            }
+        }
 
         $mapData = [];
         $totalPromovidos = 0;
         $totalMeta = 0;
 
         foreach ($demarcaciones as $d) {
-            $cantPromovidos = $promovidosPorDemarcacion[$d->id] ?? 0;
+            $cantPromovidos = ($promovidosPorDemarcacion[$d->id] ?? 0) + ($estructuraPorDemarcacion[$d->id] ?? 0);
             $meta = $d->meta ?? 500;
             
             $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
@@ -326,18 +364,34 @@ class WebController extends Controller
             DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
         )->orderBy('numero')->get();
 
-        // Contar promovidos por sección electoral
-        $promovidosPorSeccion = DB::table('promovidos')
+        // 1. Contar promovidos por sección electoral
+        $promovidosSeccionQuery = DB::table('promovidos')
             ->select('seccion_electoral', DB::raw('count(*) as total'))
-            ->where('presidente_id', $user->id)
             ->whereNotNull('seccion_electoral')
-            ->groupBy('seccion_electoral')
+            ->whereNull('deleted_at');
+        if ($presidenteId && !in_array($user->role, ['superuser', 'admin'])) {
+            $promovidosSeccionQuery->where('presidente_id', $presidenteId);
+        }
+        $promovidosPorSeccion = $promovidosSeccionQuery->groupBy('seccion_electoral')
+            ->pluck('total', 'seccion_electoral')
+            ->toArray();
+
+        // 2. Contar usuarios de la estructura (RD, Operador, Promotor) por sección electoral
+        $usersSeccionQuery = DB::table('users')
+            ->select('seccion_electoral', DB::raw('count(*) as total'))
+            ->whereIn('role', ['rd', 'operador', 'promotor'])
+            ->whereNotNull('seccion_electoral')
+            ->whereNull('deleted_at');
+        if ($presidenteId && !in_array($user->role, ['superuser', 'admin'])) {
+            $usersSeccionQuery->where('presidente_id', $presidenteId);
+        }
+        $estructuraPorSeccion = $usersSeccionQuery->groupBy('seccion_electoral')
             ->pluck('total', 'seccion_electoral')
             ->toArray();
 
         $seccionesData = [];
         foreach ($secciones as $s) {
-            $cantPromovidos = $promovidosPorSeccion[$s->numero] ?? 0;
+            $cantPromovidos = ($promovidosPorSeccion[$s->numero] ?? 0) + ($estructuraPorSeccion[$s->numero] ?? 0);
             $meta = $s->meta ?? 50; // default meta if none set
             
             $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
@@ -373,5 +427,4 @@ class WebController extends Controller
             ]
         ]);
     }
-
 }

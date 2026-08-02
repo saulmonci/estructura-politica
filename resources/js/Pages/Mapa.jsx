@@ -516,7 +516,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-400 mb-2">
-                                            <span>{item.promovidos} promovidos</span>
+                                            <span>{item.promovidos} integrantes</span>
                                             <span>Meta: {item.meta}</span>
                                         </div>
                                         <Progress 
