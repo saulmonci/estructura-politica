@@ -35,17 +35,13 @@ class DemarcacionController extends BaseCrudController
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        foreach ($filters as $field => $value) {
-            if ($value === null || $value === '') continue;
+        if (isset($filters['nombre']) && $filters['nombre'] !== '') {
+            $valLower = strtolower($filters['nombre']);
+            $query->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"]);
+        }
 
-            if ($field === 'nombre') {
-                $valLower = strtolower($value);
-                $query->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"]);
-            }
-
-            if ($field === 'meta') {
-                $query->where('meta', $value);
-            }
+        if (isset($filters['meta']) && $filters['meta'] !== '') {
+            $query->where('meta', $filters['meta']);
         }
     }
 

@@ -52,38 +52,43 @@ class PresidenteController extends BaseCrudController
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        foreach ($filters as $field => $value) {
-            if ($value === null || $value === '') continue;
+        $name = $filters['nombre'] ?? $filters['name'] ?? null;
+        if ($name !== null && $name !== '') {
+            $valLower = strtolower($name);
+            $query->where(function ($q) use ($valLower) {
+                $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
+                    ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ["%{$valLower}%"]);
+            });
+        }
 
-            if (in_array($field, ['nombre', 'name'])) {
-                $valLower = strtolower($value);
-                $query->where(function ($q) use ($valLower) {
-                    $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"])
-                        ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ["%{$valLower}%"]);
-                });
-            } elseif ($field === 'apellidos') {
-                $valLower = strtolower($value);
-                $query->whereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
-            } elseif (in_array($field, ['telefono', 'colonia'])) {
-                $query->where($field, 'like', "%{$value}%");
-            }
+        if (isset($filters['apellidos']) && $filters['apellidos'] !== '') {
+            $valLower = strtolower($filters['apellidos']);
+            $query->whereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
+        }
 
-            if ($field === 'estado') {
-                $query->where('estado', $value);
-            }
+        if (isset($filters['telefono']) && $filters['telefono'] !== '') {
+            $query->where('telefono', 'like', "%{$filters['telefono']}%");
+        }
 
-            if ($field === 'state_id') {
-                $query->where('state_id', $value);
-            }
+        if (isset($filters['colonia']) && $filters['colonia'] !== '') {
+            $query->where('colonia', 'like', "%{$filters['colonia']}%");
+        }
 
-            if ($field === 'municipality_id') {
-                $query->where('municipality_id', $value);
-            }
+        if (isset($filters['estado']) && $filters['estado'] !== '') {
+            $query->where('estado', $filters['estado']);
+        }
 
-            if ($field === 'created_at' && is_array($value) && count($value) === 2) {
-                $query->whereBetween('created_at', [$value[0] . ' 00:00:00', $value[1] . ' 23:59:59']);
-            }
+        if (isset($filters['state_id']) && $filters['state_id'] !== '') {
+            $query->where('state_id', $filters['state_id']);
+        }
+
+        if (isset($filters['municipality_id']) && $filters['municipality_id'] !== '') {
+            $query->where('municipality_id', $filters['municipality_id']);
+        }
+
+        if (isset($filters['created_at']) && is_array($filters['created_at']) && count($filters['created_at']) === 2) {
+            $query->whereBetween('created_at', [$filters['created_at'][0] . ' 00:00:00', $filters['created_at'][1] . ' 23:59:59']);
         }
     }
 

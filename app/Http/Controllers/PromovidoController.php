@@ -75,30 +75,46 @@ class PromovidoController extends BaseCrudController
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        foreach ($filters as $field => $value) {
-            if ($value === null || $value === '') continue;
+        if (isset($filters['nombre']) && $filters['nombre'] !== '') {
+            $valLower = strtolower($filters['nombre']);
+            $query->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"]);
+        }
 
-            if ($field === 'nombre') {
-                $valLower = strtolower($value);
-                $query->whereRaw('LOWER(nombre) LIKE ?', ["%{$valLower}%"]);
-            } elseif ($field === 'apellidos') {
-                $valLower = strtolower($value);
-                $query->whereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
-            } elseif (in_array($field, ['telefono', 'colonia', 'seccion_electoral'])) {
-                $query->where($field, 'like', "%{$value}%");
-            }
-            
-            if ($field === 'promotor_id') {
-                $query->where('promotor_id', $value);
-            }
+        if (isset($filters['apellidos']) && $filters['apellidos'] !== '') {
+            $valLower = strtolower($filters['apellidos']);
+            $query->whereRaw('LOWER(apellidos) LIKE ?', ["%{$valLower}%"]);
+        }
 
-            if (in_array($field, ['state_id', 'municipality_id', 'demarcacion_id'])) {
-                $query->where($field, $value);
-            }
+        if (isset($filters['telefono']) && $filters['telefono'] !== '') {
+            $query->where('telefono', 'like', "%{$filters['telefono']}%");
+        }
 
-            if ($field === 'created_at' && is_array($value) && count($value) === 2) {
-                $query->whereBetween('created_at', [$value[0] . ' 00:00:00', $value[1] . ' 23:59:59']);
-            }
+        if (isset($filters['colonia']) && $filters['colonia'] !== '') {
+            $query->where('colonia', 'like', "%{$filters['colonia']}%");
+        }
+
+        if (isset($filters['seccion_electoral']) && $filters['seccion_electoral'] !== '') {
+            $query->where('seccion_electoral', 'like', "%{$filters['seccion_electoral']}%");
+        }
+
+        if (isset($filters['promotor_id']) && $filters['promotor_id'] !== '') {
+            $query->where('promotor_id', $filters['promotor_id']);
+        }
+
+        if (isset($filters['state_id']) && $filters['state_id'] !== '') {
+            $query->where('state_id', $filters['state_id']);
+        }
+
+        if (isset($filters['municipality_id']) && $filters['municipality_id'] !== '') {
+            $query->where('municipality_id', $filters['municipality_id']);
+        }
+
+        if (isset($filters['demarcacion_id']) && $filters['demarcacion_id'] !== '') {
+            $query->where('demarcacion_id', $filters['demarcacion_id']);
+        }
+
+        if (isset($filters['created_at']) && is_array($filters['created_at']) && count($filters['created_at']) === 2) {
+            $query->whereBetween('created_at', [$filters['created_at'][0] . ' 00:00:00', $filters['created_at'][1] . ' 23:59:59']);
         }
     }
 
