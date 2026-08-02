@@ -342,6 +342,9 @@ export default function PresidentesIndex({ presidentes }) {
                 return response.data.map(e => ({ label: e.name || e.nombre, value: e.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Estado',
             }
         },
@@ -359,6 +362,9 @@ export default function PresidentesIndex({ presidentes }) {
                 return response.data.map(m => ({ label: m.name || m.nombre, value: m.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Municipio',
             }
         },

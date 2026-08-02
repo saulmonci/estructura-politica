@@ -181,6 +181,9 @@ export default function PromovidosIndex({ availablePromotores }) {
                 return response.data.map(e => ({ label: e.nombre, value: e.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Estado',
                 disabled: auth?.user?.scope_level === 'estatal' && auth?.user?.role !== 'superuser',
             }
@@ -207,6 +210,9 @@ export default function PromovidosIndex({ availablePromotores }) {
                 return response.data.map(m => ({ label: m.nombre, value: m.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Municipio',
                 disabled: auth?.user?.scope_level === 'municipal' && auth?.user?.role !== 'superuser',
             }
@@ -223,6 +229,9 @@ export default function PromovidosIndex({ availablePromotores }) {
                 return response.data.map(d => ({ label: d.nombre, value: d.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Demarcación',
             }
         },

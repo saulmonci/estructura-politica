@@ -191,6 +191,9 @@ export default function OperadoresIndex({ availableRds }) {
                 return response.data.map(d => ({ label: d.nombre, value: d.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Demarcación',
             }
         },
@@ -220,6 +223,8 @@ export default function OperadoresIndex({ availableRds }) {
             },
             fieldProps: {
                 showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por RD',
             }
         },

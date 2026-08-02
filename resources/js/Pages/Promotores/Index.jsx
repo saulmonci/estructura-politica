@@ -191,6 +191,9 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                 return response.data.map(d => ({ label: d.nombre, value: d.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Demarcación',
             }
         },
@@ -246,6 +249,8 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
             },
             fieldProps: {
                 showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Operador',
             }
         },

@@ -192,6 +192,9 @@ export default function RepresentantesIndex({ representantes }) {
                 return response.data.map(d => ({ label: d.nombre, value: d.id }));
             },
             fieldProps: {
+                showSearch: true,
+                optionFilterProp: 'label',
+                filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Demarcación',
             }
         },
