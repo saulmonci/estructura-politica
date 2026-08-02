@@ -42,7 +42,9 @@ class TerritoryScope implements Scope
         }
         // 3. Demarcación (Regidor / Delegado / RD)
         elseif ($user->scope_level === 'demarcacion') {
-            $targetDemarcacionId = $user->demarcacion_asignada_id ?? $user->demarcacion_id;
+            $targetDemarcacionId = ($user->role === 'rd' && $user->demarcacion_asignada_id)
+                ? $user->demarcacion_asignada_id
+                : $user->demarcacion_id;
 
             if ($targetDemarcacionId && $this->hasColumn($table, 'demarcacion_id')) {
                 $builder->where($table . '.demarcacion_id', $targetDemarcacionId);
