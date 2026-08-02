@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
-import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, GiftOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, MailOutlined, GiftOutlined, DownloadOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
@@ -43,6 +43,18 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
     const handleOpenApoyos = (record) => {
         setSelectedPromotor(record);
         setIsApoyosOpen(true);
+    };
+
+    const handleImpersonate = (record) => {
+        modal.confirm({
+            title: '¿Impersonar promotor?',
+            content: `¿Deseas ingresar al sistema navegando en representación de ${record.name || record.nombre}?`,
+            okText: 'Sí, impersonar',
+            cancelText: 'Cancelar',
+            onOk: () => {
+                router.post(`/impersonate/${record.id}`);
+            }
+        });
     };
 
     const handleCreate = () => {
@@ -269,12 +281,22 @@ export default function PromotoresIndex({ availableOperadores, availableRds }) {
                             type="text" 
                             icon={<EditOutlined className="text-orange-600" />} 
                             onClick={() => handleEdit(record.id)}
+                            title="Editar"
                         />
+                        {auth?.can_impersonate && record.id !== auth.user?.id && (
+                            <Button 
+                                type="text" 
+                                icon={<SwapOutlined className="text-amber-600" />} 
+                                onClick={() => handleImpersonate(record)}
+                                title="Impersonar usuario"
+                            />
+                        )}
                         <Button 
                             type="text" 
                             danger 
                             icon={<DeleteOutlined />} 
                             onClick={() => handleDelete(record.id)}
+                            title="Eliminar"
                         />
                     </Space>
                 );

@@ -17,6 +17,10 @@ Route::post('/logout', [WebController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
 
+    // Impersonación de Usuarios
+    Route::post('/impersonate/leave', [App\Http\Controllers\ImpersonateController::class, 'leave'])->name('impersonate.leave');
+    Route::post('/impersonate/{user}', [App\Http\Controllers\ImpersonateController::class, 'take'])->name('impersonate.take');
+
     // CRUD para Presidentes (Solo Superuser / Admin)
     Route::get('/presidentes', [PresidenteController::class, 'index'])->name('presidentes.index');
     Route::post('/presidentes', [PresidenteController::class, 'store'])->name('presidentes.store');

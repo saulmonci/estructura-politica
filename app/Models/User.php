@@ -348,4 +348,36 @@ class User extends Authenticatable
     {
         return $this->hasMany(Apoyo::class, 'user_id');
     }
+
+    /**
+     * Determina si el usuario actual puede impersonar a otro usuario.
+     * Por el momento restringido a 'superuser'. Preparado para habilitar 'presidente' en el futuro.
+     */
+    public function canImpersonate(?User $target = null): bool
+    {
+        // Roles autorizados (Actualmente solo superuser)
+        // Para habilitar al presidente en el futuro, añadir 'presidente' a $allowedRoles
+        $allowedRoles = ['superuser'];
+
+        if (!in_array($this->role, $allowedRoles)) {
+            return false;
+        }
+
+        if ($target) {
+            // No se puede impersonar a sí mismo
+            if ($target->id === $this->id) {
+                return false;
+            }
+
+            // Validación jerárquica para cuando se habilite el rol 'presidente'
+            if ($this->role === 'presidente') {
+                if ($target->role === 'superuser' || $target->role === 'admin' || $target->role === 'presidente') {
+                    return false;
+                }
+                return $target->presidente_id === $this->id;
+            }
+        }
+
+        return true;
+    }
 }

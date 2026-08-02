@@ -18,7 +18,8 @@ import {
     IdcardOutlined,
     CameraOutlined,
     TeamOutlined,
-    CrownOutlined
+    CrownOutlined,
+    SwapOutlined
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import axios from 'axios';
@@ -52,6 +53,18 @@ export default function PresidentesIndex({ presidentes }) {
         } finally {
             setTogglingId(null);
         }
+    };
+
+    const handleImpersonate = (record) => {
+        modal.confirm({
+            title: '¿Impersonar presidente?',
+            content: `¿Deseas ingresar al sistema navegando en representación de ${record.nombre || record.name}?`,
+            okText: 'Sí, impersonar',
+            cancelText: 'Cancelar',
+            onOk: () => {
+                router.post(`/impersonate/${record.id}`);
+            }
+        });
     };
 
     // Catalog state
@@ -434,6 +447,14 @@ export default function PresidentesIndex({ presidentes }) {
                                 onClick={() => handleEdit(record)}
                                 title="Editar Presidente"
                             />
+                            {auth?.can_impersonate && record.id !== auth.user?.id && (
+                                <Button 
+                                    type="text" 
+                                    icon={<SwapOutlined className="text-amber-600" />} 
+                                    onClick={() => handleImpersonate(record)}
+                                    title="Impersonar usuario"
+                                />
+                            )}
                             <Button 
                                 type="text" 
                                 icon={<DeleteOutlined className="text-red-500" />} 

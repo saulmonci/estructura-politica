@@ -42,10 +42,24 @@ class HandleInertiaRequests extends Middleware
             $user->loadMissing(['state', 'municipality', 'demarcacion']);
         }
 
+        $impersonatedBy = $request->session()->get('impersonated_by');
+        $impersonator = $impersonatedBy ? \App\Models\User::find($impersonatedBy) : null;
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $user,
+                'is_impersonating' => !empty($impersonatedBy),
+                'impersonator' => $impersonator ? [
+                    'id' => $impersonator->id,
+                    'name' => $impersonator->name ?? trim(($impersonator->nombre ?? '') . ' ' . ($impersonator->apellidos ?? '')),
+                    'role' => $impersonator->role,
+                ] : null,
+                'can_impersonate' => $user ? $user->canImpersonate() : false,
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
         ];
     }

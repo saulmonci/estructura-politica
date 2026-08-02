@@ -19,6 +19,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
+import ImpersonateBanner from '../Components/ImpersonateBanner';
 
 export default function MainLayout({ children }) {
     const { auth } = usePage().props;
@@ -167,6 +168,7 @@ export default function MainLayout({ children }) {
                     headerRender={false}
                 >
                     <div className="flex flex-col h-[calc(100vh-64px)] w-full relative">
+                        <ImpersonateBanner />
                         {/* Custom Header that bypasses ProLayout header issues */}
                         <div className="flex items-center justify-between w-full h-16 bg-white px-4 md:px-6 shadow-sm border-b border-gray-100 flex-shrink-0 relative z-10">
                             <div className="hidden md:flex items-center text-sm text-gray-500 truncate mr-4">
