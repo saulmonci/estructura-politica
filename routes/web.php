@@ -8,12 +8,20 @@ use App\Http\Controllers\PromotorController;
 use App\Http\Controllers\PromovidoController;
 use App\Http\Controllers\DemarcacionController;
 
+use App\Http\Controllers\PresidenteController;
+
 Route::get('/', [WebController::class, 'showLogin'])->name('login');
 Route::post('/login', [WebController::class, 'login']);
 Route::post('/logout', [WebController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
+
+    // CRUD para Presidentes (Solo Superuser / Admin)
+    Route::get('/presidentes/export', [PresidenteController::class, 'export']);
+    Route::post('/presidentes/{id}/restore', [PresidenteController::class, 'restore']);
+    Route::resource('presidentes', PresidenteController::class)
+         ->only(['index', 'store', 'update', 'destroy', 'show']);
     
     // CRUD para Demarcaciones (Solo Presidente)
     Route::get('/demarcaciones/export', [DemarcacionController::class, 'export']);

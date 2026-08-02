@@ -14,7 +14,8 @@ import {
   SearchOutlined,
   MenuOutlined,
   HistoryOutlined,
-  UserOutlined
+  UserOutlined,
+  CrownOutlined
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
@@ -101,6 +102,11 @@ export default function MainLayout({ children }) {
                                         path: '/dashboard',
                                         name: 'Dashboard',
                                         icon: <DashboardOutlined />,
+                                    },
+                                    ['superuser'].includes(user.role) && {
+                                        path: '/presidentes',
+                                        name: 'Presidentes',
+                                        icon: <CrownOutlined />,
                                     },
                                     ['presidente', 'admin', 'superuser'].includes(user.role) && {
                                         path: '/representantes',
