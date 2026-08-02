@@ -16,7 +16,20 @@ class ActivityLogController extends Controller
         // Restrict access to President only
         abort_if(!in_array($request->user()->role, ['presidente', 'admin', 'superuser']), 403, 'Acceso denegado. Solo los administradores pueden acceder a esta información.');
 
-        $query = ActivityLog::where('presidente_id', $request->user()->id);
+        $user = $request->user();
+        $query = ActivityLog::query();
+
+        // Aplicar restricciones según el rol del usuario
+        if ($user->role === 'presidente') {
+            $query->where('presidente_id', $user->id);
+        } elseif ($user->role === 'admin') {
+            if ($user->scope_level === 'municipal' && $user->municipality_id) {
+                $query->where('municipality_id', $user->municipality_id);
+            } elseif ($user->scope_level === 'estatal' && $user->state_id) {
+                $query->where('state_id', $user->state_id);
+            }
+        }
+        // Para 'superuser' no se aplica restricción obligatoria de presidente_id
 
         // Global search
         if ($search = $request->input('search')) {
@@ -76,7 +89,20 @@ class ActivityLogController extends Controller
     {
         abort_if(!in_array($request->user()->role, ['presidente', 'admin', 'superuser']), 403, 'Acceso denegado.');
 
-        $log = ActivityLog::where('presidente_id', $request->user()->id)->findOrFail($id);
+        $user = $request->user();
+        $query = ActivityLog::query();
+
+        if ($user->role === 'presidente') {
+            $query->where('presidente_id', $user->id);
+        } elseif ($user->role === 'admin') {
+            if ($user->scope_level === 'municipal' && $user->municipality_id) {
+                $query->where('municipality_id', $user->municipality_id);
+            } elseif ($user->scope_level === 'estatal' && $user->state_id) {
+                $query->where('state_id', $user->state_id);
+            }
+        }
+
+        $log = $query->findOrFail($id);
 
         return response()->json($log);
     }
