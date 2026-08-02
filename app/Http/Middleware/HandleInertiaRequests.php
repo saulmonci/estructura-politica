@@ -43,7 +43,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $impersonatedBy = $request->session()->get('impersonated_by');
-        $impersonator = $impersonatedBy ? \App\Models\User::find($impersonatedBy) : null;
+        $impersonator = $impersonatedBy ? \App\Models\User::withoutGlobalScopes()->find($impersonatedBy) : null;
 
         return [
             ...parent::share($request),

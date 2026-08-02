@@ -26,7 +26,7 @@ class ImpersonateController extends Controller
             abort(403, 'No tienes permisos para impersonar a este usuario.');
         }
 
-        // Guardar el ID del usuario original en la sesión
+        // Guardar el ID del usuario original
         $originalUserId = $currentUser->id;
 
         // Registrar la actividad en la bitácora
@@ -48,14 +48,13 @@ class ImpersonateController extends Controller
             'presidente_id' => $currentUser->getPresidenteId(),
         ]);
 
-        // Guardar identificador de impersonador en la sesión
+        // Autenticar como el usuario objetivo (Laravel regenera sesión al hacer login)
+        Auth::login($user);
+
+        // Almacenar el id del usuario original en la nueva sesión creada tras el login
         $request->session()->put('impersonated_by', $originalUserId);
 
-        // Autenticar como el usuario objetivo
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->route('dashboard')->with('success', "Ahora estás navegando como {$user->name} ({$user->role}).");
+        return redirect()->route('dashboard')->with('success', "Ahora estás navegando como " . ($user->name ?? $user->nombre) . " ({$user->role}).");
     }
 
     /**
@@ -69,12 +68,14 @@ class ImpersonateController extends Controller
 
         $originalUserId = $request->session()->get('impersonated_by');
         $targetUser = $request->user();
-        $originalUser = User::find($originalUserId);
+
+        // IMPORTANTE: Desactivar Scopes Globales (TerritoryScope) al buscar el usuario original,
+        // ya que la sesión actual tiene los permisos del usuario suplantado y filtraría al superuser.
+        $originalUser = User::withoutGlobalScopes()->find($originalUserId);
 
         if (!$originalUser) {
             $request->session()->forget('impersonated_by');
-            Auth::logout();
-            return redirect()->route('login')->with('error', 'Usuario original no encontrado. Por favor inicia sesión de nuevo.');
+            return redirect()->route('dashboard')->with('error', 'Usuario original no encontrado.');
         }
 
         // Registrar fin de la suplantación en la bitácora
@@ -96,7 +97,6 @@ class ImpersonateController extends Controller
 
         // Volver a autenticar con el usuario original
         Auth::login($originalUser);
-        $request->session()->regenerate();
 
         return redirect()->route('dashboard')->with('success', "Has regresado a tu cuenta de {$originalUser->role}.");
     }
