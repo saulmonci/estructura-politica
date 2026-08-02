@@ -190,7 +190,8 @@ export default function PresidentesIndex({ presidentes }) {
         });
     };
 
-    const handleFormSubmit = async () => {
+    const handleFormSubmit = async (e) => {
+        if (e?.preventDefault) e.preventDefault();
         try {
             const values = await form.validateFields();
             setSubmitting(true);
@@ -500,7 +501,13 @@ export default function PresidentesIndex({ presidentes }) {
                 width={720}
                 destroyOnClose
             >
-                <Form form={form} layout="vertical" className="mt-4">
+                <Form 
+                    form={form} 
+                    layout="vertical" 
+                    className="mt-4"
+                    onFinish={handleFormSubmit}
+                    onSubmit={(e) => e.preventDefault()}
+                >
                     <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
                         Asignación Geográfica
                     </Divider>
