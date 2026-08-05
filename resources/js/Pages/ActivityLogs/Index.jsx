@@ -126,6 +126,14 @@ export default function ActivityLogsIndex() {
                 } else if (action === 'deleted') {
                     color = 'red';
                     label = 'Eliminación';
+                } else if (action === 'impersonate_start') {
+                    color = 'purple';
+                    label = 'Inició Suplantación';
+                } else if (action === 'impersonate_stop') {
+                    color = 'orange';
+                    label = 'Detuvo Suplantación';
+                } else if (action !== 'updated') {
+                    label = action;
                 }
                 return <Tag color={color} className="uppercase font-bold text-[10px]">{label}</Tag>;
             }
@@ -301,6 +309,14 @@ export default function ActivityLogsIndex() {
         } else if (record.action === 'deleted') {
             actionColor = 'red';
             actionLabel = 'Eliminación';
+        } else if (record.action === 'impersonate_start') {
+            actionColor = 'purple';
+            actionLabel = 'Inició Suplantación';
+        } else if (record.action === 'impersonate_stop') {
+            actionColor = 'orange';
+            actionLabel = 'Detuvo Suplantación';
+        } else if (record.action !== 'updated') {
+            actionLabel = record.action;
         }
 
         return (
@@ -406,12 +422,17 @@ export default function ActivityLogsIndex() {
                                 <Tag 
                                     color={
                                         selectedLog.action === 'created' ? 'green' : 
-                                        selectedLog.action === 'deleted' ? 'red' : 'blue'
+                                        selectedLog.action === 'deleted' ? 'red' : 
+                                        selectedLog.action === 'impersonate_start' ? 'purple' : 
+                                        selectedLog.action === 'impersonate_stop' ? 'orange' : 'blue'
                                     } 
                                     className="uppercase font-bold text-[10px]"
                                 >
                                     {selectedLog.action === 'created' ? 'Creación' :
-                                     selectedLog.action === 'deleted' ? 'Eliminación' : 'Actualización'}
+                                     selectedLog.action === 'deleted' ? 'Eliminación' : 
+                                     selectedLog.action === 'impersonate_start' ? 'Inició Suplantación' : 
+                                     selectedLog.action === 'impersonate_stop' ? 'Detuvo Suplantación' : 
+                                     selectedLog.action === 'updated' ? 'Actualización' : selectedLog.action}
                                 </Tag>
                             </Descriptions.Item>
                             <Descriptions.Item label="Módulo">
@@ -457,6 +478,13 @@ export default function ActivityLogsIndex() {
                                 <div>
                                     <p className="text-xs text-gray-500 mb-2">Campos específicos que cambiaron en la base de datos:</p>
                                     {renderDiffTable(selectedLog.original_data, selectedLog.changed_data)}
+                                </div>
+                            )}
+
+                            {(selectedLog.action === 'impersonate_start' || selectedLog.action === 'impersonate_stop') && (
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-2">Detalles de la sesión de suplantación:</p>
+                                    {renderSimpleDataList(selectedLog.changed_data || {})}
                                 </div>
                             )}
                         </div>
