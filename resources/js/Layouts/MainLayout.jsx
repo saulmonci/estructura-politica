@@ -79,7 +79,7 @@ export default function MainLayout({ children }) {
                     menuExtraRender={({ collapsed }) =>
                         !collapsed && (
                             <div className="flex items-center gap-3 px-4 py-6 border-b border-gray-800 mb-2">
-                                <Avatar size={48} icon={<UserOutlined />} className="bg-gray-700" />
+                                <Avatar size={48} icon={<UserOutlined />} src={user?.foto ? `/storage/${user.foto}` : null} className="bg-gray-700" />
                                 <div className="flex flex-col min-w-0 flex-1">
                                     <span className="font-bold text-white leading-tight truncate" title={displayName}>{displayName}</span>
                                     <span className="text-gray-300 text-sm capitalize leading-tight mb-1 truncate">{roleName}</span>
@@ -217,7 +217,7 @@ export default function MainLayout({ children }) {
                                     }}
                                 >
                                     <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 md:p-1.5 rounded transition-colors">
-                                        <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
+                                        <Avatar icon={<UserOutlined />} src={user?.foto ? `/storage/${user.foto}` : null} className="bg-blue-100 text-blue-600" />
                                         <div className="hidden sm:flex flex-col leading-none text-left min-w-0 max-w-[120px]">
                                             <span className="font-bold text-gray-800 text-sm truncate" title={displayName}>{displayName}</span>
                                             <span className="text-xs text-gray-500 capitalize truncate">{roleName}</span>
