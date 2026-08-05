@@ -25,6 +25,17 @@ import HeaderImpersonateSearch from '../Components/HeaderImpersonateSearch';
 export default function MainLayout({ children }) {
     const { auth } = usePage().props;
     const user = auth?.user || { name: 'Presidente', role: 'presidente', id: 'PRES-0001' };
+    const displayName = user.name || `${user.nombre || ''} ${user.apellidos || ''}`.trim() || `Usuario ${user.id}`;
+    
+    const ROLE_NAMES = {
+        superuser: 'Superusuario',
+        admin: 'Administrador',
+        presidente: 'Presidente',
+        rd: 'Representante de Demarcación (RD)',
+        operador: 'Operador',
+        promotor: 'Promotor',
+    };
+    const roleName = ROLE_NAMES[user.role] || user.role;
     const [pathname, setPathname] = useState(window.location.pathname);
     const [collapsed, setCollapsed] = useState(false);
 
@@ -69,9 +80,9 @@ export default function MainLayout({ children }) {
                         !collapsed && (
                             <div className="flex items-center gap-3 px-4 py-6 border-b border-gray-800 mb-2">
                                 <Avatar size={48} icon={<UserOutlined />} className="bg-gray-700" />
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-white leading-tight">{user.id || 'PRES-0001'}</span>
-                                    <span className="text-gray-300 text-sm capitalize leading-tight mb-1">{user.role}</span>
+                                <div className="flex flex-col min-w-0 flex-1">
+                                    <span className="font-bold text-white leading-tight truncate" title={displayName}>{displayName}</span>
+                                    <span className="text-gray-300 text-sm capitalize leading-tight mb-1 truncate">{roleName}</span>
                                     <div className="flex items-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-green-500"></div>
                                         <span className="text-green-500 text-xs font-medium">En línea</span>
@@ -172,10 +183,10 @@ export default function MainLayout({ children }) {
                         <ImpersonateBanner />
                         {/* Custom Header that bypasses ProLayout header issues */}
                         <div className="flex items-center justify-between w-full h-16 bg-white px-4 md:px-6 shadow-sm border-b border-gray-100 flex-shrink-0 relative z-10">
-                            <div className="hidden md:flex items-center text-sm text-gray-500 truncate mr-4">
-                                <span className="font-semibold text-gray-700 truncate">Representantes de Demarcación (RD)</span>
-                                <span className="mx-2 text-gray-400 font-bold">&gt;</span>
-                                <span className="truncate">{user.id || 'RD-0001'} - Ana Gabriela Torres</span>
+                            <div className="hidden md:flex items-center text-sm text-gray-500 truncate mr-4 min-w-0">
+                                <span className="font-semibold text-gray-700 truncate">{roleName}</span>
+                                <span className="mx-2 text-gray-400 font-bold flex-shrink-0">&gt;</span>
+                                <span className="truncate">{user.id} - {displayName}</span>
                             </div>
                             {/* Mobile title replacement & menu toggle */}
                             <div className="md:hidden flex items-center gap-3 flex-1">
@@ -207,9 +218,9 @@ export default function MainLayout({ children }) {
                                 >
                                     <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 md:p-1.5 rounded transition-colors">
                                         <Avatar icon={<UserOutlined />} className="bg-blue-100 text-blue-600" />
-                                        <div className="hidden sm:flex flex-col leading-none text-left">
-                                            <span className="font-bold text-gray-800 text-sm">{user.id || 'PRES-0001'}</span>
-                                            <span className="text-xs text-gray-500 capitalize">{user.role}</span>
+                                        <div className="hidden sm:flex flex-col leading-none text-left min-w-0 max-w-[120px]">
+                                            <span className="font-bold text-gray-800 text-sm truncate" title={displayName}>{displayName}</span>
+                                            <span className="text-xs text-gray-500 capitalize truncate">{roleName}</span>
                                         </div>
                                         <span className="text-gray-400 text-xs font-bold hidden sm:block">v</span>
                                     </div>

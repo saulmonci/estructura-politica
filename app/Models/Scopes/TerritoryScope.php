@@ -46,12 +46,28 @@ class TerritoryScope implements Scope
                 ? $user->demarcacion_asignada_id
                 : $user->demarcacion_id;
 
-            if ($targetDemarcacionId && $this->hasColumn($table, 'demarcacion_id')) {
-                $builder->where($table . '.demarcacion_id', $targetDemarcacionId);
-            } else {
-                // If scope is demarcation but none is assigned, return empty result
-                $builder->whereRaw('1 = 0');
-            }
+            $builder->where(function ($query) use ($table, $targetDemarcacionId, $user) {
+                $hasCondition = false;
+
+                if ($targetDemarcacionId && $this->hasColumn($table, 'demarcacion_id')) {
+                    $query->where($table . '.demarcacion_id', $targetDemarcacionId);
+                    $hasCondition = true;
+                }
+
+                // Permitir ver registros de los que soy padre directo (ej. RDs viendo a sus operadores)
+                if ($this->hasColumn($table, 'parent_id')) {
+                    if ($hasCondition) {
+                        $query->orWhere($table . '.parent_id', $user->id);
+                    } else {
+                        $query->where($table . '.parent_id', $user->id);
+                        $hasCondition = true;
+                    }
+                }
+
+                if (!$hasCondition) {
+                    $query->whereRaw('1 = 0');
+                }
+            });
         }
     }
 
@@ -62,7 +78,7 @@ class TerritoryScope implements Scope
     {
         // Safe mapping of our main domain models and their columns
         $map = [
-            'users' => ['state_id', 'municipality_id', 'demarcacion_id'],
+            'users' => ['state_id', 'municipality_id', 'demarcacion_id', 'parent_id'],
             'promovidos' => ['state_id', 'municipality_id', 'demarcacion_id'],
             'apoyos' => ['state_id', 'municipality_id', 'demarcacion_id'],
         ];
