@@ -65,7 +65,7 @@ abstract class BaseCrudController extends Controller
         $this->checkAccess($request);
         $query = $this->getBaseQuery($request);
 
-        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && $request->user()?->role === 'presidente') {
+        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && in_array($request->user()?->role, ['presidente', 'admin', 'superuser'])) {
             if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
                 $query->onlyTrashed();
             }
@@ -168,8 +168,8 @@ abstract class BaseCrudController extends Controller
     public function restore(Request $request, string $id)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'presidente') {
-            abort(403, 'Solo el presidente puede restaurar registros.');
+        if (!$user || !in_array($user->role, ['presidente', 'admin', 'superuser'])) {
+            abort(403, 'Solo el presidente o administradores pueden restaurar registros.');
         }
 
         if (!in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
@@ -178,9 +178,11 @@ abstract class BaseCrudController extends Controller
 
         $item = $this->modelClass::onlyTrashed()->findOrFail($id);
         
-        // Verificación de seguridad adicional
-        if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class]) && isset($item->presidente_id) && $item->presidente_id !== $user->id) {
-            abort(403, 'Acceso denegado.');
+        // Verificación de seguridad adicional (los admins y superusers pueden restaurar todo)
+        if (!in_array($user->role, ['admin', 'superuser'])) {
+            if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class]) && isset($item->presidente_id) && $item->presidente_id !== $user->id) {
+                abort(403, 'Acceso denegado.');
+            }
         }
 
         if (method_exists($item, 'restore')) {

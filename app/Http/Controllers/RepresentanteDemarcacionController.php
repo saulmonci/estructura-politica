@@ -73,6 +73,24 @@ class RepresentanteDemarcacionController extends BaseCrudController
         }
     }
 
+    public function index(Request $request)
+    {
+        $response = parent::index($request);
+
+        if ($response instanceof \Inertia\Response) {
+            $user = $request->user();
+            $presidentes = [];
+
+            if ($user && in_array(strtolower($user->role), ['admin', 'superadmin', 'superuser'])) {
+                $presidentes = User::where('role', 'presidente')->get(['id', 'name', 'apodo']);
+            }
+
+            $response->with('availablePresidentes', $presidentes);
+        }
+
+        return $response;
+    }
+
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
         return [
@@ -100,6 +118,8 @@ class RepresentanteDemarcacionController extends BaseCrudController
             'password' => ['nullable', 'string', 'min:6'],
             'estado' => ['nullable', 'boolean'],
             'role' => ['nullable', 'string'],
+            'parent_id' => ['nullable', 'exists:users,id'],
+            'presidente_id' => ['nullable', 'exists:users,id'],
         ];
     }
     
@@ -223,6 +243,12 @@ class RepresentanteDemarcacionController extends BaseCrudController
     protected function afterUpdate(Request $request, $item): void
     {
         parent::afterUpdate($request, $item);
+
+        if ($request->filled('parent_id') && in_array($request->user()->role, ['admin', 'superuser'])) {
+            $item->presidente_id = $item->parent_id;
+            $item->save();
+        }
+
         $this->handlePhotoUpload($request, $item);
     }
 

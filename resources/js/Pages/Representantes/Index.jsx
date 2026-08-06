@@ -8,7 +8,7 @@ import PersonaFormModal from '@/Components/PersonaFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
 import axios from 'axios';
 
-export default function RepresentantesIndex({ representantes }) {
+export default function RepresentantesIndex({ representantes, availablePresidentes }) {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
     const [isApoyosOpen, setIsApoyosOpen] = useState(false);
@@ -390,13 +390,13 @@ export default function RepresentantesIndex({ representantes }) {
                         <p className="text-gray-500 text-sm mt-1">Lista de todos los RD asignados en el sistema.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center">
-                        {auth?.user?.role === 'presidente' && (
+                        {['presidente', 'admin', 'superuser'].includes(auth?.user?.role) && (
                             <div className="flex items-center gap-2 mr-0 sm:mr-4 text-sm text-gray-600">
                                 <span>Ver eliminados</span>
                                 <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
                             </div>
                         )}
-                        {auth?.user?.role === 'presidente' && (
+                        {['presidente', 'admin', 'superuser'].includes(auth?.user?.role) && (
                             <Button 
                                 type="default" 
                                 icon={<DownloadOutlined />} 
@@ -426,6 +426,8 @@ export default function RepresentantesIndex({ representantes }) {
 
             <PersonaFormModal 
                 ref={modalRef}
+                entityType="Representante"
+                availablePresidentes={availablePresidentes || []}
                 onSuccess={() => {
                     if (actionRef.current) {
                         actionRef.current.reload();

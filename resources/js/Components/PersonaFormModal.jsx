@@ -23,7 +23,7 @@ import imageCompression from 'browser-image-compression';
 
 const { Dragger } = Upload;
 
-const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRds = [] }, ref) => {
+const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRds = [], availablePresidentes = [] }, ref) => {
     const { auth } = usePage().props;
     const [open, setOpen] = useState(false);
     const [editId, setEditingId] = useState(null);
@@ -247,8 +247,8 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
             submitter={{
                 render: (props) => {
                     const userRole = auth?.user?.role?.toLowerCase() || '';
-                    const requiresParent = (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
-                    const isDisabled = requiresParent && availableRds.length === 0;
+                    const requiresParent = (entityType === 'Representante' && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
+                    const isDisabled = requiresParent && (entityType === 'Representante' ? availablePresidentes.length === 0 : availableRds.length === 0);
                     
                     return (
                         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
@@ -398,19 +398,23 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                         <div className="mt-4">
                             {(() => {
                                 const userRole = auth?.user?.role?.toLowerCase() || '';
-                                const requiresParent = (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
+                                const requiresParent = (entityType === 'Representante' && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
+                                
+                                const parentOptions = entityType === 'Representante' 
+                                    ? availablePresidentes.map(p => ({ label: p.apodo ? `${p.name} (${p.apodo})` : p.name, value: p.id }))
+                                    : availableRds.map(rd => ({ label: rd.apodo ? `${rd.name} (${rd.apodo})` : rd.name, value: rd.id }));
+                                    
+                                const parentLabel = entityType === 'Representante' ? 'Presidente a cargo' : (entityType === 'Operador' ? 'Representante de Demarcación (RD)' : 'Operador');
+                                
                                 return requiresParent ? (
                                 <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
                                     <Col span={24}>
                                         <ProFormSelect
                                             name="parent_id"
-                                            label={<span className="font-bold text-blue-800">Asignar a {entityType === 'Operador' ? 'Representante de Demarcación (RD)' : 'Operador'}</span>}
-                                            placeholder={`Seleccionar el ${entityType === 'Operador' ? 'RD' : 'Operador'} responsable`}
+                                            label={<span className="font-bold text-blue-800">Asignar a {parentLabel}</span>}
+                                            placeholder={`Seleccionar el ${parentLabel} responsable`}
                                             rules={[{ required: true, message: 'Requerido' }]}
-                                            options={availableRds.map(rd => ({
-                                                label: rd.apodo ? `${rd.name} (${rd.apodo})` : rd.name,
-                                                value: rd.id
-                                            }))}
+                                            options={parentOptions}
                                             fieldProps={{ prefix: <TeamOutlined className="text-blue-500 mr-2" />, showSearch: true }}
                                         />
                                     </Col>

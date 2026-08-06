@@ -410,7 +410,7 @@ export default function OperadoresIndex({ availableRds }) {
                         <p className="text-gray-500 text-sm mt-1">Lista de operadores políticos asignados a tu red.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center">
-                        {auth?.user?.role === 'presidente' && (
+                        {['presidente', 'admin', 'superuser'].includes(auth?.user?.role) && (
                             <div className="flex items-center gap-2 mr-0 sm:mr-4 text-sm text-gray-600">
                                 <span>Ver eliminados</span>
                                 <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
