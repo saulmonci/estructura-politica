@@ -7,6 +7,7 @@ use App\Models\Municipality;
 use App\Models\Demarcacion;
 use App\Models\SeccionElectoral;
 use Illuminate\Http\Request;
+use App\Enums\UserRole;
 
 class CatalogoController extends Controller
 {
@@ -41,7 +42,7 @@ class CatalogoController extends Controller
         $user = $request->user();
 
         // Aplicar filtro territorial del usuario
-        if ($user && !in_array($user->role, ['superuser', 'admin'])) {
+        if ($user && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             if ($user->scope_level === 'estatal' && $user->state_id) {
                 // Filtrar demarcaciones por el estado del usuario
                 $query->whereHas('municipality', function($q) use ($user) {
@@ -57,12 +58,12 @@ class CatalogoController extends Controller
         }
         
         // Si el admin estatal está solicitando, también lo filtramos por default
-        if ($user && $user->role === 'admin' && $user->scope_level === 'estatal' && $user->state_id) {
+        if ($user && $user->role === UserRole::ADMIN && $user->scope_level === 'estatal' && $user->state_id) {
             $query->whereHas('municipality', function($q) use ($user) {
                 $q->where('state_id', $user->state_id);
             });
         }
-        if ($user && $user->role === 'admin' && $user->scope_level === 'municipal' && $user->municipality_id) {
+        if ($user && $user->role === UserRole::ADMIN && $user->scope_level === 'municipal' && $user->municipality_id) {
             $query->where('municipality_id', $user->municipality_id);
         }
 

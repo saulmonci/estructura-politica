@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Enums\UserRole;
 
 class TerritoryAdminsSeeder extends Seeder
 {
@@ -34,7 +35,7 @@ class TerritoryAdminsSeeder extends Seeder
                     'name' => "Admin Estatal - {$state->nombre}",
                     'email' => $email,
                     'password' => $password,
-                    'role' => 'admin',
+                    'role' => UserRole::ADMIN->value,
                     'scope_level' => 'estatal',
                     'state_id' => $state->id,
                     'municipality_id' => null,
@@ -60,7 +61,7 @@ class TerritoryAdminsSeeder extends Seeder
                     'name' => "Admin Mpal - {$muni->nombre}",
                     'email' => $email,
                     'password' => $password,
-                    'role' => 'admin',
+                    'role' => UserRole::ADMIN->value,
                     'scope_level' => 'municipal',
                     'state_id' => $muni->state_id,
                     'municipality_id' => $muni->id,

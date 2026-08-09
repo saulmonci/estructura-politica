@@ -8,6 +8,7 @@ use App\Models\Demarcacion;
 use App\Models\ActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Enums\UserRole;
 
 class ActivityLogTest extends TestCase
 {
@@ -21,7 +22,7 @@ class ActivityLogTest extends TestCase
 
     public function test_non_presidente_roles_cannot_access_logs()
     {
-        $rd = User::factory()->create(['role' => 'rd']);
+        $rd = User::factory()->create(['role' => UserRole::RD]);
 
         $response = $this->actingAs($rd)->get('/logs');
         $response->assertStatus(403);
@@ -29,7 +30,7 @@ class ActivityLogTest extends TestCase
 
     public function test_presidente_can_access_logs_and_details()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         
         $log = ActivityLog::create([
             'user_id' => $presidente->id,
@@ -54,7 +55,7 @@ class ActivityLogTest extends TestCase
 
     public function test_automatic_activity_logging_on_create_update_delete()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         
         // 1. Create a Demarcacion and assert activity log was created
         $demarcacion = Demarcacion::create([
@@ -96,14 +97,14 @@ class ActivityLogTest extends TestCase
 
     public function test_passwords_are_not_logged()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         
         // When creating a user, verify no password gets logged
         $user = User::factory()->create([
             'name' => 'John Doe',
             'email' => 'john@test.com',
             'password' => bcrypt('supersecretpassword123'),
-            'role' => 'promotor'
+            'role' => UserRole::PROMOTOR
         ]);
 
         // Find the log for this creation

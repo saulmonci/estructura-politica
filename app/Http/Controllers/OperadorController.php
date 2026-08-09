@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Enums\UserRole;
 
 class OperadorController extends BaseCrudController
 {
@@ -16,14 +17,14 @@ class OperadorController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'rd', "superuser", "admin"]), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::RD, UserRole::SUPERUSER, UserRole::ADMIN], true), 403, 'Acceso denegado.');
     }
 
     protected function getBaseQuery(Request $request): Builder
     {
         $user = $request->user();
         if (!$user) {
-            return $this->modelClass::query()->where('role', 'operador')->with(['demarcacion', 'leader']);
+            return $this->modelClass::query()->where('role', UserRole::OPERADOR)->with(['demarcacion', 'leader']);
         }
         return $user->queryOperadores()->with(['demarcacion', 'leader']);
     }
@@ -38,11 +39,10 @@ class OperadorController extends BaseCrudController
             $rds = [];
 
             if ($user) {
-                $role = strtolower($user->role);
-                if ($role === 'presidente') {
-                    $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
-                } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
-                    $rds = User::where('role', 'rd')->get(['id', 'name', 'apodo', 'demarcacion_id']);
+                if ($user->role === UserRole::PRESIDENTE) {
+                    $rds = User::where('role', UserRole::RD)->where('presidente_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
+                } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+                    $rds = User::where('role', UserRole::RD)->get(['id', 'name', 'apodo', 'demarcacion_id']);
                 }
             }
 
@@ -131,14 +131,13 @@ class OperadorController extends BaseCrudController
         ];
 
         if ($user) {
-            $role = strtolower($user->role);
-            if ($role === 'presidente') {
+            if ($user->role === UserRole::PRESIDENTE) {
                 $rules['parent_id'] = [
                     'required',
-                    Rule::exists('users', 'id')->where('role', 'rd')->where('presidente_id', $user->id)
+                    Rule::exists('users', 'id')->where('role', UserRole::RD->value)->where('presidente_id', $user->id)
                 ];
-            } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
-                $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', 'rd')];
+            } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+                $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', UserRole::RD->value)];
             }
         }
 
@@ -162,7 +161,7 @@ class OperadorController extends BaseCrudController
             $request->merge(['password' => Hash::make('secret')]);
         }
 
-        $request->merge(['role' => 'operador']);
+        $request->merge(['role' => UserRole::OPERADOR->value]);
 
         return parent::store($request);
     }
@@ -218,10 +217,9 @@ class OperadorController extends BaseCrudController
         $user = $request->user();
 
         if ($user) {
-            $role = strtolower($user->role);
-            if ($role === 'rd') {
+            if ($user->role === UserRole::RD) {
                 $item->parent_id = $user->id;
-            } elseif (in_array($role, ['presidente', 'admin', 'superadmin', 'superuser'])) {
+            } elseif (in_array($user->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
                 if ($request->has('parent_id')) {
                     $item->parent_id = $request->input('parent_id');
                 }

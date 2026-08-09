@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\UserRole;
 
 abstract class BaseCrudController extends Controller
 {
@@ -35,7 +36,7 @@ abstract class BaseCrudController extends Controller
         // Lógica base por defecto: si el usuario logueado es presidente,
         // restringimos la consulta a los registros que le pertenecen (jerarquía).
         $user = $request->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class, \App\Models\ActivityLog::class])) {
                 $query->where('presidente_id', $user->id);
             } else {
@@ -65,7 +66,7 @@ abstract class BaseCrudController extends Controller
         $this->checkAccess($request);
         $query = $this->getBaseQuery($request);
 
-        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && in_array($request->user()?->role, ['presidente', 'admin', 'superuser'])) {
+        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && in_array($request->user()?->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
                 $query->onlyTrashed();
             }
@@ -168,7 +169,7 @@ abstract class BaseCrudController extends Controller
     public function restore(Request $request, string $id)
     {
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['presidente', 'admin', 'superuser'])) {
+        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             abort(403, 'Solo el presidente o administradores pueden restaurar registros.');
         }
 
@@ -179,7 +180,7 @@ abstract class BaseCrudController extends Controller
         $item = $this->modelClass::onlyTrashed()->findOrFail($id);
         
         // Verificación de seguridad adicional (los admins y superusers pueden restaurar todo)
-        if (!in_array($user->role, ['admin', 'superuser'])) {
+        if (!in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class]) && isset($item->presidente_id) && $item->presidente_id !== $user->id) {
                 abort(403, 'Acceso denegado.');
             }
@@ -200,7 +201,7 @@ abstract class BaseCrudController extends Controller
     {
         // Asignación de jerarquía por defecto al crear registros
         $user = $request->user();
-        if ($user && $user->role === 'presidente' && empty($item->parent_id)) {
+        if ($user && $user->role === UserRole::PRESIDENTE && empty($item->parent_id)) {
             $item->parent_id = $user->id;
             $item->save();
         }
@@ -213,14 +214,14 @@ abstract class BaseCrudController extends Controller
         $this->checkAccess($request);
         
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['presidente', 'rd'])) {
+        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::RD], true)) {
             abort(403, 'No autorizado para exportar datos.');
         }
 
         $query = $this->getBaseQuery($request);
 
         // Seguridad: Los RDs solo pueden exportar registros de su demarcación asignada
-        if ($user->role === 'rd') {
+        if ($user->role === UserRole::RD) {
             if (empty($user->demarcacion_id)) {
                 abort(403, 'El RD no tiene una demarcación asignada.');
             }

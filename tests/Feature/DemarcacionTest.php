@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Demarcacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Enums\UserRole;
 
 class DemarcacionTest extends TestCase
 {
@@ -19,7 +20,7 @@ class DemarcacionTest extends TestCase
 
     public function test_non_presidente_roles_cannot_access_demarcaciones()
     {
-        $rd = User::factory()->create(['role' => 'rd']);
+        $rd = User::factory()->create(['role' => UserRole::RD]);
         
         $response = $this->actingAs($rd)->get('/demarcaciones');
         $response->assertStatus(403);
@@ -34,7 +35,7 @@ class DemarcacionTest extends TestCase
 
     public function test_presidente_can_list_demarcaciones()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación 1', 'meta' => 400]);
 
         $response = $this->actingAs($presidente)->get('/demarcaciones');
@@ -43,7 +44,7 @@ class DemarcacionTest extends TestCase
 
     public function test_presidente_can_create_demarcacion()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
 
         $response = $this->actingAs($presidente)->post('/demarcaciones', [
             'id' => 10,
@@ -61,7 +62,7 @@ class DemarcacionTest extends TestCase
 
     public function test_create_demarcacion_enforces_validation()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación 1', 'meta' => 400]);
 
         // Duplicate ID
@@ -75,7 +76,7 @@ class DemarcacionTest extends TestCase
 
     public function test_presidente_can_update_demarcacion()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         $dem = Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación Antigua', 'meta' => 400]);
 
         $response = $this->actingAs($presidente)->put("/demarcaciones/{$dem->id}", [
@@ -94,7 +95,7 @@ class DemarcacionTest extends TestCase
 
     public function test_presidente_can_delete_demarcacion()
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         $dem = Demarcacion::create(['id' => 1, 'nombre' => 'Demarcación a borrar', 'meta' => 400]);
 
         $response = $this->actingAs($presidente)->delete("/demarcaciones/{$dem->id}");

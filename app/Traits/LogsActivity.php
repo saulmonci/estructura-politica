@@ -128,7 +128,7 @@ trait LogsActivity
             } elseif ($model) {
                 if (isset($model->presidente_id)) {
                     $presidenteId = $model->presidente_id;
-                } elseif (get_class($model) === \App\Models\User::class && $model->role === 'presidente') {
+                } elseif (get_class($model) === \App\Models\User::class && ($model->role === \App\Enums\UserRole::PRESIDENTE || $model->role === 'presidente')) {
                     $presidenteId = $model->id;
                 }
             }

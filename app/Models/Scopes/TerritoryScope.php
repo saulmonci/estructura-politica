@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\UserRole;
 
 class TerritoryScope implements Scope
 {
@@ -22,7 +23,7 @@ class TerritoryScope implements Scope
         $user = Auth::user();
 
         // Superusers can see everything, do not filter them
-        if ($user->role === 'superuser') {
+        if ($user->role === UserRole::SUPERUSER) {
             return;
         }
 
@@ -42,7 +43,7 @@ class TerritoryScope implements Scope
         }
         // 3. Demarcación (Regidor / Delegado / RD)
         elseif ($user->scope_level === 'demarcacion') {
-            $targetDemarcacionId = ($user->role === 'rd' && $user->demarcacion_asignada_id)
+            $targetDemarcacionId = ($user->role === UserRole::RD && $user->demarcacion_asignada_id)
                 ? $user->demarcacion_asignada_id
                 : $user->demarcacion_id;
 

@@ -6,6 +6,7 @@ use App\Models\Promovido;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use App\Enums\UserRole;
 
 class PromovidoController extends BaseCrudController
 {
@@ -22,7 +23,7 @@ class PromovidoController extends BaseCrudController
         }
 
         // Si es un rol administrativo/campaña, cargamos todos bajo su scope territorial
-        if (in_array($user->role, ['superuser', 'admin', 'campana_admin'])) {
+        if (in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             return Promovido::query()->with(['state', 'municipality', 'demarcacion']);
         }
 
@@ -40,18 +41,18 @@ class PromovidoController extends BaseCrudController
             $promotores = [];
             
             if ($user) {
-                if ($user->role === 'presidente') {
-                    $promotores = User::where('role', 'promotor')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
-                } elseif ($user->role === 'rd') {
-                    $operadoresIds = User::where('role', 'operador')->where('parent_id', $user->id)->pluck('id');
-                    $promotores = User::where('role', 'promotor')
+                if ($user->role === UserRole::PRESIDENTE) {
+                    $promotores = User::where('role', UserRole::PROMOTOR)->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
+                } elseif ($user->role === UserRole::RD) {
+                    $operadoresIds = User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->pluck('id');
+                    $promotores = User::where('role', UserRole::PROMOTOR)
                         ->where(function($q) use ($user, $operadoresIds) {
                             $q->where('parent_id', $user->id)
                               ->orWhereIn('parent_id', $operadoresIds);
                         })
                         ->get(['id', 'name', 'apodo']);
-                } elseif ($user->role === 'operador') {
-                    $promotores = User::where('role', 'promotor')->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
+                } elseif ($user->role === UserRole::OPERADOR) {
+                    $promotores = User::where('role', UserRole::PROMOTOR)->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
                 }
             }
             
@@ -127,7 +128,7 @@ class PromovidoController extends BaseCrudController
         );
         
         $user = $request->user();
-        if ($user && $user->role === 'promotor') {
+        if ($user && $user->role === UserRole::PROMOTOR) {
             $validated['promotor_id'] = $user->id;
         }
 
@@ -169,31 +170,30 @@ class PromovidoController extends BaseCrudController
         ];
 
         if ($user) {
-            $role = strtolower($user->role);
-            if ($role === 'presidente') {
+            if ($user->role === UserRole::PRESIDENTE) {
                 $rules['promotor_id'] = [
                     'required', 
-                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', 'promotor')->where('presidente_id', $user->id)
+                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('presidente_id', $user->id)
                 ];
-            } elseif ($role === 'rd') {
+            } elseif ($user->role === UserRole::RD) {
                 // RD solo puede asignar a un promotor de su red
-                $operadoresIds = \App\Models\User::where('role', 'operador')->where('parent_id', $user->id)->pluck('id')->toArray();
+                $operadoresIds = \App\Models\User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->pluck('id')->toArray();
                 $rules['promotor_id'] = [
                     'required', 
                     \Illuminate\Validation\Rule::exists('users', 'id')
-                        ->where('role', 'promotor')
+                        ->where('role', UserRole::PROMOTOR->value)
                         ->where(function ($query) use ($user, $operadoresIds) {
                             $query->where('parent_id', $user->id)
                                   ->orWhereIn('parent_id', $operadoresIds);
                         })
                 ];
-            } elseif ($role === 'operador') {
+            } elseif ($user->role === UserRole::OPERADOR) {
                 $rules['promotor_id'] = [
                     'required', 
-                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', 'promotor')->where('parent_id', $user->id)
+                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('parent_id', $user->id)
                 ];
-            } elseif (in_array($role, ['admin', 'superadmin', 'superuser', 'campana_admin'])) {
-                $rules['promotor_id'] = ['required', \Illuminate\Validation\Rule::exists('users', 'id')->where('role', 'promotor')];
+            } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+                $rules['promotor_id'] = ['required', \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)];
             }
         }
 
@@ -233,10 +233,10 @@ class PromovidoController extends BaseCrudController
         /** @var \App\Models\Promovido $item */
         $user = $request->user();
         
-        if ($user && $user->role === 'promotor') {
+        if ($user && $user->role === UserRole::PROMOTOR) {
             $item->promotor_id = $user->id;
             $item->save();
-        } elseif ($user && in_array($user->role, ['presidente', 'rd', 'operador'])) {
+        } elseif ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::RD, UserRole::OPERADOR], true)) {
             if ($request->has('promotor_id')) {
                 $item->promotor_id = $request->input('promotor_id');
                 $item->save();

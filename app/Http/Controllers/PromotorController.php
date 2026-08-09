@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Enums\UserRole;
 
 class PromotorController extends BaseCrudController
 {
@@ -16,14 +17,14 @@ class PromotorController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'rd', 'operador', "superuser", "admin"]), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::RD, UserRole::OPERADOR, UserRole::SUPERUSER, UserRole::ADMIN], true), 403, 'Acceso denegado.');
     }
 
     protected function getBaseQuery(Request $request): Builder
     {
         $user = $request->user();
         if (!$user) {
-            return $this->modelClass::query()->where('role', 'promotor')->with(['demarcacion', 'leader']);
+            return $this->modelClass::query()->where('role', UserRole::PROMOTOR)->with(['demarcacion', 'leader']);
         }
         return $user->queryPromotores()->with(['demarcacion', 'leader']);
     }
@@ -39,12 +40,11 @@ class PromotorController extends BaseCrudController
             $rds = [];
 
             if ($user) {
-                $role = strtolower($user->role);
-                if ($role === 'presidente') {
-                    $operadores = User::where('role', 'operador')->where('presidente_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
-                    $rds = User::where('role', 'rd')->where('presidente_id', $user->id)->get(['id', 'name', 'demarcacion_id']);
-                } elseif ($role === 'rd') {
-                    $operadores = User::where('role', 'operador')->where('parent_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
+                if ($user->role === UserRole::PRESIDENTE) {
+                    $operadores = User::where('role', UserRole::OPERADOR)->where('presidente_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
+                    $rds = User::where('role', UserRole::RD)->where('presidente_id', $user->id)->get(['id', 'name', 'demarcacion_id']);
+                } elseif ($user->role === UserRole::RD) {
+                    $operadores = User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
                 }
             }
 
@@ -134,21 +134,20 @@ class PromotorController extends BaseCrudController
         ];
 
         if ($user) {
-            $role = strtolower($user->role);
-            if ($role === 'presidente') {
+            if ($user->role === UserRole::PRESIDENTE) {
                 $rules['parent_id'] = [
                     'required',
-                    Rule::exists('users', 'id')->where('role', 'operador')->where('presidente_id', $user->id)
+                    Rule::exists('users', 'id')->where('role', UserRole::OPERADOR->value)->where('presidente_id', $user->id)
                 ];
-            } elseif ($role === 'rd') {
+            } elseif ($user->role === UserRole::RD) {
                 $rules['parent_id'] = [
                     'required',
-                    Rule::exists('users', 'id')->where('parent_id', $user->id)->where('role', 'operador')
+                    Rule::exists('users', 'id')->where('parent_id', $user->id)->where('role', UserRole::OPERADOR->value)
                 ];
-            } elseif (in_array($role, ['admin', 'superadmin', 'superuser'])) {
+            } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
                 $rules['parent_id'] = [
                     'required',
-                    Rule::exists('users', 'id')->where('role', 'operador')
+                    Rule::exists('users', 'id')->where('role', UserRole::OPERADOR->value)
                 ];
             }
         }
@@ -173,7 +172,7 @@ class PromotorController extends BaseCrudController
             $request->merge(['password' => Hash::make('secret')]);
         }
 
-        $request->merge(['role' => 'promotor']);
+        $request->merge(['role' => UserRole::PROMOTOR->value]);
 
         return parent::store($request);
     }
@@ -228,9 +227,9 @@ class PromotorController extends BaseCrudController
     {
         $user = $request->user();
 
-        if ($user && strtolower($user->role) === 'operador') {
+        if ($user && $user->role === UserRole::OPERADOR) {
             $item->parent_id = $user->id;
-        } elseif ($user && in_array(strtolower($user->role), ['presidente', 'rd'])) {
+        } elseif ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::RD, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             if ($request->has('parent_id')) {
                 $item->parent_id = $request->input('parent_id');
             }

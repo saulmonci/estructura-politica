@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+use App\Enums\UserRole;
 
 class CheckAccountStatus
 {
@@ -19,7 +20,7 @@ class CheckAccountStatus
         $user = $request->user();
 
         // 1. Si no hay usuario autenticado o es superuser/admin, continuar normalmente
-        if (!$user || in_array($user->role, ['superuser', 'admin'])) {
+        if (!$user || in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             return $next($request);
         }
 
@@ -31,7 +32,7 @@ class CheckAccountStatus
         }
 
         // 3. Si el usuario pertenece a la estructura de un presidente suspendido/inactivo
-        if (!$errorMessage && $user->presidente_id && $user->role !== 'presidente') {
+        if (!$errorMessage && $user->presidente_id && $user->role !== UserRole::PRESIDENTE) {
             $presidente = $user->presidente;
             if ($presidente && isset($presidente->estado) && !$presidente->estado) {
                 $errorMessage = 'El acceso para tu estructura ha sido suspendido por el administrador.';

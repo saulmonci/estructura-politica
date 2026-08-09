@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Enums\UserRole;
 
 class DashboardController extends Controller
 {
@@ -22,31 +23,37 @@ class DashboardController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
+            'email' => 'required',
+            'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validación fallida',
                 'errors' => $validator->errors()
             ], 422);
         }
 
         $credentials = $request->only('email', 'password');
+        $isEmail = filter_var($credentials['email'], FILTER_VALIDATE_EMAIL);
 
-        if (!Auth::attempt($credentials)) {
+        $user = null;
+        if ($isEmail) {
+            $user = User::where('email', $credentials['email'])->first();
+        } else {
+            $user = User::where('telefono', $credentials['email'])
+                ->orWhere('curp', $credentials['email'])
+                ->first();
+        }
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Credenciales incorrectas'
+                'message' => 'Credenciales inválidas.'
             ], 401);
         }
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
-        // Revocar tokens anteriores para evitar acumulación de sesiones (Seguridad)
+        // Revocar tokens anteriores
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -65,7 +72,7 @@ class DashboardController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role,
+                    'role' => $user->role instanceof UserRole ? $user->role->value : $user->role,
                     'municipality_id' => $user->municipality_id,
                     'municipality' => $user->municipality,
                     'demarcacion' => $user->demarcacion,
@@ -108,25 +115,25 @@ class DashboardController extends Controller
         $promovidos = $user->queryPromovidos()->count();
         $totalEstructura = 0;
 
-        if ($user->role === 'presidente') {
+        if ($user->role === UserRole::PRESIDENTE) {
             // RDs del Presidente
-            $rdIds = User::where('parent_id', $user->id)->where('role', 'rd')->pluck('id')->toArray();
+            $rdIds = User::where('parent_id', $user->id)->where('role', UserRole::RD)->pluck('id')->toArray();
             $rdCount = count($rdIds);
 
-            $operadores = User::whereIn('parent_id', $rdIds)->where('role', 'operador')->count();
+            $operadores = User::whereIn('parent_id', $rdIds)->where('role', UserRole::OPERADOR)->count();
 
             // Total estructura: RDs + Operadores + Promotores + Promovidos
             $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;
-        } elseif ($user->role === 'rd') {
+        } elseif ($user->role === UserRole::RD) {
             // Operadores
-            $operadores = User::where('parent_id', $user->id)->where('role', 'operador')->count();
+            $operadores = User::where('parent_id', $user->id)->where('role', UserRole::OPERADOR)->count();
 
             // Total estructura: Operadores + Promotores + Promovidos
             $totalEstructura = $operadores + $promotores + $promovidos;
-        } elseif ($user->role === 'operador') {
+        } elseif ($user->role === UserRole::OPERADOR) {
             // Total estructura: Promotores + Promovidos
             $totalEstructura = $promotores + $promovidos;
-        } elseif ($user->role === 'promotor') {
+        } elseif ($user->role === UserRole::PROMOTOR) {
             $totalEstructura = $promovidos;
         }
 

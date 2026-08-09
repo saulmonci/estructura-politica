@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Enums\UserRole;
 
 class TerritoryPresidentesSeeder extends Seeder
 {
@@ -34,7 +35,7 @@ class TerritoryPresidentesSeeder extends Seeder
                     'name' => "Presidente Estatal - {$state->nombre}",
                     'email' => $email,
                     'password' => $password,
-                    'role' => 'presidente',
+                    'role' => UserRole::PRESIDENTE->value,
                     'scope_level' => 'estatal',
                     'state_id' => $state->id,
                     'municipality_id' => null,
@@ -60,7 +61,7 @@ class TerritoryPresidentesSeeder extends Seeder
                     'name' => "Presidente Mpal - {$muni->nombre}",
                     'email' => $email,
                     'password' => $password,
-                    'role' => 'presidente',
+                    'role' => UserRole::PRESIDENTE->value,
                     'scope_level' => 'municipal',
                     'state_id' => $muni->state_id,
                     'municipality_id' => $muni->id,
@@ -88,7 +89,7 @@ class TerritoryPresidentesSeeder extends Seeder
             $this->command->getOutput()->progressFinish();
 
             // 4. Update presidente_id to themselves for all newly created presidentes
-            DB::statement("UPDATE users SET presidente_id = id WHERE role = 'presidente' AND presidente_id IS NULL");
+            DB::statement("UPDATE users SET presidente_id = id WHERE role = '" . UserRole::PRESIDENTE->value . "' AND presidente_id IS NULL");
         }
 
         $this->command->info('¡Presidentes territoriales creados correctamente!');

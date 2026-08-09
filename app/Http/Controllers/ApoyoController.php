@@ -6,6 +6,7 @@ use App\Models\Apoyo;
 use App\Models\Promovido;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Enums\UserRole;
 
 class ApoyoController extends Controller
 {
@@ -17,7 +18,7 @@ class ApoyoController extends Controller
     {
         // Si el usuario logueado es presidente, verificar que el promovido pertenezca a su estructura
         $user = auth()->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             abort_if($promovido->presidente_id !== $user->id, 403, 'No autorizado.');
         }
 
@@ -29,7 +30,7 @@ class ApoyoController extends Controller
     {
         // Si el usuario logueado es presidente, verificar que el promovido pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             abort_if($promovido->presidente_id !== $user->id, 403, 'No autorizado.');
         }
 
@@ -51,7 +52,7 @@ class ApoyoController extends Controller
     {
         // Si el usuario logueado es presidente, verificar que el promotor pertenezca a su estructura
         $user = auth()->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             abort_if($promotor->presidente_id !== $user->id, 403, 'No autorizado.');
         }
 
@@ -63,7 +64,7 @@ class ApoyoController extends Controller
     {
         // Si el usuario logueado es presidente, verificar que el promotor pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             abort_if($promotor->presidente_id !== $user->id, 403, 'No autorizado.');
         }
 
@@ -85,7 +86,7 @@ class ApoyoController extends Controller
     {
         // Si el usuario logueado es presidente, verificar que el apoyo pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             abort_if($apoyo->presidente_id !== $user->id, 403, 'No autorizado.');
         }
 
@@ -103,7 +104,7 @@ class ApoyoController extends Controller
     {
         // Si el usuario logueado es presidente, verificar que el apoyo pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === 'presidente') {
+        if ($user && $user->role === UserRole::PRESIDENTE) {
             abort_if($apoyo->presidente_id !== $user->id, 403, 'No autorizado.');
         }
 

@@ -7,6 +7,7 @@ use App\Models\Promovido;
 use App\Models\Demarcacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Enums\UserRole;
 
 class ExportTest extends TestCase
 {
@@ -54,8 +55,8 @@ class ExportTest extends TestCase
 
     public function test_unauthorized_roles_cannot_export(): void
     {
-        $operador = User::factory()->create(['role' => 'operador']);
-        $promotor = User::factory()->create(['role' => 'promotor']);
+        $operador = User::factory()->create(['role' => UserRole::OPERADOR]);
+        $promotor = User::factory()->create(['role' => UserRole::PROMOTOR]);
 
         $this->actingAs($operador)->get('/operadores/export')->assertStatus(403);
         $this->actingAs($promotor)->get('/promovidos/export')->assertStatus(403);
@@ -63,19 +64,19 @@ class ExportTest extends TestCase
 
     public function test_rd_cannot_export_representantes(): void
     {
-        $rd = User::factory()->create(['role' => 'rd', 'demarcacion_id' => 1]);
+        $rd = User::factory()->create(['role' => UserRole::RD, 'demarcacion_id' => 1]);
 
         $this->actingAs($rd)->get('/representantes/export')->assertStatus(403);
     }
 
     public function test_presidente_can_export_everything(): void
     {
-        $presidente = User::factory()->create(['role' => 'presidente']);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
         
         // Crear algunos registros de prueba
-        User::factory()->create(['role' => 'rd', 'parent_id' => $presidente->id]);
-        User::factory()->create(['role' => 'operador']);
-        User::factory()->create(['role' => 'promotor']);
+        User::factory()->create(['role' => UserRole::RD, 'parent_id' => $presidente->id]);
+        User::factory()->create(['role' => UserRole::OPERADOR]);
+        User::factory()->create(['role' => UserRole::PROMOTOR]);
 
         $response = $this->actingAs($presidente)->get('/operadores/export');
         $response->assertStatus(200);
@@ -84,7 +85,7 @@ class ExportTest extends TestCase
 
     public function test_rd_without_demarcation_cannot_export(): void
     {
-        $rd = User::factory()->create(['role' => 'rd', 'demarcacion_id' => null]);
+        $rd = User::factory()->create(['role' => UserRole::RD, 'demarcacion_id' => null]);
 
         $this->actingAs($rd)->get('/operadores/export')
             ->assertStatus(403)
@@ -94,13 +95,13 @@ class ExportTest extends TestCase
     public function test_rd_can_only_export_subordinates_matching_demarcation(): void
     {
         // 1. Crear RDs
-        $rd1 = User::factory()->create(['role' => 'rd', 'demarcacion_id' => 1, 'name' => 'RD 1']);
-        $rd2 = User::factory()->create(['role' => 'rd', 'demarcacion_id' => 2, 'name' => 'RD 2']);
+        $rd1 = User::factory()->create(['role' => UserRole::RD, 'demarcacion_id' => 1, 'name' => 'RD 1']);
+        $rd2 = User::factory()->create(['role' => UserRole::RD, 'demarcacion_id' => 2, 'name' => 'RD 2']);
 
         // 2. Crear Operadores
         // Operador 1: Bajo RD 1, demarcación 1 (Debe ser exportable por RD 1)
         $op1 = User::factory()->create([
-            'role' => 'operador',
+            'role' => UserRole::OPERADOR,
             'parent_id' => $rd1->id,
             'demarcacion_id' => 1,
             'nombre' => 'Juan',
@@ -109,7 +110,7 @@ class ExportTest extends TestCase
         
         // Operador 2: Bajo RD 1, pero demarcación 2 (No debe ser exportable por RD 1 por demarcación diferente)
         $op2 = User::factory()->create([
-            'role' => 'operador',
+            'role' => UserRole::OPERADOR,
             'parent_id' => $rd1->id,
             'demarcacion_id' => 2,
             'nombre' => 'Pedro',
@@ -118,7 +119,7 @@ class ExportTest extends TestCase
 
         // Operador 3: Bajo RD 2, demarcación 1 (No debe ser exportable por RD 1 por jerarquía diferente)
         $op3 = User::factory()->create([
-            'role' => 'operador',
+            'role' => UserRole::OPERADOR,
             'parent_id' => $rd2->id,
             'demarcacion_id' => 1,
             'nombre' => 'Lucas',
@@ -128,7 +129,7 @@ class ExportTest extends TestCase
         // 3. Crear Promotores
         // Promotor 1: Bajo Op 1, demarcación 1 (Debe ser exportable por RD 1)
         $pr1 = User::factory()->create([
-            'role' => 'promotor',
+            'role' => UserRole::PROMOTOR,
             'parent_id' => $op1->id,
             'demarcacion_id' => 1,
             'nombre' => 'Maria',
@@ -137,7 +138,7 @@ class ExportTest extends TestCase
 
         // Promotor 2: Bajo Op 1, demarcación 2 (No debe ser exportable)
         $pr2 = User::factory()->create([
-            'role' => 'promotor',
+            'role' => UserRole::PROMOTOR,
             'parent_id' => $op1->id,
             'demarcacion_id' => 2,
             'nombre' => 'Clara',
@@ -146,7 +147,7 @@ class ExportTest extends TestCase
 
         // Promotor 3: Bajo Op 3 (RD 2), demarcación 1 (No debe ser exportable)
         $pr3 = User::factory()->create([
-            'role' => 'promotor',
+            'role' => UserRole::PROMOTOR,
             'parent_id' => $op3->id,
             'demarcacion_id' => 1,
             'nombre' => 'Sonia',
@@ -208,7 +209,7 @@ class ExportTest extends TestCase
 
     public function test_can_create_promovido_with_photo(): void
     {
-        $promotor = User::factory()->create(['role' => 'promotor']);
+        $promotor = User::factory()->create(['role' => UserRole::PROMOTOR]);
         
         \Illuminate\Support\Facades\Storage::fake('public');
         

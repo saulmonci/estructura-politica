@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Enums\UserRole;
 
 class PoblarMapaSemaforoSeeder extends Seeder
 {
@@ -17,14 +18,14 @@ class PoblarMapaSemaforoSeeder extends Seeder
     public function run(): void
     {
         // 1. Obtener promotores existentes
-        $promotores = User::where('role', 'promotor')->pluck('id')->toArray();
+        $promotores = User::where('role', UserRole::PROMOTOR)->pluck('id')->toArray();
         if (empty($promotores)) {
             // Si no hay promotores, creamos uno por defecto para asociar los promovidos
             $promotorId = DB::table('users')->insertGetId([
                 'name' => 'Promotor General',
                 'email' => 'promotor.general@estructura.com',
                 'password' => bcrypt('secret'),
-                'role' => 'promotor',
+                'role' => UserRole::PROMOTOR->value,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -72,7 +73,7 @@ class PoblarMapaSemaforoSeeder extends Seeder
         $apellidos = ['Hernández', 'García', 'Martínez', 'López', 'González', 'Pérez', 'Rodríguez', 'Sánchez', 'Ramírez', 'Cruz', 'Gómez', 'Flores', 'Morales', 'Vázquez', 'Jiménez', 'Reyes'];
         $colonias = ['Centro', 'Lomas', 'Vista Hermosa', 'San Juan', 'Las Palmas', 'Pedregal', 'Santa Fe', 'Infonavit'];
 
-        $presidente = User::where('role', 'presidente')->first();
+        $presidente = User::where('role', UserRole::PRESIDENTE)->first();
         if (!$presidente) {
             $this->command->error('No se encontró un presidente en la base de datos. Por favor corre el DatabaseSeeder primero.');
             return;

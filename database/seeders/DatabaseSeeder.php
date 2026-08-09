@@ -8,6 +8,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Enums\UserRole;
 
 class DatabaseSeeder extends Seeder
 {
@@ -31,7 +32,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Presidente Electoral',
                 'password' => Hash::make('secret'),
-                'role' => 'presidente',
+                'role' => UserRole::PRESIDENTE,
                 'parent_id' => null,
             ]
         );
@@ -46,7 +47,7 @@ class DatabaseSeeder extends Seeder
                 [
                     'name' => "Responsable de Distrito $i",
                     'password' => Hash::make('secret'),
-                    'role' => 'rd',
+                    'role' => UserRole::RD,
                     'parent_id' => $presidente->id,
                     'presidente_id' => $presidente->id,
                 ]
@@ -63,7 +64,7 @@ class DatabaseSeeder extends Seeder
                     [
                         'name' => "Operador Político $operadorCount",
                         'password' => Hash::make('secret'),
-                        'role' => 'operador',
+                        'role' => UserRole::OPERADOR,
                         'parent_id' => $rd->id,
                         'presidente_id' => $presidente->id,
                     ]
@@ -82,7 +83,7 @@ class DatabaseSeeder extends Seeder
                     [
                         'name' => "Promotor Electoral $promotorCount",
                         'password' => Hash::make('secret'),
-                        'role' => 'promotor',
+                        'role' => UserRole::PROMOTOR,
                         'parent_id' => $operador->id,
                         'presidente_id' => $presidente->id,
                     ]

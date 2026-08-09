@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Enums\UserRole;
 
 class ActivityLogController extends Controller
 {
@@ -14,15 +15,15 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         // Restrict access to President only
-        abort_if(!in_array($request->user()->role, ['presidente', 'admin', 'superuser']), 403, 'Acceso denegado. Solo los administradores pueden acceder a esta información.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden acceder a esta información.');
 
         $user = $request->user();
         $query = ActivityLog::query();
 
         // Aplicar restricciones según el rol del usuario
-        if ($user->role === 'presidente') {
+        if ($user->role === UserRole::PRESIDENTE) {
             $query->where('presidente_id', $user->id);
-        } elseif ($user->role === 'admin') {
+        } elseif ($user->role === UserRole::ADMIN) {
             if ($user->scope_level === 'municipal' && $user->municipality_id) {
                 $query->where('municipality_id', $user->municipality_id);
             } elseif ($user->scope_level === 'estatal' && $user->state_id) {
@@ -87,14 +88,14 @@ class ActivityLogController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'admin', 'superuser']), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado.');
 
         $user = $request->user();
         $query = ActivityLog::query();
 
-        if ($user->role === 'presidente') {
+        if ($user->role === UserRole::PRESIDENTE) {
             $query->where('presidente_id', $user->id);
-        } elseif ($user->role === 'admin') {
+        } elseif ($user->role === UserRole::ADMIN) {
             if ($user->scope_level === 'municipal' && $user->municipality_id) {
                 $query->where('municipality_id', $user->municipality_id);
             } elseif ($user->scope_level === 'estatal' && $user->state_id) {

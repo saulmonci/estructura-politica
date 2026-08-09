@@ -7,6 +7,7 @@ use App\Models\Demarcacion;
 use App\Models\Promovido;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Enums\UserRole;
 
 class MapaTest extends TestCase
 {
@@ -20,15 +21,15 @@ class MapaTest extends TestCase
 
     public function test_non_presidente_roles_cannot_access_mapa()
     {
-        $rd = User::factory()->create(['role' => 'rd']);
+        $rd = User::factory()->create(['role' => UserRole::RD]);
         $response = $this->actingAs($rd)->get('/mapa');
         $response->assertStatus(403);
 
-        $operador = User::factory()->create(['role' => 'operador']);
+        $operador = User::factory()->create(['role' => UserRole::OPERADOR]);
         $response = $this->actingAs($operador)->get('/mapa');
         $response->assertStatus(403);
 
-        $promotor = User::factory()->create(['role' => 'promotor']);
+        $promotor = User::factory()->create(['role' => UserRole::PROMOTOR]);
         $response = $this->actingAs($promotor)->get('/mapa');
         $response->assertStatus(403);
     }
@@ -46,8 +47,8 @@ class MapaTest extends TestCase
             'meta' => 100,
         ]);
 
-        $presidente = User::factory()->create(['role' => 'presidente']);
-        $promotor = User::factory()->create(['role' => 'promotor', 'parent_id' => $presidente->id]);
+        $presidente = User::factory()->create(['role' => UserRole::PRESIDENTE]);
+        $promotor = User::factory()->create(['role' => UserRole::PROMOTOR, 'parent_id' => $presidente->id]);
 
         // Registrar promovidos en demarcaciones
         Promovido::create([

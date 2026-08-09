@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Enums\UserRole;
 
 class PresidenteController extends BaseCrudController
 {
@@ -16,23 +17,23 @@ class PresidenteController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['superuser']), 403, 'Acceso denegado. Solo los administradores pueden gestionar presidentes.');
+        abort_if(!in_array($request->user()->role, [UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden gestionar presidentes.');
     }
 
     protected function getBaseQuery(Request $request): Builder
     {
         return User::query()
-            ->where('role', 'presidente')
+            ->where('role', UserRole::PRESIDENTE)
             ->with(['state', 'municipality'])
             ->withCount([
                 'subordinates as rds_count' => function ($query) {
-                    $query->where('role', 'rd');
+                    $query->where('role', UserRole::RD);
                 },
                 'subordinates as operadores_count' => function ($query) {
-                    $query->where('role', 'operador');
+                    $query->where('role', UserRole::OPERADOR);
                 },
                 'subordinates as promotores_count' => function ($query) {
-                    $query->where('role', 'promotor');
+                    $query->where('role', UserRole::PROMOTOR);
                 }
             ]);
     }
@@ -147,7 +148,7 @@ class PresidenteController extends BaseCrudController
         }
 
         $request->merge([
-            'role' => 'presidente',
+            'role' => UserRole::PRESIDENTE->value,
             'scope_level' => 'municipal',
             'candidate_type' => 'presidente_municipal'
         ]);
@@ -178,7 +179,7 @@ class PresidenteController extends BaseCrudController
         }
 
         $request->merge([
-            'role' => 'presidente',
+            'role' => UserRole::PRESIDENTE->value,
             'scope_level' => 'municipal',
             'candidate_type' => 'presidente_municipal'
         ]);
@@ -303,7 +304,7 @@ class PresidenteController extends BaseCrudController
     {
         $this->checkAccess($request);
 
-        $user = User::where('role', 'presidente')->findOrFail($id);
+        $user = User::where('role', UserRole::PRESIDENTE)->findOrFail($id);
 
         $estado = filter_var($request->input('estado'), FILTER_VALIDATE_BOOLEAN);
         $user->estado = $estado;

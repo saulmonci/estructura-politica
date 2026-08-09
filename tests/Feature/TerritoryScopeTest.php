@@ -9,6 +9,7 @@ use App\Models\Municipality;
 use App\Models\State;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Enums\UserRole;
 
 class TerritoryScopeTest extends TestCase
 {
@@ -53,7 +54,7 @@ class TerritoryScopeTest extends TestCase
         ]);
 
         $superuser = User::factory()->create([
-            'role' => 'superuser',
+            'role' => UserRole::SUPERUSER,
             'scope_level' => 'estatal',
             'state_id' => null,
             'municipality_id' => null,
@@ -82,7 +83,7 @@ class TerritoryScopeTest extends TestCase
 
         // Usuario estatal limitado al Estado 1
         $estatalUser = User::factory()->create([
-            'role' => 'campana_admin',
+            'role' => UserRole::ADMIN,
             'scope_level' => 'estatal',
             'state_id' => $this->state1->id,
             'municipality_id' => null,
@@ -112,7 +113,7 @@ class TerritoryScopeTest extends TestCase
 
         // Usuario municipal limitado al Municipio A
         $municipalUser = User::factory()->create([
-            'role' => 'campana_admin',
+            'role' => UserRole::ADMIN,
             'scope_level' => 'municipal',
             'state_id' => $this->state1->id,
             'municipality_id' => $this->muni1->id,
@@ -142,7 +143,7 @@ class TerritoryScopeTest extends TestCase
 
         // Usuario demarcación limitado a Demarcación Alpha
         $demarcacionUser = User::factory()->create([
-            'role' => 'campana_admin',
+            'role' => UserRole::ADMIN,
             'scope_level' => 'demarcacion',
             'state_id' => $this->state1->id,
             'municipality_id' => $this->muni1->id,

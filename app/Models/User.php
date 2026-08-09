@@ -14,6 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\Apoyo;
 use App\Traits\LogsActivity;
 use App\Models\Scopes\TerritoryScope;
+use App\Enums\UserRole;
 
 #[Fillable([
     'name', 'nombre', 'apellidos', 'email', 'password', 'role', 'scope_level', 'candidate_type',
@@ -39,6 +40,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'estado' => 'boolean',
+            'role' => UserRole::class,
         ];
     }
 
@@ -111,7 +113,7 @@ class User extends Authenticatable
         });
 
         static::created(function ($user) {
-            if ($user->role === 'presidente' && empty($user->presidente_id)) {
+            if ($user->role === UserRole::PRESIDENTE && empty($user->presidente_id)) {
                 $user->presidente_id = $user->id;
                 $user->saveQuietly();
             }
@@ -131,7 +133,7 @@ class User extends Authenticatable
      */
     public function getPresidenteId()
     {
-        if ($this->role === 'presidente') {
+        if ($this->role === UserRole::PRESIDENTE) {
             return $this->id;
         }
         if ($this->presidente_id) {
@@ -208,7 +210,7 @@ class User extends Authenticatable
      */
     public function promovidos()
     {
-        if ($this->role === 'promotor') {
+        if ($this->role === UserRole::PROMOTOR) {
             return $this->hasMany(Promovido::class, 'promotor_id');
         }
 
@@ -228,16 +230,16 @@ class User extends Authenticatable
      */
     public function queryOperadores()
     {
-        if (in_array($this->role, ['admin', 'superuser'])) {
-            return User::where('role', 'operador'); // TerritoryScope applies automatically
+        if (in_array($this->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+            return User::where('role', UserRole::OPERADOR); // TerritoryScope applies automatically
         }
 
-        if ($this->role === 'presidente') {
-            return User::where('role', 'operador')->where('presidente_id', $this->id);
+        if ($this->role === UserRole::PRESIDENTE) {
+            return User::where('role', UserRole::OPERADOR)->where('presidente_id', $this->id);
         }
 
-        if ($this->role === 'rd') {
-            return User::where('role', 'operador')->where('parent_id', $this->id);
+        if ($this->role === UserRole::RD) {
+            return User::where('role', UserRole::OPERADOR)->where('parent_id', $this->id);
         }
 
         return User::whereRaw('1 = 0');
@@ -248,29 +250,29 @@ class User extends Authenticatable
      */
     public function queryPromotores()
     {
-        if (in_array($this->role, ['admin', 'superuser'])) {
-            return User::where('role', 'promotor'); // TerritoryScope applies automatically
+        if (in_array($this->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+            return User::where('role', UserRole::PROMOTOR); // TerritoryScope applies automatically
         }
 
-        if ($this->role === 'presidente') {
-            return User::where('role', 'promotor')->where('presidente_id', $this->id);
+        if ($this->role === UserRole::PRESIDENTE) {
+            return User::where('role', UserRole::PROMOTOR)->where('presidente_id', $this->id);
         }
 
-        if ($this->role === 'rd') {
-            return User::where('role', 'promotor')
+        if ($this->role === UserRole::RD) {
+            return User::where('role', UserRole::PROMOTOR)
                 ->where(function($query) {
                     $query->where('parent_id', $this->id)
                           ->orWhereIn('parent_id', function($subQuery) {
                               $subQuery->select('id')
                                   ->from('users')
-                                  ->where('role', 'operador')
+                                  ->where('role', UserRole::OPERADOR)
                                   ->where('parent_id', $this->id);
                           });
                 });
         }
 
-        if ($this->role === 'operador') {
-            return User::where('parent_id', $this->id)->where('role', 'promotor');
+        if ($this->role === UserRole::OPERADOR) {
+            return User::where('parent_id', $this->id)->where('role', UserRole::PROMOTOR);
         }
 
         return User::whereRaw('1 = 0');
@@ -282,15 +284,15 @@ class User extends Authenticatable
      */
     public function queryPromovidos()
     {
-        if (in_array($this->role, ['admin', 'superuser'])) {
+        if (in_array($this->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             return Promovido::query(); // TerritoryScope applies automatically
         }
 
-        if ($this->role === 'promotor') {
+        if ($this->role === UserRole::PROMOTOR) {
             return Promovido::where('promotor_id', $this->id);
         }
 
-        if ($this->role === 'operador') {
+        if ($this->role === UserRole::OPERADOR) {
             return Promovido::where(function($query) {
                 // Promovidos directos (si se asignó al operador directamente)
                 $query->where('promotor_id', $this->id)
@@ -298,13 +300,13 @@ class User extends Authenticatable
                       ->orWhereIn('promotor_id', function ($subQuery) {
                           $subQuery->select('id')
                               ->from('users')
-                              ->where('role', 'promotor')
+                              ->where('role', UserRole::PROMOTOR)
                               ->where('parent_id', $this->id);
                       });
             });
         }
 
-        if ($this->role === 'rd') {
+        if ($this->role === UserRole::RD) {
             return Promovido::where(function($query) {
                 // Promovidos directos
                 $query->where('promotor_id', $this->id)
@@ -312,20 +314,20 @@ class User extends Authenticatable
                       ->orWhereIn('promotor_id', function ($subQuery) {
                           $subQuery->select('id')
                               ->from('users')
-                              ->where('role', 'operador')
+                              ->where('role', UserRole::OPERADOR)
                               ->where('parent_id', $this->id);
                       })
                       // O a través de los promotores de su red
                       ->orWhereIn('promotor_id', function ($subQuery) {
                           $subQuery->select('id')
                               ->from('users')
-                              ->where('role', 'promotor')
+                              ->where('role', UserRole::PROMOTOR)
                               ->where(function($q) {
                                   $q->where('parent_id', $this->id)
                                     ->orWhereIn('parent_id', function ($opQuery) {
                                         $opQuery->select('id')
                                             ->from('users')
-                                            ->where('role', 'operador')
+                                            ->where('role', UserRole::OPERADOR)
                                             ->where('parent_id', $this->id);
                                     });
                               });
@@ -333,7 +335,7 @@ class User extends Authenticatable
             });
         }
 
-        if ($this->role === 'presidente') {
+        if ($this->role === UserRole::PRESIDENTE) {
             // El presidente tiene visibilidad de todos los promovidos de su estructura
             return Promovido::where('presidente_id', $this->id);
         }
@@ -356,10 +358,10 @@ class User extends Authenticatable
     public function canImpersonate(?User $target = null): bool
     {
         // Roles autorizados (Actualmente solo superuser)
-        // Para habilitar al presidente en el futuro, añadir 'presidente' a $allowedRoles
-        $allowedRoles = ['superuser'];
+        // Para habilitar al presidente en el futuro, añadir UserRole::PRESIDENTE a $allowedRoles
+        $allowedRoles = [UserRole::SUPERUSER];
 
-        if (!in_array($this->role, $allowedRoles)) {
+        if (!in_array($this->role, $allowedRoles, true)) {
             return false;
         }
 
@@ -370,8 +372,8 @@ class User extends Authenticatable
             }
 
             // Validación jerárquica para cuando se habilite el rol 'presidente'
-            if ($this->role === 'presidente') {
-                if ($target->role === 'superuser' || $target->role === 'admin' || $target->role === 'presidente') {
+            if ($this->role === UserRole::PRESIDENTE) {
+                if (in_array($target->role, [UserRole::SUPERUSER, UserRole::ADMIN, UserRole::PRESIDENTE], true)) {
                     return false;
                 }
                 return $target->presidente_id === $this->id;
@@ -381,3 +383,4 @@ class User extends Authenticatable
         return true;
     }
 }
+

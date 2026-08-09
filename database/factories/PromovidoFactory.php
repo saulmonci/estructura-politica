@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Promovido;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Enums\UserRole;
 
 /**
  * @extends Factory<Promovido>
@@ -29,7 +30,7 @@ class PromovidoFactory extends Factory
             'calle' => fake()->streetName(),
             'numero' => (string) fake()->buildingNumber(),
             'codigo_postal' => sprintf('%05d', rand(10000, 99999)),
-            'promotor_id' => User::where('role', 'promotor')->inRandomOrder()->first()->id ?? User::factory()->create(['role' => 'promotor'])->id,
+            'promotor_id' => User::where('role', UserRole::PROMOTOR)->inRandomOrder()->first()->id ?? User::factory()->create(['role' => UserRole::PROMOTOR])->id,
         ];
     }
 }

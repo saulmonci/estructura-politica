@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Enums\UserRole;
 
 class RepresentanteDemarcacionController extends BaseCrudController
 {
@@ -16,16 +17,16 @@ class RepresentanteDemarcacionController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, ['presidente', 'admin', 'superuser']), 403, 'Acceso denegado. Solo los administradores pueden ver esto.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden ver esto.');
     }
 
     protected function getBaseQuery(Request $request): Builder
     {
         // El filtrado por jerarquía (parent_id) ya se hereda de BaseCrudController
-        return parent::getBaseQuery($request)->where('role', 'rd')
+        return parent::getBaseQuery($request)->where('role', UserRole::RD)
             ->with(['demarcacion', 'demarcacionAsignada'])
             ->withCount(['subordinates as operadores_count' => function ($query) {
-                $query->where('role', 'operador');
+                $query->where('role', UserRole::OPERADOR);
             }]);
     }
 
@@ -81,8 +82,8 @@ class RepresentanteDemarcacionController extends BaseCrudController
             $user = $request->user();
             $presidentes = [];
 
-            if ($user && in_array(strtolower($user->role), ['admin', 'superadmin', 'superuser'])) {
-                $presidentes = User::where('role', 'presidente')->get(['id', 'name', 'apodo']);
+            if ($user && in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+                $presidentes = User::where('role', UserRole::PRESIDENTE)->get(['id', 'name', 'apodo']);
             }
 
             $response->with('availablePresidentes', $presidentes);
@@ -142,7 +143,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             $request->merge(['password' => Hash::make('secret')]);
         }
 
-        $request->merge(['role' => 'rd']);
+        $request->merge(['role' => UserRole::RD->value]);
 
         return parent::store($request);
     }
@@ -211,14 +212,14 @@ class RepresentanteDemarcacionController extends BaseCrudController
                 } 
                 // Fallback dinámico por municipio
                 elseif ($user->scope_level === 'municipal' && $user->municipality_id) {
-                    $presidente = User::where('role', 'presidente')
+                    $presidente = User::where('role', UserRole::PRESIDENTE)
                                       ->where('scope_level', 'municipal')
                                       ->where('municipality_id', $user->municipality_id)
                                       ->first();
                 }
                 // Fallback dinámico por estado
                 elseif (in_array($user->scope_level, ['municipal', 'estatal']) && $user->state_id) {
-                    $presidente = User::where('role', 'presidente')
+                    $presidente = User::where('role', UserRole::PRESIDENTE)
                                       ->where('scope_level', 'estatal')
                                       ->where('state_id', $user->state_id)
                                       ->first();
@@ -227,7 +228,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
             
             // Fallback al presidente global si no hay específicos
             if (!$presidente) {
-                $presidente = User::where('role', 'presidente')->first();
+                $presidente = User::where('role', UserRole::PRESIDENTE)->first();
             }
 
             if ($presidente) {
@@ -244,7 +245,7 @@ class RepresentanteDemarcacionController extends BaseCrudController
     {
         parent::afterUpdate($request, $item);
 
-        if ($request->filled('parent_id') && in_array($request->user()->role, ['admin', 'superuser'])) {
+        if ($request->filled('parent_id') && in_array($request->user()->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             $item->presidente_id = $item->parent_id;
             $item->save();
         }

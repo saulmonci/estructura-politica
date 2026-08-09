@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Enums\UserRole;
 
 class AssociateAdminsToPresidentesSeeder extends Seeder
 {
@@ -16,12 +17,12 @@ class AssociateAdminsToPresidentesSeeder extends Seeder
         $this->command->info('Asociando administradores territoriales a sus respectivos presidentes...');
 
         // 1. Asociar admins municipales a presidentes municipales
-        $municipalAdmins = User::where('role', 'admin')->where('scope_level', 'municipal')->whereNotNull('municipality_id')->get();
+        $municipalAdmins = User::where('role', UserRole::ADMIN)->where('scope_level', 'municipal')->whereNotNull('municipality_id')->get();
         $this->command->info("Asociando {$municipalAdmins->count()} admins municipales...");
         $this->command->getOutput()->progressStart($municipalAdmins->count());
 
         foreach ($municipalAdmins as $admin) {
-            $presidente = User::where('role', 'presidente')
+            $presidente = User::where('role', UserRole::PRESIDENTE)
                 ->where('scope_level', 'municipal')
                 ->where('municipality_id', $admin->municipality_id)
                 ->first();
@@ -36,12 +37,12 @@ class AssociateAdminsToPresidentesSeeder extends Seeder
         $this->command->getOutput()->progressFinish();
 
         // 2. Asociar admins estatales a presidentes estatales
-        $stateAdmins = User::where('role', 'admin')->where('scope_level', 'estatal')->whereNotNull('state_id')->get();
+        $stateAdmins = User::where('role', UserRole::ADMIN)->where('scope_level', 'estatal')->whereNotNull('state_id')->get();
         $this->command->info("Asociando {$stateAdmins->count()} admins estatales...");
         $this->command->getOutput()->progressStart($stateAdmins->count());
 
         foreach ($stateAdmins as $admin) {
-            $presidente = User::where('role', 'presidente')
+            $presidente = User::where('role', UserRole::PRESIDENTE)
                 ->where('scope_level', 'estatal')
                 ->where('state_id', $admin->state_id)
                 ->first();
