@@ -115,12 +115,13 @@ class DashboardController extends Controller
         $promovidos = $user->queryPromovidos()->count();
         $totalEstructura = 0;
 
-        if ($user->role === UserRole::PRESIDENTE) {
+        if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presidenteId = $user->getPresidenteId();
             // RDs del Presidente
-            $rdIds = User::where('parent_id', $user->id)->where('role', UserRole::RD)->pluck('id')->toArray();
+            $rdIds = User::where('presidente_id', $presidenteId)->where('role', UserRole::RD)->pluck('id')->toArray();
             $rdCount = count($rdIds);
 
-            $operadores = User::whereIn('parent_id', $rdIds)->where('role', UserRole::OPERADOR)->count();
+            $operadores = User::where('presidente_id', $presidenteId)->where('role', UserRole::OPERADOR)->count();
 
             // Total estructura: RDs + Operadores + Promotores + Promovidos
             $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;

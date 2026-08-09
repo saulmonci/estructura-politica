@@ -12,12 +12,14 @@ import {
     CloseOutlined,
     BankOutlined,
     UsergroupAddOutlined,
-    CameraOutlined
+    CameraOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
 import IneScanner from './IneScanner';
 import imageCompression from 'browser-image-compression';
+import { generatePromovidoFormData } from '@/Utils/dummyDataGenerator';
 
 const { Dragger } = Upload;
 
@@ -320,9 +322,33 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                         <p className="text-gray-300 text-sm m-0">Registro Simpatizantes</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300 bg-white/10 px-4 py-2 rounded-full text-sm">
-                    <SafetyCertificateOutlined />
-                    <span>Información segura</span>
+                <div className="flex items-center gap-3">
+                    {(auth?.user?.role === 'superuser' || auth?.is_impersonating || auth?.impersonator?.role === 'superuser') && (
+                        <Button
+                            type="primary"
+                            icon={<ThunderboltOutlined />}
+                            className="bg-amber-500 hover:bg-amber-600 text-white font-semibold border-none shadow-md"
+                            onClick={() => {
+                                const dummy = generatePromovidoFormData({
+                                    availablePromotores,
+                                    demarcaciones,
+                                    secciones,
+                                });
+                                form.setFieldsValue(dummy);
+                                if (dummy.demarcacion_id) {
+                                    setSelectedDemarcacion(dummy.demarcacion_id);
+                                    fetchSecciones(dummy.demarcacion_id);
+                                }
+                                message.success('⚡ Datos de prueba generados exitosamente');
+                            }}
+                        >
+                            ⚡ Llenar datos de prueba
+                        </Button>
+                    )}
+                    <div className="hidden sm:flex items-center gap-2 text-gray-300 bg-white/10 px-4 py-2 rounded-full text-sm">
+                        <SafetyCertificateOutlined />
+                        <span>Información segura</span>
+                    </div>
                 </div>
             </div>
 

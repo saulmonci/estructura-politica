@@ -31,6 +31,7 @@ export default function MainLayout({ children }) {
         superuser: 'Superusuario',
         admin: 'Administrador',
         presidente: 'Presidente',
+        coordinador_distrito: 'Coordinador de Distrito',
         rd: 'Representante de Demarcación (RD)',
         operador: 'Operador',
         promotor: 'Promotor',
@@ -122,16 +123,21 @@ export default function MainLayout({ children }) {
                                         icon: <CrownOutlined />,
                                     },
                                     ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                        path: '/coordinadores',
+                                        name: 'Coordinadores de Distrito',
+                                        icon: <UserOutlined />,
+                                    },
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
                                         path: '/representantes',
                                         name: 'Representantes (RD)',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'rd'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito', 'rd'].includes(user.role) && {
                                         path: '/operadores',
                                         name: 'Operadores',
                                         icon: <TeamOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'rd', 'operador'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito', 'rd', 'operador'].includes(user.role) && {
                                         path: '/promotores',
                                         name: 'Promotores',
                                         icon: <TeamOutlined />,
@@ -141,38 +147,21 @@ export default function MainLayout({ children }) {
                                         name: 'Promovidos',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
                                         path: '/mapa',
                                         name: 'Mapa Territorial',
                                         icon: <EnvironmentOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
                                         path: '/demarcaciones',
                                         name: 'Demarcaciones',
                                         icon: <EnvironmentOutlined />,
                                     },
-
-                                    // ['presidente', 'admin', 'superuser'].includes(user.role) && {
-                                    //     path: '/estadisticas',
-                                    //     name: 'Estadísticas',
-                                    //     icon: <BarChartOutlined />,
-                                    // },
-                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
                                         path: '/logs',
                                         name: 'Bitácora',
                                         icon: <HistoryOutlined />,
                                     },
-                                    // {
-                                    //     path: '/mensajes',
-                                    //     name: 'Mensajes',
-                                    //     icon: <MessageOutlined />,
-                                    //     badge: 8,
-                                    // },
-                                    // {
-                                    //     path: '/configuracion',
-                                    //     name: 'Configuración',
-                                    //     icon: <SettingOutlined />,
-                                    // },
                                 ].filter(Boolean)
                             }
                         ],

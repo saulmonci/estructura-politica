@@ -32,6 +32,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/presidentes/{id}', [PresidenteController::class, 'update']);
     Route::post('/presidentes/{id}', [PresidenteController::class, 'update']);
     Route::delete('/presidentes/{id}', [PresidenteController::class, 'destroy']);
+
+    // CRUD para Coordinadores de Distrito (Presidente y Admin)
+    Route::get('/coordinadores/export', [App\Http\Controllers\CoordinadorDistritoController::class, 'export']);
+    Route::post('/coordinadores/{id}/restore', [App\Http\Controllers\CoordinadorDistritoController::class, 'restore']);
+    Route::resource('coordinadores', App\Http\Controllers\CoordinadorDistritoController::class)
+         ->only(['index', 'store', 'update', 'destroy', 'show']);
     
     // CRUD para Demarcaciones (Solo Presidente)
     Route::get('/demarcaciones/export', [DemarcacionController::class, 'export']);

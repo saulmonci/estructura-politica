@@ -33,14 +33,20 @@ abstract class BaseCrudController extends Controller
     {
         $query = $this->modelClass::query();
         
-        // Lógica base por defecto: si el usuario logueado es presidente,
+        // Lógica base por defecto: si el usuario logueado es presidente o coordinador de distrito,
         // restringimos la consulta a los registros que le pertenecen (jerarquía).
         $user = $request->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class, \App\Models\ActivityLog::class])) {
-                $query->where('presidente_id', $user->id);
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presidenteId = $user->getPresidenteId();
+            if ($this->modelClass === \App\Models\User::class) {
+                $query->where(function ($q) use ($presidenteId) {
+                    $q->where('presidente_id', $presidenteId)
+                      ->orWhere('parent_id', $presidenteId);
+                });
+            } elseif (in_array($this->modelClass, [\App\Models\Promovido::class, \App\Models\ActivityLog::class])) {
+                $query->where('presidente_id', $presidenteId);
             } else {
-                $query->where('parent_id', $user->id);
+                $query->where('parent_id', $presidenteId);
             }
         }
 
@@ -66,7 +72,7 @@ abstract class BaseCrudController extends Controller
         $this->checkAccess($request);
         $query = $this->getBaseQuery($request);
 
-        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && in_array($request->user()?->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && in_array($request->user()?->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
                 $query->onlyTrashed();
             }
@@ -169,8 +175,8 @@ abstract class BaseCrudController extends Controller
     public function restore(Request $request, string $id)
     {
         $user = $request->user();
-        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
-            abort(403, 'Solo el presidente o administradores pueden restaurar registros.');
+        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+            abort(403, 'Solo el presidente, coordinadores o administradores pueden restaurar registros.');
         }
 
         if (!in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
@@ -181,7 +187,8 @@ abstract class BaseCrudController extends Controller
         
         // Verificación de seguridad adicional (los admins y superusers pueden restaurar todo)
         if (!in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
-            if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class]) && isset($item->presidente_id) && $item->presidente_id !== $user->id) {
+            $presidenteId = $user->getPresidenteId();
+            if (in_array($this->modelClass, [\App\Models\User::class, \App\Models\Promovido::class]) && isset($item->presidente_id) && $item->presidente_id !== $presidenteId) {
                 abort(403, 'Acceso denegado.');
             }
         }
@@ -201,8 +208,8 @@ abstract class BaseCrudController extends Controller
     {
         // Asignación de jerarquía por defecto al crear registros
         $user = $request->user();
-        if ($user && $user->role === UserRole::PRESIDENTE && empty($item->parent_id)) {
-            $item->parent_id = $user->id;
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true) && empty($item->parent_id)) {
+            $item->parent_id = $user->getPresidenteId();
             $item->save();
         }
     }
@@ -214,7 +221,7 @@ abstract class BaseCrudController extends Controller
         $this->checkAccess($request);
         
         $user = $request->user();
-        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::RD], true)) {
+        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::RD], true)) {
             abort(403, 'No autorizado para exportar datos.');
         }
 

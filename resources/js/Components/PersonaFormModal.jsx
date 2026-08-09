@@ -14,12 +14,14 @@ import {
     CloseOutlined,
     BankOutlined,
     LockOutlined,
-    MailOutlined
+    MailOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
 import IneScanner from './IneScanner';
 import imageCompression from 'browser-image-compression';
+import { generatePersonaFormData } from '@/Utils/dummyDataGenerator';
 
 const { Dragger } = Upload;
 
@@ -247,8 +249,8 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
             submitter={{
                 render: (props) => {
                     const userRole = auth?.user?.role?.toLowerCase() || '';
-                    const requiresParent = (entityType === 'Representante' && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
-                    const isDisabled = requiresParent && (entityType === 'Representante' ? availablePresidentes.length === 0 : availableRds.length === 0);
+                    const requiresParent = ((entityType === 'Representante' || entityType === 'Coordinador') && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'coordinador_distrito', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'coordinador_distrito', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
+                    const isDisabled = requiresParent && ((entityType === 'Representante' || entityType === 'Coordinador') ? availablePresidentes.length === 0 : availableRds.length === 0);
                     
                     return (
                         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
@@ -277,7 +279,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                 },
             }}
             onFinish={async (values) => {
-                const basePath = entityType === 'Operador' ? '/operadores' : (entityType === 'Promotor' ? '/promotores' : '/representantes');
+                const basePath = entityType === 'Operador' ? '/operadores' : (entityType === 'Promotor' ? '/promotores' : (entityType === 'Coordinador' ? '/coordinadores' : '/representantes'));
                 const endpoint = fetchUrl || (editId ? `${basePath}/${editId}` : basePath);
                 
                 if (fileList.length > 0 && fileList[0].originFileObj) {
@@ -348,44 +350,61 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                     </div>
                     <div>
                         <h2 className="text-xl font-bold m-0 tracking-wide uppercase">
-                            {editId ? 'EDICIÓN DE' : 'REGISTRO DE'} {entityType === 'RD' ? 'Representante Demarcación' : (entityType === 'Operador' ? 'Operador Político' : 'Promotor')}
+                            {editId ? 'EDICIÓN DE' : 'REGISTRO DE'} {entityType === 'Coordinador' ? 'Coordinador de Distrito' : (entityType === 'RD' || entityType === 'Representante' ? 'Representante Demarcación' : (entityType === 'Operador' ? 'Operador Político' : 'Promotor'))}
                         </h2>
                         <p className="text-gray-300 text-sm m-0">Estructura Política y Control Territorial</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300 bg-white/10 px-4 py-2 rounded-full text-sm">
-                    <SafetyCertificateOutlined />
-                    <span>Información segura y confidencial</span>
+                <div className="flex items-center gap-3">
+                    {(auth?.user?.role === 'superuser' || auth?.is_impersonating || auth?.impersonator?.role === 'superuser') && (
+                        <Button
+                            type="primary"
+                            icon={<ThunderboltOutlined />}
+                            className="bg-amber-500 hover:bg-amber-600 text-white font-semibold border-none shadow-md"
+                            onClick={() => {
+                                const dummy = generatePersonaFormData({
+                                    entityType,
+                                    userRole: auth?.user?.role,
+                                    availablePresidentes,
+                                    availableRds,
+                                    demarcaciones,
+                                    secciones,
+                                });
+                                form.setFieldsValue(dummy);
+                                if (dummy.demarcacion_id) {
+                                    setSelectedDemarcacion(dummy.demarcacion_id);
+                                    fetchSecciones(dummy.demarcacion_id);
+                                }
+                                message.success('⚡ Datos de prueba generados exitosamente');
+                            }}
+                        >
+                            ⚡ Llenar datos de prueba
+                        </Button>
+                    )}
+                    <div className="hidden sm:flex items-center gap-2 text-gray-300 bg-white/10 px-4 py-2 rounded-full text-sm">
+                        <SafetyCertificateOutlined />
+                        <span>Información segura</span>
+                    </div>
                 </div>
             </div>
 
             <div className="p-5">
                 <Row gutter={48}>
-                    {/* Left Column: Personal Data */}
-                    <Col xs={24} md={15}>
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="bg-[#0f172a] text-white p-1 rounded">
-                                <UserOutlined />
-                            </div>
-                            <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">DATOS PERSONALES</h3>
-                        </div>
-                        <Divider className="my-2 border-gray-300" />
-                        
-                        <IneScanner onDataExtracted={(data) => {
-                            // Si Gemini devuelve sexo H o M, mapearlo a Masculino/Femenino
-                            if (data.sexo) {
-                                if (data.sexo.toUpperCase() === 'H') data.sexo = 'Masculino';
-                                if (data.sexo.toUpperCase() === 'M') data.sexo = 'Femenino';
+                    <Col xs={24} lg={15}>
+                        <IneScanner onExtractionComplete={(data) => {
+                            if (data.nombre) {
+                                form.setFieldsValue({ nombre: data.nombre });
+                            }
+                            if (data.apellidos) {
+                                form.setFieldsValue({ apellidos: data.apellidos });
                             }
                             
-                            // Mapear clave_elector a clave_electoral que es como se llama en el formulario
                             if (data.clave_elector) {
                                 data.clave_electoral = data.clave_elector;
                             }
                             
                             form.setFieldsValue(data);
 
-                            // Si la IA logró deducir la demarcación basada en la sección, actualizar los combos
                             if (data.demarcacion_id) {
                                 const demId = String(data.demarcacion_id);
                                 setSelectedDemarcacion(demId);
@@ -398,13 +417,13 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                         <div className="mt-4">
                             {(() => {
                                 const userRole = auth?.user?.role?.toLowerCase() || '';
-                                const requiresParent = (entityType === 'Representante' && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
+                                const requiresParent = ((entityType === 'Representante' || entityType === 'Coordinador') && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'coordinador_distrito', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'coordinador_distrito', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
                                 
-                                const parentOptions = entityType === 'Representante' 
+                                const parentOptions = (entityType === 'Representante' || entityType === 'Coordinador')
                                     ? availablePresidentes.map(p => ({ label: p.apodo ? `${p.name} (${p.apodo})` : p.name, value: p.id }))
                                     : availableRds.map(rd => ({ label: rd.apodo ? `${rd.name} (${rd.apodo})` : rd.name, value: rd.id }));
                                     
-                                const parentLabel = entityType === 'Representante' ? 'Presidente a cargo' : (entityType === 'Operador' ? 'Representante de Demarcación (RD)' : 'Operador');
+                                const parentLabel = (entityType === 'Representante' || entityType === 'Coordinador') ? 'Presidente a cargo' : (entityType === 'Operador' ? 'Representante de Demarcación (RD)' : 'Operador');
                                 
                                 return requiresParent ? (
                                 <Row gutter={16} className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">

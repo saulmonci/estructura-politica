@@ -41,8 +41,8 @@ class PromovidoController extends BaseCrudController
             $promotores = [];
             
             if ($user) {
-                if ($user->role === UserRole::PRESIDENTE) {
-                    $promotores = User::where('role', UserRole::PROMOTOR)->where('presidente_id', $user->id)->get(['id', 'name', 'apodo']);
+                if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+                    $promotores = User::where('role', UserRole::PROMOTOR)->where('presidente_id', $user->getPresidenteId())->get(['id', 'name', 'apodo']);
                 } elseif ($user->role === UserRole::RD) {
                     $operadoresIds = User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->pluck('id');
                     $promotores = User::where('role', UserRole::PROMOTOR)
@@ -170,10 +170,10 @@ class PromovidoController extends BaseCrudController
         ];
 
         if ($user) {
-            if ($user->role === UserRole::PRESIDENTE) {
+            if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
                 $rules['promotor_id'] = [
                     'required', 
-                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('presidente_id', $user->id)
+                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('presidente_id', $user->getPresidenteId())
                 ];
             } elseif ($user->role === UserRole::RD) {
                 // RD solo puede asignar a un promotor de su red
@@ -236,7 +236,7 @@ class PromovidoController extends BaseCrudController
         if ($user && $user->role === UserRole::PROMOTOR) {
             $item->promotor_id = $user->id;
             $item->save();
-        } elseif ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::RD, UserRole::OPERADOR], true)) {
+        } elseif ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::RD, UserRole::OPERADOR], true)) {
             if ($request->has('promotor_id')) {
                 $item->promotor_id = $request->input('promotor_id');
                 $item->save();

@@ -16,8 +16,8 @@ class DemarcacionController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        // Solo el Presidente tiene acceso para administrar las demarcaciones
-        abort_if(!$request->user() || !in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden administrar las demarcaciones.');
+        // Solo el Presidente, Coordinadores o Administradores tienen acceso para administrar las demarcaciones
+        abort_if(!$request->user() || !in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden administrar las demarcaciones.');
     }
 
     protected function getBaseQuery(Request $request): Builder

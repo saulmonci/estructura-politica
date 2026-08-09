@@ -83,23 +83,36 @@ class WebController extends Controller
                 $d['promovidos'] = Promovido::where('created_at', '<=', $d['date'])->count();
             }
 
-        } elseif ($user->role === UserRole::PRESIDENTE) {
-            $rdIds = User::where('presidente_id', $user->id)->where('role', UserRole::RD)->pluck('id')->toArray();
+        } elseif (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presId = $user->getPresidenteId();
+            $rdIds = User::where(function ($q) use ($presId) {
+                $q->where('presidente_id', $presId)->orWhere('parent_id', $presId);
+            })->where('role', UserRole::RD)->pluck('id')->toArray();
             $rdCount = count($rdIds);
             
-            $opsIds = User::where('presidente_id', $user->id)->where('role', UserRole::OPERADOR)->pluck('id')->toArray();
+            $opsIds = User::where(function ($q) use ($presId, $rdIds) {
+                $q->where('presidente_id', $presId)->orWhereIn('parent_id', !empty($rdIds) ? $rdIds : [0]);
+            })->where('role', UserRole::OPERADOR)->pluck('id')->toArray();
             $operadores = count($opsIds);
             
+            $promotores = $user->queryPromotores()->count();
+            $promovidos = $user->queryPromovidos()->count();
             $totalEstructura = $rdCount + $operadores + $promotores + $promovidos;
             
             foreach($dates as &$d) {
-                $d['rd'] = User::where('presidente_id', $user->id)->where('role', UserRole::RD)->where('created_at', '<=', $d['date'])->count();
+                $d['rd'] = User::where(function ($q) use ($presId) {
+                    $q->where('presidente_id', $presId)->orWhere('parent_id', $presId);
+                })->where('role', UserRole::RD)->where('created_at', '<=', $d['date'])->count();
                 
-                $d['operadores'] = User::where('presidente_id', $user->id)->where('role', UserRole::OPERADOR)->where('created_at', '<=', $d['date'])->count();
+                $d['operadores'] = User::where(function ($q) use ($presId, $rdIds) {
+                    $q->where('presidente_id', $presId)->orWhereIn('parent_id', !empty($rdIds) ? $rdIds : [0]);
+                })->where('role', UserRole::OPERADOR)->where('created_at', '<=', $d['date'])->count();
                 
-                $d['promotores'] = User::where('presidente_id', $user->id)->where('role', UserRole::PROMOTOR)->where('created_at', '<=', $d['date'])->count();
+                $d['promotores'] = User::where(function ($q) use ($presId) {
+                    $q->where('presidente_id', $presId)->orWhere('parent_id', $presId);
+                })->where('role', UserRole::PROMOTOR)->where('created_at', '<=', $d['date'])->count();
                 
-                $d['promovidos'] = Promovido::where('presidente_id', $user->id)->where('created_at', '<=', $d['date'])->count();
+                $d['promovidos'] = Promovido::where('presidente_id', $presId)->where('created_at', '<=', $d['date'])->count();
             }
             
         } elseif ($user->role === UserRole::RD) {
@@ -165,10 +178,13 @@ class WebController extends Controller
 
         // Para la tabla general de RD
         $rds = [];
-        if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::SUPERUSER, UserRole::ADMIN], true)) {
+        if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $rdsQuery = User::where('role', UserRole::RD)->with('demarcacion');
-            if ($user->role === UserRole::PRESIDENTE) {
-                $rdsQuery->where('presidente_id', $user->id);
+            if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+                $presId = $user->getPresidenteId();
+                $rdsQuery->where(function ($q) use ($presId) {
+                    $q->where('presidente_id', $presId)->orWhere('parent_id', $presId);
+                });
             }
             $rdsList = $rdsQuery->get();
             foreach($rdsList as $rd) {
@@ -264,8 +280,11 @@ class WebController extends Controller
 
         if ($user->role === UserRole::RD) {
             $query->where('parent_id', $user->id);
-        } else if ($user->role === UserRole::PRESIDENTE) {
-            $query->where('presidente_id', $user->id);
+        } else if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presId = $user->getPresidenteId();
+            $query->where(function($q) use ($presId) {
+                $q->where('presidente_id', $presId)->orWhere('parent_id', $presId);
+            });
         }
 
         $operadores = $query->with('leader')->get();
@@ -278,11 +297,11 @@ class WebController extends Controller
     public function mapa(Request $request)
     {
         $user = $request->user();
-        if (!in_array($user->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+        if (!in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
             abort(403, 'No autorizado.');
         }
 
-        $presidenteId = $user->role === UserRole::PRESIDENTE ? $user->id : $user->getPresidenteId();
+        $presidenteId = in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true) ? $user->getPresidenteId() : $user->getPresidenteId();
 
         // Obtener todas las demarcaciones con sus metas y polígonos
         $demarcaciones = \App\Models\Demarcacion::select(

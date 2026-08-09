@@ -69,13 +69,20 @@ class User extends Authenticatable
 
         static::creating(function ($user) {
             if (empty($user->presidente_id)) {
-                if (auth()->check()) {
-                    $user->presidente_id = auth()->user()->getPresidenteId();
-                } else if ($user->parent_id) {
+                if (!empty($user->parent_id)) {
                     $parent = User::find($user->parent_id);
                     if ($parent) {
                         $user->presidente_id = $parent->getPresidenteId();
+                        $user->state_id = $user->state_id ?: $parent->state_id;
+                        $user->municipality_id = $user->municipality_id ?: $parent->municipality_id;
+                        $user->scope_level = $user->scope_level ?: ($parent->scope_level ?: 'municipal');
                     }
+                } else if (auth()->check() && auth()->user()->getPresidenteId()) {
+                    $presUser = auth()->user();
+                    $user->presidente_id = $presUser->getPresidenteId();
+                    $user->state_id = $user->state_id ?: $presUser->state_id;
+                    $user->municipality_id = $user->municipality_id ?: $presUser->municipality_id;
+                    $user->scope_level = $user->scope_level ?: ($presUser->scope_level ?: 'municipal');
                 }
             }
 
@@ -139,10 +146,27 @@ class User extends Authenticatable
         if ($this->presidente_id) {
             return $this->presidente_id;
         }
-        // Fallback: resolver a través del líder inmediato
-        $parent = $this->leader;
-        if ($parent) {
-            return $parent->getPresidenteId();
+        if ($this->parent_id) {
+            $parent = User::withoutGlobalScopes()->find($this->parent_id);
+            if ($parent) {
+                return $parent->getPresidenteId();
+            }
+        }
+        if ($this->role === UserRole::COORDINADOR_DISTRITO) {
+            if ($this->municipality_id) {
+                $pres = User::withoutGlobalScopes()->where('role', UserRole::PRESIDENTE)
+                    ->where('municipality_id', $this->municipality_id)
+                    ->first();
+                if ($pres) return $pres->id;
+            }
+            if ($this->state_id) {
+                $pres = User::withoutGlobalScopes()->where('role', UserRole::PRESIDENTE)
+                    ->where('state_id', $this->state_id)
+                    ->first();
+                if ($pres) return $pres->id;
+            }
+            $firstPres = User::withoutGlobalScopes()->where('role', UserRole::PRESIDENTE)->first();
+            if ($firstPres) return $firstPres->id;
         }
         return null;
     }
@@ -192,7 +216,7 @@ class User extends Authenticatable
      */
     public function leader()
     {
-        return $this->belongsTo(User::class, 'parent_id')->select('id', 'name', 'email', 'role', 'parent_id', 'presidente_id');
+        return $this->belongsTo(User::class, 'parent_id')->withoutGlobalScopes()->select('id', 'name', 'email', 'role', 'parent_id', 'presidente_id', 'state_id', 'municipality_id', 'scope_level');
     }
 
     /**
@@ -201,6 +225,21 @@ class User extends Authenticatable
     public function subordinates()
     {
         return $this->hasMany(User::class, 'parent_id');
+    }
+
+    /**
+     * RD: Relación para obtener todos los operadores de sus promotores (jerarquía directa de 2 niveles).
+     */
+    public function rdsPromotores()
+    {
+        return $this->hasManyThrough(
+            User::class,   // Modelo final que queremos (Promotor)
+            User::class,   // Modelo intermedio (Operador)
+            'parent_id',   // Llave foránea en la tabla intermedia (users.parent_id = rd.id)
+            'parent_id',   // Llave foránea en la tabla final (users.parent_id = operador.id)
+            'id',          // Llave local en esta tabla (users)
+            'id'           // Llave local en la tabla intermedia (users)
+        );
     }
 
     /**
@@ -234,8 +273,12 @@ class User extends Authenticatable
             return User::where('role', UserRole::OPERADOR); // TerritoryScope applies automatically
         }
 
-        if ($this->role === UserRole::PRESIDENTE) {
-            return User::where('role', UserRole::OPERADOR)->where('presidente_id', $this->id);
+        if (in_array($this->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presId = $this->getPresidenteId();
+            return User::where('role', UserRole::OPERADOR)->where(function ($q) use ($presId) {
+                $q->where('presidente_id', $presId)
+                  ->orWhere('parent_id', $presId);
+            });
         }
 
         if ($this->role === UserRole::RD) {
@@ -254,8 +297,12 @@ class User extends Authenticatable
             return User::where('role', UserRole::PROMOTOR); // TerritoryScope applies automatically
         }
 
-        if ($this->role === UserRole::PRESIDENTE) {
-            return User::where('role', UserRole::PROMOTOR)->where('presidente_id', $this->id);
+        if (in_array($this->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presId = $this->getPresidenteId();
+            return User::where('role', UserRole::PROMOTOR)->where(function ($q) use ($presId) {
+                $q->where('presidente_id', $presId)
+                  ->orWhere('parent_id', $presId);
+            });
         }
 
         if ($this->role === UserRole::RD) {
@@ -273,6 +320,31 @@ class User extends Authenticatable
 
         if ($this->role === UserRole::OPERADOR) {
             return User::where('parent_id', $this->id)->where('role', UserRole::PROMOTOR);
+        }
+
+        return User::whereRaw('1 = 0');
+    }
+
+    /**
+     * Consulta para obtener los coordinadores de distrito bajo el alcance del usuario.
+     */
+    public function queryCoordinadores()
+    {
+        if (in_array($this->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+            return User::where('role', UserRole::COORDINADOR_DISTRITO);
+        }
+
+        if ($this->role === UserRole::PRESIDENTE) {
+            return User::where('role', UserRole::COORDINADOR_DISTRITO)->where(function ($q) {
+                $q->where('presidente_id', $this->id)->orWhere('parent_id', $this->id);
+            });
+        }
+
+        if ($this->role === UserRole::COORDINADOR_DISTRITO) {
+            $presId = $this->getPresidenteId();
+            return User::where('role', UserRole::COORDINADOR_DISTRITO)->where(function ($q) use ($presId) {
+                $q->where('presidente_id', $presId)->orWhere('parent_id', $presId);
+            });
         }
 
         return User::whereRaw('1 = 0');
@@ -335,9 +407,9 @@ class User extends Authenticatable
             });
         }
 
-        if ($this->role === UserRole::PRESIDENTE) {
-            // El presidente tiene visibilidad de todos los promovidos de su estructura
-            return Promovido::where('presidente_id', $this->id);
+        if (in_array($this->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $presId = $this->getPresidenteId();
+            return Promovido::where('presidente_id', $presId);
         }
 
         return Promovido::whereRaw('1 = 0');

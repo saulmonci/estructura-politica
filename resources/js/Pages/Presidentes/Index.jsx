@@ -19,11 +19,13 @@ import {
     CameraOutlined,
     TeamOutlined,
     CrownOutlined,
-    SwapOutlined
+    SwapOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import axios from 'axios';
 import imageCompression from 'browser-image-compression';
+import { generatePresidenteFormData } from '@/Utils/dummyDataGenerator';
 
 export default function PresidentesIndex({ presidentes }) {
     const { auth } = usePage().props;
@@ -662,9 +664,32 @@ export default function PresidentesIndex({ presidentes }) {
             {/* Modal de Registro / Edición de Presidente */}
             <Modal
                 title={
-                    <div className="flex items-center gap-2 text-lg font-bold text-gray-800">
-                        <CrownOutlined className="text-amber-500" />
-                        {editingId ? 'Editar Presidente Municipal' : 'Registrar Nuevo Presidente Municipal'}
+                    <div className="flex items-center justify-between w-full pr-8">
+                        <div className="flex items-center gap-2 text-lg font-bold text-gray-800">
+                            <CrownOutlined className="text-amber-500" />
+                            {editingId ? 'Editar Presidente Municipal' : 'Registrar Nuevo Presidente Municipal'}
+                        </div>
+                        {(auth?.user?.role === 'superuser' || auth?.is_impersonating || auth?.impersonator?.role === 'superuser') && (
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<ThunderboltOutlined />}
+                                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold border-none shadow-sm"
+                                onClick={() => {
+                                    const dummy = generatePresidenteFormData({
+                                        estados,
+                                        municipios,
+                                    });
+                                    form.setFieldsValue(dummy);
+                                    if (dummy.state_id) {
+                                        fetchMunicipios(dummy.state_id);
+                                    }
+                                    message.success('⚡ Datos de prueba generados exitosamente');
+                                }}
+                            >
+                                ⚡ Llenar datos de prueba
+                            </Button>
+                        )}
                     </div>
                 }
                 open={isModalOpen}

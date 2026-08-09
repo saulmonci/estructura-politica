@@ -97,7 +97,8 @@ trait LogsActivity
                 if (empty($fullName)) {
                     $fullName = $user->name ?? '';
                 }
-                $userIdentifier = sprintf('%s - %s (%s)', $user->id, $fullName, $user->role);
+                $userRoleStr = $user->role instanceof \App\Enums\UserRole ? $user->role->value : ($user->role ?? '');
+                $userIdentifier = sprintf('%s - %s (%s)', $user->id, $fullName, $userRoleStr);
             } else {
                 $userIdentifier = 'Sistema / Semilla';
             }
@@ -133,6 +134,13 @@ trait LogsActivity
                 }
             }
 
+            $normalizeData = function (?array $data) {
+                if (!$data) return $data;
+                return array_map(function ($val) {
+                    return $val instanceof \BackedEnum ? $val->value : $val;
+                }, $data);
+            };
+
             ActivityLog::create([
                 'user_id' => $user?->id,
                 'user_identifier' => $userIdentifier,
@@ -141,8 +149,8 @@ trait LogsActivity
                 'model_friendly_name' => $modelFriendlyName,
                 'model_id' => $model->getKey(),
                 'model_representation' => $modelRepresentation,
-                'original_data' => $original,
-                'changed_data' => $changed,
+                'original_data' => $normalizeData($original),
+                'changed_data' => $normalizeData($changed),
                 'ip_address' => Request::ip(),
                 'user_agent' => Request::userAgent(),
                 'presidente_id' => $presidenteId,

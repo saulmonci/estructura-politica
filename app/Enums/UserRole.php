@@ -7,6 +7,7 @@ enum UserRole: string
     case SUPERUSER = 'superuser';
     case ADMIN = 'admin';
     case PRESIDENTE = 'presidente';
+    case COORDINADOR_DISTRITO = 'coordinador_distrito';
     case RD = 'rd';
     case OPERADOR = 'operador';
     case PROMOTOR = 'promotor';
@@ -20,6 +21,7 @@ enum UserRole: string
             self::SUPERUSER => 'Súper Usuario',
             self::ADMIN => 'Administrador',
             self::PRESIDENTE => 'Presidente',
+            self::COORDINADOR_DISTRITO => 'Coordinador de Distrito',
             self::RD => 'Responsable de Demarcación',
             self::OPERADOR => 'Operador Político',
             self::PROMOTOR => 'Promotor',
@@ -45,11 +47,11 @@ enum UserRole: string
     }
 
     /**
-     * Verifica si el rol es administrativo o directivo (Superuser, Admin, Presidente).
+     * Verifica si el rol es administrativo o directivo (Superuser, Admin, Presidente, Coordinador de Distrito).
      */
     public function isManagement(): bool
     {
-        return in_array($this, [self::SUPERUSER, self::ADMIN, self::PRESIDENTE], true);
+        return in_array($this, [self::SUPERUSER, self::ADMIN, self::PRESIDENTE, self::COORDINADOR_DISTRITO], true);
     }
 
     /**
@@ -57,6 +59,6 @@ enum UserRole: string
      */
     public function canManageStructure(): bool
     {
-        return in_array($this, [self::SUPERUSER, self::ADMIN, self::PRESIDENTE, self::RD, self::OPERADOR], true);
+        return in_array($this, [self::SUPERUSER, self::ADMIN, self::PRESIDENTE, self::COORDINADOR_DISTRITO, self::RD, self::OPERADOR], true);
     }
 }

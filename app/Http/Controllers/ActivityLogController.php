@@ -15,14 +15,14 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         // Restrict access to President only
-        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden acceder a esta información.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden acceder a esta información.');
 
         $user = $request->user();
         $query = ActivityLog::query();
 
         // Aplicar restricciones según el rol del usuario
-        if ($user->role === UserRole::PRESIDENTE) {
-            $query->where('presidente_id', $user->id);
+        if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $query->where('presidente_id', $user->getPresidenteId());
         } elseif ($user->role === UserRole::ADMIN) {
             if ($user->scope_level === 'municipal' && $user->municipality_id) {
                 $query->where('municipality_id', $user->municipality_id);
@@ -62,13 +62,11 @@ class ActivityLogController extends Controller
         }
 
         // Sorting
-        if ($sortField = $request->input('sort_field')) {
-            $sortDirection = $request->input('sort_direction', 'asc');
-            $query->orderBy($sortField, $sortDirection);
-        } else {
-            $query->latest();
-        }
+        $sortField = $request->input('sort_field', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
 
+        // Pagination
         $perPage = min((int) $request->input('per_page', 10), 100);
         $logs = $query->paginate($perPage)->withQueryString();
 
@@ -88,13 +86,13 @@ class ActivityLogController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado.');
 
         $user = $request->user();
         $query = ActivityLog::query();
 
-        if ($user->role === UserRole::PRESIDENTE) {
-            $query->where('presidente_id', $user->id);
+        if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            $query->where('presidente_id', $user->getPresidenteId());
         } elseif ($user->role === UserRole::ADMIN) {
             if ($user->scope_level === 'municipal' && $user->municipality_id) {
                 $query->where('municipality_id', $user->municipality_id);

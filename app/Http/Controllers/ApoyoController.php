@@ -16,10 +16,10 @@ class ApoyoController extends Controller
 
     public function index(Promovido $promovido)
     {
-        // Si el usuario logueado es presidente, verificar que el promovido pertenezca a su estructura
+        // Si el usuario logueado es presidente o coordinador, verificar que el promovido pertenezca a su estructura
         $user = auth()->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            abort_if($promovido->presidente_id !== $user->id, 403, 'No autorizado.');
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            abort_if($promovido->presidente_id !== $user->getPresidenteId(), 403, 'No autorizado.');
         }
 
         $apoyos = $promovido->apoyos()->orderBy('fecha', 'desc')->get();
@@ -28,10 +28,10 @@ class ApoyoController extends Controller
 
     public function store(Request $request, Promovido $promovido)
     {
-        // Si el usuario logueado es presidente, verificar que el promovido pertenezca a su estructura
+        // Si el usuario logueado es presidente o coordinador, verificar que el promovido pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            abort_if($promovido->presidente_id !== $user->id, 403, 'No autorizado.');
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            abort_if($promovido->presidente_id !== $user->getPresidenteId(), 403, 'No autorizado.');
         }
 
         $validated = $this->validateApoyo($request);
@@ -50,10 +50,10 @@ class ApoyoController extends Controller
 
     public function indexForUser(User $promotor)
     {
-        // Si el usuario logueado es presidente, verificar que el promotor pertenezca a su estructura
+        // Si el usuario logueado es presidente o coordinador, verificar que el promotor pertenezca a su estructura
         $user = auth()->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            abort_if($promotor->presidente_id !== $user->id, 403, 'No autorizado.');
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            abort_if($promotor->presidente_id !== $user->getPresidenteId(), 403, 'No autorizado.');
         }
 
         $apoyos = $promotor->apoyos()->orderBy('fecha', 'desc')->get();
@@ -62,10 +62,10 @@ class ApoyoController extends Controller
 
     public function storeForUser(Request $request, User $promotor)
     {
-        // Si el usuario logueado es presidente, verificar que el promotor pertenezca a su estructura
+        // Si el usuario logueado es presidente o coordinador, verificar que el promotor pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            abort_if($promotor->presidente_id !== $user->id, 403, 'No autorizado.');
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            abort_if($promotor->presidente_id !== $user->getPresidenteId(), 403, 'No autorizado.');
         }
 
         $validated = $this->validateApoyo($request);
@@ -84,10 +84,10 @@ class ApoyoController extends Controller
 
     public function update(Request $request, Apoyo $apoyo)
     {
-        // Si el usuario logueado es presidente, verificar que el apoyo pertenezca a su estructura
+        // Si el usuario logueado es presidente o coordinador, verificar que el apoyo pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            abort_if($apoyo->presidente_id !== $user->id, 403, 'No autorizado.');
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            abort_if($apoyo->presidente_id !== $user->getPresidenteId(), 403, 'No autorizado.');
         }
 
         $validated = $this->validateApoyo($request);
@@ -102,10 +102,10 @@ class ApoyoController extends Controller
 
     public function destroy(Request $request, Apoyo $apoyo)
     {
-        // Si el usuario logueado es presidente, verificar que el apoyo pertenezca a su estructura
+        // Si el usuario logueado es presidente o coordinador, verificar que el apoyo pertenezca a su estructura
         $user = $request->user();
-        if ($user && $user->role === UserRole::PRESIDENTE) {
-            abort_if($apoyo->presidente_id !== $user->id, 403, 'No autorizado.');
+        if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+            abort_if($apoyo->presidente_id !== $user->getPresidenteId(), 403, 'No autorizado.');
         }
 
         $apoyo->delete();

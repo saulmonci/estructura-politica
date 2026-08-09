@@ -38,8 +38,23 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         if ($user) {
+            if ($user->role === \App\Enums\UserRole::COORDINADOR_DISTRITO && (empty($user->presidente_id) || empty($user->parent_id))) {
+                $presId = $user->getPresidenteId();
+                if ($presId) {
+                    $parent = \App\Models\User::withoutGlobalScopes()->find($presId);
+                    if ($parent) {
+                        $user->parent_id = $user->parent_id ?: $parent->id;
+                        $user->presidente_id = $parent->id;
+                        $user->state_id = $user->state_id ?: $parent->state_id;
+                        $user->municipality_id = $user->municipality_id ?: $parent->municipality_id;
+                        $user->scope_level = $user->scope_level ?: ($parent->scope_level ?: 'municipal');
+                        $user->saveQuietly();
+                    }
+                }
+            }
+
             // Eager load relations for UI convenience
-            $user->loadMissing(['state', 'municipality', 'demarcacion']);
+            $user->loadMissing(['state', 'municipality', 'demarcacion', 'presidente']);
         }
 
         $impersonatedBy = $request->session()->get('impersonated_by');

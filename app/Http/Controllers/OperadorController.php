@@ -17,7 +17,7 @@ class OperadorController extends BaseCrudController
 
     protected function checkAccess(Request $request): void
     {
-        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::RD, UserRole::SUPERUSER, UserRole::ADMIN], true), 403, 'Acceso denegado.');
+        abort_if(!in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::RD, UserRole::SUPERUSER, UserRole::ADMIN], true), 403, 'Acceso denegado.');
     }
 
     protected function getBaseQuery(Request $request): Builder
@@ -39,8 +39,8 @@ class OperadorController extends BaseCrudController
             $rds = [];
 
             if ($user) {
-                if ($user->role === UserRole::PRESIDENTE) {
-                    $rds = User::where('role', UserRole::RD)->where('presidente_id', $user->id)->get(['id', 'name', 'apodo', 'demarcacion_id']);
+                if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+                    $rds = User::where('role', UserRole::RD)->where('presidente_id', $user->getPresidenteId())->get(['id', 'name', 'apodo', 'demarcacion_id']);
                 } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
                     $rds = User::where('role', UserRole::RD)->get(['id', 'name', 'apodo', 'demarcacion_id']);
                 }
@@ -131,10 +131,10 @@ class OperadorController extends BaseCrudController
         ];
 
         if ($user) {
-            if ($user->role === UserRole::PRESIDENTE) {
+            if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
                 $rules['parent_id'] = [
                     'required',
-                    Rule::exists('users', 'id')->where('role', UserRole::RD->value)->where('presidente_id', $user->id)
+                    Rule::exists('users', 'id')->where('role', UserRole::RD->value)->where('presidente_id', $user->getPresidenteId())
                 ];
             } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
                 $rules['parent_id'] = ['required', Rule::exists('users', 'id')->where('role', UserRole::RD->value)];
