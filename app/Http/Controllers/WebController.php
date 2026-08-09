@@ -301,21 +301,86 @@ class WebController extends Controller
             abort(403, 'No autorizado.');
         }
 
-        $presidenteId = in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true) ? $user->getPresidenteId() : $user->getPresidenteId();
+        $canSwitchMunicipality = in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true);
+        $municipalityId = null;
 
-        // Obtener todas las demarcaciones con sus metas y polígonos
-        $demarcaciones = \App\Models\Demarcacion::select(
+        if ($canSwitchMunicipality) {
+            if ($request->filled('municipality_id')) {
+                $municipalityId = (int) $request->input('municipality_id');
+            } elseif ($user->municipality_id) {
+                $municipalityId = $user->municipality_id;
+            } else {
+                $firstWithData = \App\Models\Demarcacion::whereNotNull('municipality_id')->value('municipality_id')
+                    ?: \App\Models\SeccionElectoral::whereNotNull('municipality_id')->value('municipality_id');
+
+                if ($firstWithData) {
+                    $municipalityId = $firstWithData;
+                } else {
+                    $firstMuni = \App\Models\Municipality::first();
+                    $municipalityId = $firstMuni ? $firstMuni->id : null;
+                }
+            }
+        } else {
+            $municipalityId = $user->municipality_id;
+            if (!$municipalityId && $user->presidente_id) {
+                $pres = \App\Models\User::withoutGlobalScopes()->find($user->presidente_id);
+                $municipalityId = $pres?->municipality_id;
+            }
+            if (!$municipalityId) {
+                $presId = $user->getPresidenteId();
+                if ($presId) {
+                    $pres = \App\Models\User::withoutGlobalScopes()->find($presId);
+                    $municipalityId = $pres?->municipality_id;
+                }
+            }
+        }
+
+        $currentMunicipality = $municipalityId ? \App\Models\Municipality::find($municipalityId) : null;
+
+        $muniData = null;
+        if ($currentMunicipality) {
+            $muniData = [
+                'id' => $currentMunicipality->id,
+                'nombre' => $currentMunicipality->nombre,
+                'lat' => $currentMunicipality->lat ?? 20.8000000,
+                'lng' => $currentMunicipality->lng ?? -105.2500000,
+                'zoom' => $currentMunicipality->zoom ?? 11,
+            ];
+        }
+
+        $availableMunicipalities = [];
+        if ($canSwitchMunicipality) {
+            $availableMunicipalities = \App\Models\Municipality::orderBy('nombre')
+                ->get(['id', 'nombre', 'lat', 'lng', 'zoom'])
+                ->toArray();
+        }
+
+        $presidenteId = in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true) ? $user->getPresidenteId() : null;
+
+        // Obtener demarcaciones filtradas por municipio
+        $demarcacionesQuery = \App\Models\Demarcacion::select(
             'id',
             'nombre',
             'meta',
+            'municipality_id',
             DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
-        )->orderBy('id')->get();
+        )->orderBy('id');
+
+        if ($municipalityId) {
+            $demarcacionesQuery->where('municipality_id', $municipalityId);
+        }
+
+        $demarcaciones = $demarcacionesQuery->get();
 
         // 1. Contar promovidos por demarcación
         $promovidosQuery = DB::table('promovidos')
             ->select('demarcacion_id', DB::raw('count(*) as total'))
             ->whereNotNull('demarcacion_id')
             ->whereNull('deleted_at');
+
+        if ($municipalityId) {
+            $promovidosQuery->where('municipality_id', $municipalityId);
+        }
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $promovidosQuery->where('presidente_id', $presidenteId);
         }
@@ -327,6 +392,10 @@ class WebController extends Controller
         $usersDemarcacionQuery = DB::table('users')
             ->whereIn('role', [UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR])
             ->whereNull('deleted_at');
+
+        if ($municipalityId) {
+            $usersDemarcacionQuery->where('municipality_id', $municipalityId);
+        }
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $usersDemarcacionQuery->where('presidente_id', $presidenteId);
         }
@@ -347,7 +416,7 @@ class WebController extends Controller
         foreach ($demarcaciones as $d) {
             $cantPromovidos = ($promovidosPorDemarcacion[$d->id] ?? 0) + ($estructuraPorDemarcacion[$d->id] ?? 0);
             $meta = $d->meta ?? 500;
-            
+
             $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
 
             // Determinar color
@@ -375,20 +444,31 @@ class WebController extends Controller
 
         $avanceGlobal = $totalMeta > 0 ? round(($totalPromovidos / $totalMeta) * 100, 1) : 0;
 
-        // Obtener todas las secciones con sus metas, demarcación asignada y polígonos
-        $secciones = \App\Models\SeccionElectoral::select(
+        // Obtener secciones electorales filtradas por municipio
+        $seccionesQuery = \App\Models\SeccionElectoral::select(
             'id',
             'numero',
             'meta',
             'demarcacion_id',
+            'municipality_id',
             DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
-        )->orderBy('numero')->get();
+        )->orderBy('numero');
+
+        if ($municipalityId) {
+            $seccionesQuery->where('municipality_id', $municipalityId);
+        }
+
+        $secciones = $seccionesQuery->get();
 
         // 1. Contar promovidos por sección electoral
         $promovidosSeccionQuery = DB::table('promovidos')
             ->select('seccion_electoral', DB::raw('count(*) as total'))
             ->whereNotNull('seccion_electoral')
             ->whereNull('deleted_at');
+
+        if ($municipalityId) {
+            $promovidosSeccionQuery->where('municipality_id', $municipalityId);
+        }
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $promovidosSeccionQuery->where('presidente_id', $presidenteId);
         }
@@ -402,6 +482,10 @@ class WebController extends Controller
             ->whereIn('role', [UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR])
             ->whereNotNull('seccion_electoral')
             ->whereNull('deleted_at');
+
+        if ($municipalityId) {
+            $usersSeccionQuery->where('municipality_id', $municipalityId);
+        }
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $usersSeccionQuery->where('presidente_id', $presidenteId);
         }
@@ -410,10 +494,13 @@ class WebController extends Controller
             ->toArray();
 
         $seccionesData = [];
+        $totalSeccionesMeta = 0;
+        $totalSeccionesPromovidos = 0;
+
         foreach ($secciones as $s) {
             $cantPromovidos = ($promovidosPorSeccion[$s->numero] ?? 0) + ($estructuraPorSeccion[$s->numero] ?? 0);
             $meta = $s->meta ?? 50; // default meta if none set
-            
+
             $porcentaje = $meta > 0 ? round(($cantPromovidos / $meta) * 100, 1) : 0;
 
             // Determinar color
@@ -435,11 +522,24 @@ class WebController extends Controller
                 'color' => $color,
                 'geojson' => $s->geojson,
             ];
+
+            $totalSeccionesPromovidos += $cantPromovidos;
+            $totalSeccionesMeta += $meta;
+        }
+
+        // Si no hay demarcaciones pero sí secciones, calcular avance global sobre secciones
+        if (count($demarcaciones) === 0 && count($secciones) > 0) {
+            $totalPromovidos = $totalSeccionesPromovidos;
+            $totalMeta = $totalSeccionesMeta;
+            $avanceGlobal = $totalMeta > 0 ? round(($totalPromovidos / $totalMeta) * 100, 1) : 0;
         }
 
         return Inertia::render('Mapa', [
             'demarcaciones' => $mapData,
             'secciones' => $seccionesData,
+            'currentMunicipality' => $muniData,
+            'availableMunicipalities' => $availableMunicipalities,
+            'canSwitchMunicipality' => $canSwitchMunicipality,
             'globalStats' => [
                 'total_promovidos' => $totalPromovidos,
                 'total_meta' => $totalMeta,

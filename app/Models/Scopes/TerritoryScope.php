@@ -87,10 +87,11 @@ class TerritoryScope implements Scope
             if ($user->state_id && $this->hasColumn($table, 'state_id')) {
                 $builder->where(function ($query) use ($table, $user) {
                     $query->where($table . '.state_id', $user->state_id);
-                    if ($this->hasColumn($table, 'presidente_id')) {
-                        $query->orWhere($table . '.presidente_id', $user->getPresidenteId());
+                    $presId = $user->getPresidenteId();
+                    if ($presId && $this->hasColumn($table, 'presidente_id')) {
+                        $query->orWhere($table . '.presidente_id', $presId);
                     }
-                    if ($this->hasColumn($table, 'parent_id')) {
+                    if ($user->id && $this->hasColumn($table, 'parent_id')) {
                         $query->orWhere($table . '.parent_id', $user->id);
                     }
                 });
@@ -104,8 +105,8 @@ class TerritoryScope implements Scope
                     $query->where($table . '.municipality_id', $user->municipality_id);
                     $hasCondition = true;
                 }
-                if ($this->hasColumn($table, 'presidente_id')) {
-                    $presId = $user->getPresidenteId();
+                $presId = $user->getPresidenteId();
+                if ($presId && $this->hasColumn($table, 'presidente_id')) {
                     if ($hasCondition) {
                         $query->orWhere($table . '.presidente_id', $presId);
                     } else {
@@ -113,7 +114,7 @@ class TerritoryScope implements Scope
                         $hasCondition = true;
                     }
                 }
-                if ($this->hasColumn($table, 'parent_id')) {
+                if ($user->id && $this->hasColumn($table, 'parent_id')) {
                     if ($hasCondition) {
                         $query->orWhere($table . '.parent_id', $user->id);
                     } else {

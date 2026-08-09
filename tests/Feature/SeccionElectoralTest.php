@@ -143,7 +143,7 @@ class SeccionElectoralTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
         
-        $this->assertDatabaseMissing('secciones_electorales', [
+        $this->assertSoftDeleted('secciones_electorales', [
             'id' => $seccion->id
         ]);
     }

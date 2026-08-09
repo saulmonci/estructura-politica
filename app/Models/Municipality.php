@@ -16,6 +16,16 @@ class Municipality extends Model
     protected $fillable = [
         'state_id',
         'nombre',
+        'inegi_clave',
+        'lat',
+        'lng',
+        'zoom',
+    ];
+
+    protected $casts = [
+        'lat' => 'float',
+        'lng' => 'float',
+        'zoom' => 'integer',
     ];
 
     /**

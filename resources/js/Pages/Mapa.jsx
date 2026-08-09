@@ -1,29 +1,46 @@
 import React, { useEffect, useRef, useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head } from '@inertiajs/react';
-import { Card, Row, Col, Progress, Statistic, Badge, List, Button, Radio, Input } from 'antd';
-import { EnvironmentOutlined, GlobalOutlined, ArrowRightOutlined, InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { Head, router } from '@inertiajs/react';
+import { Card, Row, Col, Progress, Statistic, Badge, List, Radio, Input, Select } from 'antd';
+import { GlobalOutlined, SearchOutlined } from '@ant-design/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { demarcacionesGeoJson } from './Mapa/demarcacionesGeoJson';
 
-export default function MapaPage({ demarcaciones = [], secciones = [], globalStats = {} }) {
+export default function MapaPage({
+    demarcaciones = [],
+    secciones = [],
+    globalStats = {},
+    currentMunicipality = null,
+    availableMunicipalities = [],
+    canSwitchMunicipality = false
+}) {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const geoJsonLayers = useRef({});
     const demarcacionGroupsRef = useRef({});
     const [selectedId, setSelectedId] = useState(null);
-    const [viewMode, setViewMode] = useState('demarcacion');
+    const [viewMode, setViewMode] = useState(demarcaciones.length > 0 ? 'demarcacion' : 'seccion');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
+        if (demarcaciones.length === 0 && secciones.length > 0 && viewMode === 'demarcacion') {
+            setViewMode('seccion');
+        }
+    }, [demarcaciones, secciones]);
+
+    useEffect(() => {
         if (!mapInstance.current && mapRef.current) {
-            // Inicializar mapa centrado en Bahía de Banderas, Nayarit
+            const initialLat = currentMunicipality?.lat ? Number(currentMunicipality.lat) : 20.80;
+            const initialLng = currentMunicipality?.lng ? Number(currentMunicipality.lng) : -105.25;
+            const initialZoom = currentMunicipality?.zoom ? Number(currentMunicipality.zoom) : 11;
+
+            // Inicializar mapa centrado en el municipio
             mapInstance.current = L.map(mapRef.current, {
-                center: [20.78, -105.28],
-                zoom: 11,
-                minZoom: 10,
-                maxZoom: 15,
+                center: [initialLat, initialLng],
+                zoom: initialZoom,
+                minZoom: 6,
+                maxZoom: 18,
                 zoomControl: true,
                 attributionControl: true
             });
@@ -66,40 +83,38 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                 "Mapa Satelital": satelliteLayer
             };
 
-            // Cargar los polígonos GeoJSON desde la base de datos (con fallback estático)
-            let geoJsonToLoad;
+            // Cargar los polígonos GeoJSON desde la base de datos
+            let geoJsonToLoad = { type: "FeatureCollection", features: [] };
 
             if (viewMode === 'demarcacion') {
-                geoJsonToLoad = demarcacionesGeoJson;
-                const hasDbGeometries = demarcaciones.some(d => d.geojson);
+                const features = demarcaciones
+                    .filter(d => d.geojson)
+                    .map(d => {
+                        try {
+                            const geometry = JSON.parse(d.geojson);
+                            return {
+                                type: "Feature",
+                                properties: {
+                                    id: d.id,
+                                    nombre: d.nombre
+                                },
+                                geometry: geometry
+                            };
+                        } catch (e) {
+                            console.error("Error parsing GeoJSON for demarcation", d.id, e);
+                            return null;
+                        }
+                    })
+                    .filter(Boolean);
 
-                if (hasDbGeometries) {
-                    const features = demarcaciones
-                        .filter(d => d.geojson)
-                        .map(d => {
-                            try {
-                                const geometry = JSON.parse(d.geojson);
-                                return {
-                                    type: "Feature",
-                                    properties: {
-                                        id: d.id,
-                                        nombre: d.nombre
-                                    },
-                                    geometry: geometry
-                                };
-                            } catch (e) {
-                                console.error("Error parsing GeoJSON for demarcation", d.id, e);
-                                return null;
-                            }
-                        })
-                        .filter(Boolean);
-
-                    if (features.length > 0) {
-                        geoJsonToLoad = {
-                            type: "FeatureCollection",
-                            features: features
-                        };
-                    }
+                if (features.length > 0) {
+                    geoJsonToLoad = {
+                        type: "FeatureCollection",
+                        features: features
+                    };
+                } else if (currentMunicipality?.nombre?.toLowerCase().includes('banderas')) {
+                    // Fallback para Bahía de Banderas si no hay geometrías en DB
+                    geoJsonToLoad = demarcacionesGeoJson;
                 }
             } else {
                 const features = secciones
@@ -150,7 +165,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                     const stats = viewMode === 'demarcacion'
                         ? (demarcaciones.find(d => d.id === id) || {
                             id,
-                            nombre: `Demarcación ${id}`,
+                            nombre: feature.properties.nombre || `Demarcación ${id}`,
                             promovidos: 0,
                             meta: 500,
                             porcentaje: 0,
@@ -176,7 +191,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                                     Demarcación ${stats.id}
                                 </h3>
                                 <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-                                    ${feature.properties.nombre.split(' - ')[1] || ''}
+                                    ${(stats.nombre || '').split(' - ')[1] || stats.nombre || ''}
                                 </div>
                                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
                                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
@@ -202,7 +217,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                                     Sección ${stats.numero}
                                 </h3>
                                 <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-                                    Demarcación ${stats.demarcacion_id}
+                                    ${stats.demarcacion_id ? `Demarcación ${stats.demarcacion_id}` : `Municipio: ${currentMunicipality?.nombre || ''}`}
                                 </div>
                                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 8px 0;"/>
                                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
@@ -245,96 +260,96 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                     });
 
                     // Añadir etiqueta estática en el centro del polígono
-                    const center = layer.getBounds().getCenter();
-                    const labelHtml = viewMode === 'demarcacion'
-                        ? `
-                            <div style="
-                                background-color: white; 
-                                border: 2px solid ${stats.color}; 
-                                border-radius: 6px; 
-                                padding: 3px 6px; 
-                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15); 
-                                display: flex; 
-                                flex-direction: column; 
-                                align-items: center; 
-                                justify-content: center; 
-                                min-width: 66px; 
-                                font-family: system-ui, sans-serif;
-                            ">
+                    if (layer.getBounds && layer.getBounds().isValid()) {
+                        const center = layer.getBounds().getCenter();
+                        const labelHtml = viewMode === 'demarcacion'
+                            ? `
                                 <div style="
-                                    background-color: ${stats.color}; 
-                                    color: white; 
-                                    border-radius: 50%; 
-                                    width: 18px; 
-                                    height: 18px; 
+                                    background-color: white; 
+                                    border: 2px solid ${stats.color}; 
+                                    border-radius: 6px; 
+                                    padding: 3px 6px; 
+                                    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15); 
                                     display: flex; 
+                                    flex-direction: column; 
                                     align-items: center; 
                                     justify-content: center; 
-                                    font-weight: bold; 
-                                    font-size: 9px;
+                                    min-width: 66px; 
+                                    font-family: system-ui, sans-serif;
                                 ">
-                                    ${stats.id}
+                                    <div style="
+                                        background-color: ${stats.color}; 
+                                        color: white; 
+                                        border-radius: 50%; 
+                                        width: 18px; 
+                                        height: 18px; 
+                                        display: flex; 
+                                        align-items: center; 
+                                        justify-content: center; 
+                                        font-weight: bold; 
+                                        font-size: 9px;
+                                    ">
+                                        ${stats.id}
+                                    </div>
+                                    <div style="font-weight: 800; font-size: 11px; margin-top: 1px; color: #0f172a;">
+                                        ${stats.porcentaje}%
+                                    </div>
+                                    <div style="font-size: 9px; color: #64748b; font-weight: 600;">
+                                        ${stats.promovidos}/${stats.meta}
+                                    </div>
                                 </div>
-                                <div style="font-weight: 800; font-size: 11px; margin-top: 1px; color: #0f172a;">
-                                    ${stats.porcentaje}%
-                                </div>
-                                <div style="font-size: 9px; color: #64748b; font-weight: 600;">
-                                    ${stats.promovidos}/${stats.meta}
-                                </div>
-                            </div>
-                        `
-                        : `
-                            <div style="
-                                background-color: white; 
-                                border: 2px solid ${stats.color}; 
-                                border-radius: 6px; 
-                                padding: 3px 6px; 
-                                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15); 
-                                display: flex; 
-                                flex-direction: column; 
-                                align-items: center; 
-                                justify-content: center; 
-                                min-width: 66px; 
-                                font-family: system-ui, sans-serif;
-                            ">
+                            `
+                            : `
                                 <div style="
-                                    background-color: ${stats.color}; 
-                                    color: white; 
-                                    border-radius: 4px; 
-                                    padding: 1px 4px;
+                                    background-color: white; 
+                                    border: 2px solid ${stats.color}; 
+                                    border-radius: 6px; 
+                                    padding: 3px 6px; 
+                                    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15); 
                                     display: flex; 
+                                    flex-direction: column; 
                                     align-items: center; 
                                     justify-content: center; 
-                                    font-weight: bold; 
-                                    font-size: 9px;
+                                    min-width: 66px; 
+                                    font-family: system-ui, sans-serif;
                                 ">
-                                    S-${stats.numero}
+                                    <div style="
+                                        background-color: ${stats.color}; 
+                                        color: white; 
+                                        border-radius: 4px; 
+                                        padding: 1px 4px; 
+                                        display: flex; 
+                                        align-items: center; 
+                                        justify-content: center; 
+                                        font-weight: bold; 
+                                        font-size: 9px;
+                                    ">
+                                        S-${stats.numero}
+                                    </div>
+                                    <div style="font-weight: 800; font-size: 11px; margin-top: 1px; color: #0f172a;">
+                                        ${stats.porcentaje}%
+                                    </div>
+                                    <div style="font-size: 9px; color: #64748b; font-weight: 600;">
+                                        ${stats.promovidos}/${stats.meta}
+                                    </div>
                                 </div>
-                                <div style="font-weight: 800; font-size: 11px; margin-top: 1px; color: #0f172a;">
-                                    ${stats.porcentaje}%
-                                </div>
-                                <div style="font-size: 9px; color: #64748b; font-weight: 600;">
-                                    ${stats.promovidos}/${stats.meta}
-                                </div>
-                            </div>
-                        `;
+                            `;
 
-                    const labelIcon = L.divIcon({
-                        className: 'custom-map-label-wrapper',
-                        html: labelHtml,
-                        iconSize: [70, 50],
-                        iconAnchor: [35, 25]
-                    });
+                        const labelIcon = L.divIcon({
+                            className: 'custom-map-label-wrapper',
+                            html: labelHtml,
+                            iconSize: [70, 50],
+                            iconAnchor: [35, 25]
+                        });
 
-                    const labelMarker = L.marker(center, { icon: labelIcon, interactive: false });
+                        const labelMarker = L.marker(center, { icon: labelIcon, interactive: false });
 
-                    // Crear un grupo de capas específico para esta entidad
-                    const group = L.layerGroup();
-                    demarcacionGroups[id] = group;
+                        const group = L.layerGroup();
+                        demarcacionGroups[id] = group;
 
-                    // Agregar tanto el polígono (layer) como el marcador (label) a este grupo
-                    layer.addTo(group);
-                    labelMarker.addTo(group);
+                        layer.addTo(group);
+                        labelMarker.addTo(group);
+                    }
                 }
             });
 
@@ -351,15 +366,19 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                         ? (stats.nombre || `Demarcación ${id}`)
                         : `Sección ${stats.numero || id}`;
                     
-                    // Añadir al mapa por defecto
                     group.addTo(mapInstance.current);
-                    
-                    // Registrar en la lista de overlays
                     overlayMaps[name] = group;
                 });
 
             // Añadir control de selección al mapa con mapas base y capas individuales (colapsado por defecto)
             L.control.layers(baseMaps, overlayMaps, { position: 'topright', collapsed: true }).addTo(mapInstance.current);
+
+            // Ajustar automáticamente vista con fitBounds si hay polígonos válidos
+            if (geoJsonLayer.getLayers().length > 0 && geoJsonLayer.getBounds().isValid()) {
+                mapInstance.current.fitBounds(geoJsonLayer.getBounds(), { padding: [30, 30], maxZoom: 14 });
+            } else {
+                mapInstance.current.setView([initialLat, initialLng], initialZoom);
+            }
         }
 
         return () => {
@@ -368,7 +387,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                 mapInstance.current = null;
             }
         };
-    }, [demarcaciones, secciones, viewMode]);
+    }, [demarcaciones, secciones, viewMode, currentMunicipality]);
 
     const focusDemarcacion = (id) => {
         setSelectedId(id);
@@ -379,39 +398,66 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
             if (group && !mapInstance.current.hasLayer(group)) {
                 group.addTo(mapInstance.current);
             }
-            const bounds = layer.getBounds();
-            mapInstance.current.fitBounds(bounds, { maxZoom: 13, animate: true, padding: [30, 30] });
-            layer.openPopup();
+            if (layer.getBounds && layer.getBounds().isValid()) {
+                const bounds = layer.getBounds();
+                mapInstance.current.fitBounds(bounds, { maxZoom: 14, animate: true, padding: [30, 30] });
+                layer.openPopup();
+            }
         }
     };
 
     return (
         <MainLayout>
-            <Head title="Mapa Territorial" />
+            <Head title={`Mapa Territorial - ${currentMunicipality?.nombre || 'General'}`} />
 
             <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold m-0 flex items-center gap-2">
-                        <GlobalOutlined className="text-[#0f172a]" /> Mapa Territorial (Bahía de Banderas)
+                        <GlobalOutlined className="text-[#0f172a]" /> Mapa Territorial ({currentMunicipality?.nombre || 'General'})
                     </h2>
                     <p className="text-gray-500 text-sm mt-1">
-                        Visualiza en tiempo real el cumplimiento y metas de votantes en las 9 demarcaciones municipales o secciones electorales.
+                        Visualiza en tiempo real el cumplimiento y metas de votantes en {demarcaciones.length > 0 ? `${demarcaciones.length} demarcaciones y ` : ''}{secciones.length} secciones electorales.
                     </p>
                 </div>
-                <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                    <Radio.Group 
-                        value={viewMode} 
-                        onChange={e => {
-                            setViewMode(e.target.value);
-                            setSelectedId(null);
-                            setSearchTerm('');
-                        }} 
-                        buttonStyle="solid"
-                        size="middle"
-                    >
-                        <Radio.Button value="demarcacion">Demarcación</Radio.Button>
-                        <Radio.Button value="seccion">Sección Electoral</Radio.Button>
-                    </Radio.Group>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                    {canSwitchMunicipality && availableMunicipalities.length > 0 && (
+                        <div className="flex items-center gap-2 bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm">
+                            <span className="text-xs font-semibold text-gray-500">Municipio:</span>
+                            <Select
+                                showSearch
+                                value={currentMunicipality?.id}
+                                style={{ width: 220 }}
+                                placeholder="Seleccionar municipio"
+                                optionFilterProp="label"
+                                onChange={(val) => {
+                                    router.get('/mapa', { municipality_id: val }, { preserveState: false });
+                                }}
+                                options={availableMunicipalities.map(m => ({
+                                    value: m.id,
+                                    label: m.nombre
+                                }))}
+                            />
+                        </div>
+                    )}
+
+                    <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+                        <Radio.Group 
+                            value={viewMode} 
+                            onChange={e => {
+                                setViewMode(e.target.value);
+                                setSelectedId(null);
+                                setSearchTerm('');
+                            }} 
+                            buttonStyle="solid"
+                            size="middle"
+                        >
+                            {demarcaciones.length > 0 && (
+                                <Radio.Button value="demarcacion">Demarcación</Radio.Button>
+                            )}
+                            <Radio.Button value="seccion">Sección Electoral</Radio.Button>
+                        </Radio.Group>
+                    </div>
                 </div>
             </div>
 
@@ -421,7 +467,7 @@ export default function MapaPage({ demarcaciones = [], secciones = [], globalSta
                     {/* Estadísticas Generales */}
                     <Card bordered={false} className="shadow-sm">
                         <Statistic 
-                            title={<span className="text-gray-500 text-xs tracking-wider uppercase font-semibold">Avance General Municipal</span>} 
+                            title={<span className="text-gray-500 text-xs tracking-wider uppercase font-semibold">Avance General ({currentMunicipality?.nombre || 'Municipal'})</span>} 
                             value={globalStats.porcentaje} 
                             precision={1}
                             suffix="%"

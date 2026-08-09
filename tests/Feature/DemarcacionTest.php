@@ -101,7 +101,7 @@ class DemarcacionTest extends TestCase
         $response = $this->actingAs($presidente)->delete("/demarcaciones/{$dem->id}");
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('demarcaciones', [
+        $this->assertSoftDeleted('demarcaciones', [
             'id' => 1
         ]);
     }

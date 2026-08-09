@@ -19,6 +19,7 @@ class Demarcacion extends Model
         'meta',
         'geom',
         'municipality_id',
+        'state_id',
     ];
 
     protected static function boot()

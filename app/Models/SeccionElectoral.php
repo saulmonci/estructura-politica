@@ -18,6 +18,8 @@ class SeccionElectoral extends Model
         'demarcacion_id',
         'geom',
         'meta',
+        'state_id',
+        'municipality_id',
     ];
 
     protected static function boot()
