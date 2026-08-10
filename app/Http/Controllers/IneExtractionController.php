@@ -19,7 +19,7 @@ class IneExtractionController extends Controller
             $imageContent = base64_encode(file_get_contents($imageFile->getRealPath()));
             $mimeType = $imageFile->getClientMimeType();
 
-            $apiKey = env('GEMINI_API_KEY');
+            $apiKey = config('services.gemini.api_key') ?: env('GEMINI_API_KEY');
 
             if (!$apiKey) {
                 return response()->json(['success' => false, 'message' => 'API Key de Gemini no configurada.'], 500);
