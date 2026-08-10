@@ -32,6 +32,14 @@ class ActivityLogController extends Controller
         }
         // Para 'superuser' no se aplica restricción obligatoria de presidente_id
 
+        // Category filter (all, activities, errors)
+        $category = $request->input('category', 'all');
+        if ($category === 'errors') {
+            $query->where('action', 'error');
+        } elseif ($category === 'activities') {
+            $query->where('action', '!=', 'error');
+        }
+
         // Global search
         if ($search = $request->input('search')) {
             $searchLower = strtolower($search);
@@ -39,12 +47,13 @@ class ActivityLogController extends Controller
                 $q->whereRaw('LOWER(user_identifier) LIKE ?', ["%{$searchLower}%"])
                   ->orWhereRaw('LOWER(action) LIKE ?', ["%{$searchLower}%"])
                   ->orWhereRaw('LOWER(model_friendly_name) LIKE ?', ["%{$searchLower}%"])
+                  ->orWhereRaw('LOWER(model_type) LIKE ?', ["%{$searchLower}%"])
                   ->orWhereRaw('LOWER(model_representation) LIKE ?', ["%{$searchLower}%"])
                   ->orWhere('ip_address', 'like', "%{$search}%");
             });
         }
 
-        // Action filter (created, updated, deleted)
+        // Action filter (created, updated, deleted, error, impersonate_start, impersonate_stop)
         if ($action = $request->input('action')) {
             $query->where('action', $action);
         }

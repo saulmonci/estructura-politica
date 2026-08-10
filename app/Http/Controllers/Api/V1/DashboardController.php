@@ -171,7 +171,7 @@ class DashboardController extends Controller
                 'data' => $distribution
             ], 200);
         } catch (\Exception $e) {
-            // TODO(security): Log detailed error server-side, but keep public error generic.
+            \App\Services\ErrorLoggerService::logException($e, $request, ['module' => 'Dashboard Colonias']);
             return response()->json([
                 'success' => false,
                 'message' => 'Ocurrió un error al obtener la distribución de colonias.'
@@ -232,7 +232,7 @@ class DashboardController extends Controller
                 'total' => $total
             ], 200);
         } catch (\Exception $e) {
-            // TODO(security): Log execution exceptions and return generic message
+            \App\Services\ErrorLoggerService::logException($e, $request, ['module' => 'Dashboard Tabla Promovidos']);
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar el listado de promovidos.'

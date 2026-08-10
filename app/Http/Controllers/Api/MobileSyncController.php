@@ -8,6 +8,7 @@ use App\Models\Municipality;
 use App\Models\Promovido;
 use App\Models\SeccionElectoral;
 use App\Models\State;
+use App\Services\ErrorLoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -42,6 +43,8 @@ class MobileSyncController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error fetching catalogos: ' . $e->getMessage());
+            ErrorLoggerService::logException($e, $request, ['module' => 'Catálogos Móvil']);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener catálogos'
@@ -119,6 +122,19 @@ class MobileSyncController extends Controller
 
                 } catch (\Exception $e) {
                     Log::error('Error sync promovido index ' . $index . ': ' . $e->getMessage());
+                    
+                    ErrorLoggerService::logManualError(
+                        message: "Fallo al sincronizar promovido [índice: {$index}, local_id: " . ($data['local_id'] ?? 'N/A') . "]: " . $e->getMessage(),
+                        module: 'Sincronización Móvil',
+                        context: [
+                            'item_index' => $index,
+                            'local_id' => $data['local_id'] ?? null,
+                            'promovido_data' => $data,
+                        ],
+                        e: $e,
+                        request: $request
+                    );
+
                     $errors[] = [
                         'local_id' => $data['local_id'] ?? $index,
                         'error' => $e->getMessage()
@@ -141,6 +157,11 @@ class MobileSyncController extends Controller
             DB::rollBack();
             Log::error('Error global en syncPromovidos: ' . $e->getMessage());
             
+            ErrorLoggerService::logException($e, $request, [
+                'module' => 'Sincronización Móvil (Global)',
+                'total_items' => count($promovidos ?? []),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error crítico durante la sincronización',

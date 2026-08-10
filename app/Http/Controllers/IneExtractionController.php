@@ -101,6 +101,7 @@ class IneExtractionController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Excepción en IneExtractionController: ' . $e->getMessage());
+            \App\Services\ErrorLoggerService::logException($e, $request, ['module' => 'Extracción INE / IA']);
             return response()->json(['success' => false, 'message' => 'Error interno al procesar la imagen.'], 500);
         }
     }

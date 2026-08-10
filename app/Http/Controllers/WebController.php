@@ -174,7 +174,9 @@ class WebController extends Controller
                 ->groupBy('colonia')
                 ->orderBy('total', 'desc')
                 ->get();
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            \App\Services\ErrorLoggerService::logException($e, request(), ['module' => 'Web Dashboard Distribución']);
+        }
 
         // Para la tabla general de RD
         $rds = [];
