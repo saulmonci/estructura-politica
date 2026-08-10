@@ -224,7 +224,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
             }}
             submitter={{
                 render: (props) => {
-                    const isDisabled = userRole !== 'promotor' && availablePromotores.length === 0;
+                    const isDisabled = !editId && userRole !== 'promotor' && availablePromotores.length === 0;
                     return (
                         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                             <Button 

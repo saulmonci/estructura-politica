@@ -40,7 +40,10 @@ class PromotorController extends BaseCrudController
             $rds = [];
 
             if ($user) {
-                if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
+                if (in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
+                    $operadores = User::where('role', UserRole::OPERADOR)->get(['id', 'name', 'apodo', 'demarcacion_id']);
+                    $rds = User::where('role', UserRole::RD)->get(['id', 'name', 'demarcacion_id']);
+                } elseif (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
                     $operadores = User::where('role', UserRole::OPERADOR)->where('presidente_id', $user->getPresidenteId())->get(['id', 'name', 'apodo', 'demarcacion_id']);
                     $rds = User::where('role', UserRole::RD)->where('presidente_id', $user->getPresidenteId())->get(['id', 'name', 'demarcacion_id']);
                 } elseif ($user->role === UserRole::RD) {

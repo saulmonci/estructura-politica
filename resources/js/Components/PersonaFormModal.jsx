@@ -251,7 +251,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                 render: (props) => {
                     const userRole = auth?.user?.role?.toLowerCase() || '';
                     const requiresParent = ((entityType === 'Representante' || entityType === 'Coordinador') && ['admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Operador' && ['presidente', 'coordinador_distrito', 'admin', 'superadmin', 'superuser'].includes(userRole)) || (entityType === 'Promotor' && ['presidente', 'coordinador_distrito', 'rd', 'admin', 'superadmin', 'superuser'].includes(userRole));
-                    const isDisabled = requiresParent && ((entityType === 'Representante' || entityType === 'Coordinador') ? availablePresidentes.length === 0 : availableRds.length === 0);
+                    const isDisabled = !editId && requiresParent && ((entityType === 'Representante' || entityType === 'Coordinador') ? availablePresidentes.length === 0 : availableRds.length === 0);
                     
                     return (
                         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
@@ -479,7 +479,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             name="parent_id"
                                             label={<span className="font-bold text-blue-800">Asignar a {parentLabel}</span>}
                                             placeholder={`Seleccionar el ${parentLabel} responsable`}
-                                            rules={[{ required: true, message: 'Requerido' }]}
+                                            rules={[{ required: !editId, message: 'Requerido' }]}
                                             options={parentOptions}
                                             fieldProps={{ prefix: <TeamOutlined className="text-blue-500 mr-2" />, showSearch: true }}
                                         />
