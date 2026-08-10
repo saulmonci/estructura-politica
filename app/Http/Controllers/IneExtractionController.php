@@ -71,10 +71,23 @@ class IneExtractionController extends Controller
 
                     // Mapear la sección a la demarcación correspondiente
                     if (isset($extractedData['seccion_electoral']) && $extractedData['seccion_electoral']) {
-                        $seccionModel = \App\Models\SeccionElectoral::where('numero', $extractedData['seccion_electoral'])->first();
-                        if ($seccionModel && $seccionModel->demarcacion_id) {
-                            $extractedData['demarcacion_id'] = (string) $seccionModel->demarcacion_id;
+                        $secRaw = (string) $extractedData['seccion_electoral'];
+                        $secTrimmed = ltrim($secRaw, '0');
+                        $seccionModel = \App\Models\SeccionElectoral::where('numero', $secRaw)
+                            ->orWhere('numero', $secTrimmed)
+                            ->orWhere('numero', str_pad($secTrimmed, 4, '0', STR_PAD_LEFT))
+                            ->first();
+
+                        if ($seccionModel) {
+                            $extractedData['seccion_electoral'] = (string) $seccionModel->numero;
+                            if ($seccionModel->demarcacion_id) {
+                                $extractedData['demarcacion_id'] = (string) $seccionModel->demarcacion_id;
+                            }
                         }
+                    }
+
+                    if (isset($extractedData['clave_elector']) && !isset($extractedData['clave_electoral'])) {
+                        $extractedData['clave_electoral'] = $extractedData['clave_elector'];
                     }
 
                     if (isset($extractedData['error']) && $extractedData['error'] === true) {

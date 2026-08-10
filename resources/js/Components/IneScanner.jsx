@@ -4,7 +4,7 @@ import { CameraOutlined, IdcardOutlined, PictureOutlined } from '@ant-design/ico
 import imageCompression from 'browser-image-compression';
 import axios from 'axios';
 
-const IneScanner = ({ onDataExtracted }) => {
+const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
 
@@ -35,7 +35,10 @@ const IneScanner = ({ onDataExtracted }) => {
             if (response.data && response.data.success) {
                 message.success('Datos extraídos correctamente de la INE');
                 if (onDataExtracted) {
-                    onDataExtracted(response.data.data);
+                    onDataExtracted(response.data.data, compressedFile);
+                }
+                if (onExtractionComplete) {
+                    onExtractionComplete(response.data.data, compressedFile);
                 }
             } else {
                 setErrorMsg(response.data?.message || 'No se pudieron extraer los datos. Por favor revisa la imagen e intenta de nuevo.');

@@ -392,26 +392,72 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
             <div className="p-5">
                 <Row gutter={48}>
                     <Col xs={24} lg={15}>
-                        <IneScanner onExtractionComplete={(data) => {
-                            if (data.nombre) {
-                                form.setFieldsValue({ nombre: data.nombre });
+                        <IneScanner onDataExtracted={async (data, compressedFile) => {
+                            // 1. Normalizar sexo
+                            let sexo = data.sexo;
+                            if (sexo) {
+                                const s = String(sexo).trim().toUpperCase();
+                                if (s === 'H' || s === 'MASCULINO' || s === 'HOMBRE') {
+                                    sexo = 'Masculino';
+                                } else if (s === 'M' || s === 'FEMENINO' || s === 'MUJER') {
+                                    sexo = 'Femenino';
+                                }
                             }
-                            if (data.apellidos) {
-                                form.setFieldsValue({ apellidos: data.apellidos });
-                            }
-                            
-                            if (data.clave_elector) {
-                                data.clave_electoral = data.clave_elector;
-                            }
-                            
-                            form.setFieldsValue(data);
 
+                            // 2. Clave electoral
+                            const claveElectoral = data.clave_electoral || data.clave_elector || '';
+
+                            // 3. Preparar campos
+                            const fieldsToSet = {
+                                nombre: data.nombre || '',
+                                apellidos: data.apellidos || '',
+                                sexo: sexo || undefined,
+                                calle: data.calle || '',
+                                numero_exterior: data.numero_exterior || '',
+                                numero_interior: data.numero_interior || '',
+                                colonia: data.colonia || '',
+                                codigo_postal: data.codigo_postal || '',
+                                curp: data.curp || '',
+                                clave_electoral: claveElectoral,
+                            };
+
+                            // 4. Si viene imagen comprimida y no hay foto de frente asignada, asignarla
+                            if (compressedFile && fileListIneFrente.length === 0) {
+                                setFileListIneFrente([{ originFileObj: compressedFile }]);
+                            }
+
+                            // 5. Manejar Demarcación y Sección
                             if (data.demarcacion_id) {
                                 const demId = String(data.demarcacion_id);
+                                fieldsToSet.demarcacion_id = demId;
                                 setSelectedDemarcacion(demId);
-                                fetchSecciones(demId);
+                                
+                                setLoadingSecciones(true);
+                                try {
+                                    const secRes = await axios.get(`/catalogos/demarcaciones/${demId}/secciones`);
+                                    const secList = secRes.data || [];
+                                    setSecciones(secList);
+                                    
+                                    if (data.seccion_electoral) {
+                                        const rawSec = String(data.seccion_electoral);
+                                        const trimmedSec = rawSec.replace(/^0+/, '');
+                                        const foundSec = secList.find(s => String(s.numero) === rawSec || String(s.numero) === trimmedSec);
+                                        if (foundSec) {
+                                            fieldsToSet.seccion_electoral = String(foundSec.numero);
+                                        } else {
+                                            fieldsToSet.seccion_electoral = rawSec;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Error al cargar secciones para la demarcación', e);
+                                } finally {
+                                    setLoadingSecciones(false);
+                                }
+                            } else if (data.seccion_electoral) {
+                                fieldsToSet.seccion_electoral = String(data.seccion_electoral);
                             }
-                            
+
+                            form.setFieldsValue(fieldsToSet);
                             message.success('Campos llenados automáticamente');
                         }} />
 

@@ -364,35 +364,81 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                         </div>
                         <Divider className="my-2 border-gray-300" />
 
-                        <IneScanner onDataExtracted={(data) => {
-                            if (data.sexo) {
-                                if (data.sexo.toUpperCase() === 'H') data.sexo = 'Masculino';
-                                if (data.sexo.toUpperCase() === 'M') data.sexo = 'Femenino';
+                        <IneScanner onDataExtracted={async (data, compressedFile) => {
+                            // 1. Normalizar sexo
+                            let sexo = data.sexo;
+                            if (sexo) {
+                                const s = String(sexo).trim().toUpperCase();
+                                if (s === 'H' || s === 'MASCULINO' || s === 'HOMBRE') {
+                                    sexo = 'Masculino';
+                                } else if (s === 'M' || s === 'FEMENINO' || s === 'MUJER') {
+                                    sexo = 'Femenino';
+                                }
                             }
                             
-                            // Mapear clave_elector a clave_electoral
-                            if (data.clave_elector) {
-                                data.clave_electoral = data.clave_elector;
-                            }
+                            // 2. Mapear clave_elector
+                            const claveElector = data.clave_elector || data.clave_electoral || '';
 
-                            // Mapear numero_exterior e interior al campo "numero"
+                            // 3. Mapear numero_exterior e interior al campo "numero"
+                            let numero = '';
                             if (data.numero_exterior) {
-                                data.numero = data.numero_exterior;
+                                numero = String(data.numero_exterior).trim();
                                 if (data.numero_interior && String(data.numero_interior).trim() !== '') {
-                                    data.numero += ' Int ' + data.numero_interior;
+                                    numero += ' Int ' + String(data.numero_interior).trim();
                                 }
                             } else if (data.numero_interior && String(data.numero_interior).trim() !== '') {
-                                data.numero = 'Int ' + data.numero_interior;
+                                numero = 'Int ' + String(data.numero_interior).trim();
                             }
-                            
-                            form.setFieldsValue(data);
 
+                            const fieldsToSet = {
+                                nombre: data.nombre || '',
+                                apellidos: data.apellidos || '',
+                                clave_elector: claveElector,
+                                curp: data.curp || '',
+                                telefono: data.telefono || '',
+                                codigo_postal: data.codigo_postal || '',
+                                colonia: data.colonia || '',
+                                calle: data.calle || '',
+                                numero: numero,
+                            };
+
+                            // 4. Si viene imagen comprimida y no hay foto de frente asignada, asignarla
+                            if (compressedFile && fileListIneFrente.length === 0) {
+                                setFileListIneFrente([{ originFileObj: compressedFile }]);
+                            }
+
+                            // 5. Manejar Demarcación y Sección
                             if (data.demarcacion_id) {
                                 const demId = String(data.demarcacion_id);
+                                fieldsToSet.demarcacion_id = demId;
                                 setSelectedDemarcacion(demId);
-                                fetchSecciones(demId);
+                                
+                                setLoadingSecciones(true);
+                                try {
+                                    const secRes = await axios.get(`/catalogos/demarcaciones/${demId}/secciones`);
+                                    const secList = secRes.data || [];
+                                    setSecciones(secList);
+                                    
+                                    if (data.seccion_electoral) {
+                                        const rawSec = String(data.seccion_electoral);
+                                        const trimmedSec = rawSec.replace(/^0+/, '');
+                                        const foundSec = secList.find(s => String(s.numero) === rawSec || String(s.numero) === trimmedSec);
+                                        if (foundSec) {
+                                            fieldsToSet.seccion_electoral = String(foundSec.numero);
+                                        } else {
+                                            fieldsToSet.seccion_electoral = rawSec;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Error al cargar secciones para la demarcación', e);
+                                } finally {
+                                    setLoadingSecciones(false);
+                                }
+                            } else if (data.seccion_electoral) {
+                                fieldsToSet.seccion_electoral = String(data.seccion_electoral);
                             }
-                            
+
+                            form.setFieldsValue(fieldsToSet);
                             message.success('Campos llenados automáticamente');
                         }} />
 
