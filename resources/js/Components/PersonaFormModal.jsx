@@ -7,6 +7,7 @@ import {
     IdcardOutlined, 
     PhoneOutlined, 
     CameraOutlined,
+    PictureOutlined,
     SafetyCertificateOutlined,
     TeamOutlined,
     InboxOutlined,
@@ -756,7 +757,7 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                 className="mb-6 bg-blue-50 border-blue-100"
                             />
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px]">
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 min-h-[260px]">
                                 <span className="text-gray-500 font-bold mb-2">FOTO DE PERFIL</span>
                                 {fileList.length > 0 ? (
                                     <div className="w-full flex flex-col items-center justify-center">
@@ -780,41 +781,60 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             style={{ objectFit: 'cover' }}
                                             className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
-                                        <Upload
-                                            beforeUpload={handleBeforeUploadFoto}
-                                            showUploadList={false}
-                                            accept="image/*"
-                                            capture="environment"
-                                        >
-                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Cambiar
-                                            </Button>
-                                        </Upload>
+                                        <div className="flex gap-2 justify-center flex-wrap">
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadFoto}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
+                                                    Cámara
+                                                </Button>
+                                            </Upload>
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadFoto}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                            >
+                                                <Button size="small" icon={<PictureOutlined />}>
+                                                    Galería
+                                                </Button>
+                                            </Upload>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
                                         <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
                                             <UserOutlined className="text-6xl text-gray-400" />
-                                            <div className="absolute bottom-1 right-1 bg-[#0f172a] w-8 h-8 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
-                                                <CameraOutlined className="text-white text-sm" />
-                                            </div>
                                         </div>
-                                        <Upload
-                                            beforeUpload={handleBeforeUploadFoto}
-                                            showUploadList={false}
-                                            accept="image/*"
-                                            capture="environment"
-                                        >
-                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Tomar
-                                            </Button>
-                                        </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Max: 4MB</p>
+                                        <div className="flex gap-2 justify-center flex-wrap">
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadFoto}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
+                                                    Cámara
+                                                </Button>
+                                            </Upload>
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadFoto}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                            >
+                                                <Button size="small" icon={<PictureOutlined />}>
+                                                    Galería
+                                                </Button>
+                                            </Upload>
+                                        </div>
+                                        <p className="text-gray-400 text-xs mt-2 mb-0">Max: 4MB</p>
                                     </>
                                 )}
                             </div>
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px] mt-4">
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 min-h-[260px] mt-4">
                                 <span className="text-gray-500 font-bold mb-2">INE FRENTE</span>
                                 {fileListIneFrente.length > 0 ? (
                                     <div className="w-full flex flex-col items-center justify-center">
@@ -838,41 +858,60 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             style={{ objectFit: 'cover' }}
                                             className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
-                                        <Upload
-                                            beforeUpload={handleBeforeUploadIneFrente}
-                                            showUploadList={false}
-                                            accept="image/*"
-                                            capture="environment"
-                                        >
-                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Cambiar
-                                            </Button>
-                                        </Upload>
+                                        <div className="flex gap-2 justify-center flex-wrap">
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneFrente}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
+                                                    Cámara
+                                                </Button>
+                                            </Upload>
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneFrente}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                            >
+                                                <Button size="small" icon={<PictureOutlined />}>
+                                                    Galería
+                                                </Button>
+                                            </Upload>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
                                         <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
                                             <IdcardOutlined className="text-4xl text-gray-400" />
-                                            <div className="absolute -bottom-2 -right-2 bg-[#0f172a] w-8 h-8 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
-                                                <CameraOutlined className="text-white text-sm" />
-                                            </div>
                                         </div>
-                                        <Upload
-                                            beforeUpload={handleBeforeUploadIneFrente}
-                                            showUploadList={false}
-                                            accept="image/*"
-                                            capture="environment"
-                                        >
-                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Tomar
-                                            </Button>
-                                        </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Max: 4MB</p>
+                                        <div className="flex gap-2 justify-center flex-wrap">
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneFrente}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
+                                                    Cámara
+                                                </Button>
+                                            </Upload>
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneFrente}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                            >
+                                                <Button size="small" icon={<PictureOutlined />}>
+                                                    Galería
+                                                </Button>
+                                            </Upload>
+                                        </div>
+                                        <p className="text-gray-400 text-xs mt-2 mb-0">Max: 4MB</p>
                                     </>
                                 )}
                             </div>
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 h-[260px] mt-4">
+                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 min-h-[260px] mt-4">
                                 <span className="text-gray-500 font-bold mb-2">INE REVERSO</span>
                                 {fileListIneReverso.length > 0 ? (
                                     <div className="w-full flex flex-col items-center justify-center">
@@ -896,36 +935,55 @@ const PersonaFormModal = forwardRef(({ onSuccess, entityType = 'RD', availableRd
                                             style={{ objectFit: 'cover' }}
                                             className="rounded-lg border-4 border-white shadow-md mb-3"
                                         />
-                                        <Upload
-                                            beforeUpload={handleBeforeUploadIneReverso}
-                                            showUploadList={false}
-                                            accept="image/*"
-                                            capture="environment"
-                                        >
-                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Cambiar
-                                            </Button>
-                                        </Upload>
+                                        <div className="flex gap-2 justify-center flex-wrap">
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneReverso}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
+                                                    Cámara
+                                                </Button>
+                                            </Upload>
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneReverso}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                            >
+                                                <Button size="small" icon={<PictureOutlined />}>
+                                                    Galería
+                                                </Button>
+                                            </Upload>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
                                         <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
                                             <IdcardOutlined className="text-4xl text-gray-400" />
-                                            <div className="absolute -bottom-2 -right-2 bg-[#0f172a] w-8 h-8 rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-blue-800 transition-colors">
-                                                <CameraOutlined className="text-white text-sm" />
-                                            </div>
                                         </div>
-                                        <Upload
-                                            beforeUpload={handleBeforeUploadIneReverso}
-                                            showUploadList={false}
-                                            accept="image/*"
-                                            capture="environment"
-                                        >
-                                            <Button type="primary" size="small" className="bg-[#0f172a] mb-2" icon={<CameraOutlined />}>
-                                                Tomar
-                                            </Button>
-                                        </Upload>
-                                        <p className="text-gray-400 text-xs mt-2">Max: 4MB</p>
+                                        <div className="flex gap-2 justify-center flex-wrap">
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneReverso}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
+                                                    Cámara
+                                                </Button>
+                                            </Upload>
+                                            <Upload
+                                                beforeUpload={handleBeforeUploadIneReverso}
+                                                showUploadList={false}
+                                                accept="image/*"
+                                            >
+                                                <Button size="small" icon={<PictureOutlined />}>
+                                                    Galería
+                                                </Button>
+                                            </Upload>
+                                        </div>
+                                        <p className="text-gray-400 text-xs mt-2 mb-0">Max: 4MB</p>
                                     </>
                                 )}
                             </div>

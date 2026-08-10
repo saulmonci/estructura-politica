@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, Button, message, Spin, Alert } from 'antd';
-import { CameraOutlined, IdcardOutlined } from '@ant-design/icons';
+import { CameraOutlined, IdcardOutlined, PictureOutlined } from '@ant-design/icons';
 import imageCompression from 'browser-image-compression';
 import axios from 'axios';
 
@@ -69,7 +69,7 @@ const IneScanner = ({ onDataExtracted }) => {
                 description={
                     <div style={{ marginTop: 8 }}>
                         Sube o toma una foto del <strong>frente de la INE</strong> para llenar los datos automáticamente.
-                        <div style={{ marginTop: 12 }}>
+                        <div style={{ marginTop: 12 }} className="flex flex-wrap gap-2">
                             <Upload
                                 name="ine_image"
                                 showUploadList={false}
@@ -79,10 +79,23 @@ const IneScanner = ({ onDataExtracted }) => {
                             >
                                 <Button 
                                     type="primary" 
-                                    icon={<IdcardOutlined />} 
+                                    icon={<CameraOutlined />} 
                                     loading={loading}
                                 >
-                                    {loading ? 'Analizando documento...' : 'Escanear INE para autollenar'}
+                                    {loading ? 'Analizando...' : 'Tomar Foto'}
+                                </Button>
+                            </Upload>
+                            <Upload
+                                name="ine_image"
+                                showUploadList={false}
+                                beforeUpload={handleUpload}
+                                accept="image/jpeg,image/png,image/jpg"
+                            >
+                                <Button 
+                                    icon={<PictureOutlined />} 
+                                    loading={loading}
+                                >
+                                    {loading ? 'Analizando...' : 'Elegir de Galería'}
                                 </Button>
                             </Upload>
                         </div>
