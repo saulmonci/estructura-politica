@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head } from '@inertiajs/react';
-import { Card, Tag, Button, Modal, Descriptions, Table, Space, Segmented, message, Tooltip, Alert } from 'antd';
+import { Card, Tag, Button, Descriptions, Table, Space, Segmented, message, Alert } from 'antd';
 import { 
     EyeOutlined, 
     HistoryOutlined, 
@@ -10,13 +10,12 @@ import {
     BugOutlined,
     CopyOutlined,
     CheckCircleOutlined,
-    CloseCircleOutlined,
     AppstoreOutlined,
     FileTextOutlined,
-    GlobalOutlined,
     CodeOutlined
 } from '@ant-design/icons';
-import TableCrud from '@/Components/TableCrud';
+import AppTable from '@/Components/AppTable';
+import AppModal from '@/Components/AppModal';
 
 // Friendly labels for model attributes in Spanish
 const FIELD_LABELS = {
@@ -91,15 +90,13 @@ const formatValue = (key, val) => {
 
 export default function ActivityLogsIndex() {
     const [category, setCategory] = useState('all');
-    const [selectedLog, setSelectedLog] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const actionRef = React.useRef();
+    const modalRef = React.useRef();
 
     const handleViewDetail = (record) => {
-        setSelectedLog(record);
         setCopied(false);
-        setIsModalOpen(true);
+        modalRef.current?.open(record);
     };
 
     const handleCopyTrace = (traceText) => {
@@ -529,27 +526,19 @@ export default function ActivityLogsIndex() {
 
     const mobileCardRender = (record) => {
         const isError = record.action === 'error';
-        let actionColor = 'blue';
-        let actionLabel = 'Actualización';
+        
+        const actionMap = {
+            created: { color: 'green', label: 'Creación' },
+            updated: { color: 'blue', label: 'Actualización' },
+            deleted: { color: 'red', label: 'Eliminación' },
+            impersonate_start: { color: 'purple', label: 'Inició Suplantación' },
+            impersonate_stop: { color: 'orange', label: 'Detuvo Suplantación' },
+            error: { color: 'volcano', label: 'Error' }
+        };
 
-        if (record.action === 'created') {
-            actionColor = 'green';
-            actionLabel = 'Creación';
-        } else if (record.action === 'deleted') {
-            actionColor = 'red';
-            actionLabel = 'Eliminación';
-        } else if (record.action === 'impersonate_start') {
-            actionColor = 'purple';
-            actionLabel = 'Inició Suplantación';
-        } else if (record.action === 'impersonate_stop') {
-            actionColor = 'orange';
-            actionLabel = 'Detuvo Suplantación';
-        } else if (record.action === 'error') {
-            actionColor = 'volcano';
-            actionLabel = 'Error';
-        } else if (record.action !== 'updated') {
-            actionLabel = record.action;
-        }
+        const config = actionMap[record.action] || { color: 'blue', label: record.action };
+        const actionColor = config.color;
+        const actionLabel = config.label;
 
         return (
             <Card 
@@ -674,7 +663,7 @@ export default function ActivityLogsIndex() {
                     </div>
                 </div>
 
-                <TableCrud
+                <AppTable
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/logs"
@@ -685,8 +674,9 @@ export default function ActivityLogsIndex() {
                 />
             </Card>
 
-            <Modal
-                title={
+            <AppModal
+                ref={modalRef}
+                title={(selectedLog) => (
                     <Space>
                         {selectedLog?.action === 'error' ? (
                             <BugOutlined className="text-rose-600" />
@@ -700,18 +690,16 @@ export default function ActivityLogsIndex() {
                             }
                         </span>
                     </Space>
-                }
-                open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                footer={[
-                    <Button key="close" type="primary" onClick={() => setIsModalOpen(false)}>
+                )}
+                footer={(selectedLog, close) => [
+                    <Button key="close" type="primary" onClick={close}>
                         Cerrar
                     </Button>
                 ]}
                 width={850}
                 destroyOnClose
             >
-                {selectedLog && (
+                {(selectedLog) => selectedLog && (
                     selectedLog.action === 'error' ? (
                         renderErrorInspector(selectedLog)
                     ) : (
@@ -793,7 +781,7 @@ export default function ActivityLogsIndex() {
                         </div>
                     )
                 )}
-            </Modal>
+            </AppModal>
         </MainLayout>
     );
 }

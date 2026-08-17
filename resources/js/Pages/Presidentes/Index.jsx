@@ -13,18 +13,14 @@ import {
     MailOutlined, 
     DownloadOutlined, 
     ReloadOutlined,
-    BankOutlined,
-    LockOutlined,
-    IdcardOutlined,
-    CameraOutlined,
-    TeamOutlined,
     CrownOutlined,
     SwapOutlined,
-    ThunderboltOutlined
+    ThunderboltOutlined,
+    TeamOutlined
 } from '@ant-design/icons';
-import TableCrud from '@/Components/TableCrud';
+import AppTable from '@/Components/AppTable';
+import PresidenteFormModal from './PresidenteFormModal';
 import axios from 'axios';
-import imageCompression from 'browser-image-compression';
 import { generatePresidenteFormData } from '@/Utils/dummyDataGenerator';
 
 export default function PresidentesIndex({ presidentes }) {
@@ -34,12 +30,7 @@ export default function PresidentesIndex({ presidentes }) {
     const [showTrashed, setShowTrashed] = useState(false);
     const [currentParams, setCurrentParams] = useState({});
     const [togglingId, setTogglingId] = useState(null);
-
-    // Form modal state
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState(null);
-    const [form] = Form.useForm();
-    const [submitting, setSubmitting] = useState(false);
+    const modalRef = useRef();
 
     const handleStatusToggle = async (record, checked) => {
         setTogglingId(record.id);
@@ -68,58 +59,6 @@ export default function PresidentesIndex({ presidentes }) {
             }
         });
     };
-
-    // Catalog state
-    const [estados, setEstados] = useState([]);
-    const [municipios, setMunicipios] = useState([]);
-    const [loadingEstados, setLoadingEstados] = useState(false);
-    const [loadingMunicipios, setLoadingMunicipios] = useState(false);
-
-    // Upload state
-    const [fileListFoto, setFileListFoto] = useState([]);
-    const [existingFoto, setExistingFoto] = useState(null);
-    const [fileListIneFrente, setFileListIneFrente] = useState([]);
-    const [existingIneFrente, setExistingIneFrente] = useState(null);
-    const [fileListIneReverso, setFileListIneReverso] = useState([]);
-    const [existingIneReverso, setExistingIneReverso] = useState(null);
-
-    useEffect(() => {
-        fetchEstados();
-    }, []);
-
-    const fetchEstados = async () => {
-        setLoadingEstados(true);
-        try {
-            const res = await axios.get('/catalogos/estados');
-            setEstados(res.data || []);
-        } catch (err) {
-            console.error('Error al cargar estados:', err);
-        } finally {
-            setLoadingEstados(false);
-        }
-    };
-
-    const fetchMunicipios = async (stateId) => {
-        if (!stateId) {
-            setMunicipios([]);
-            return;
-        }
-        setLoadingMunicipios(true);
-        try {
-            const res = await axios.get(`/catalogos/municipios?state_id=${stateId}`);
-            setMunicipios(res.data || []);
-        } catch (err) {
-            console.error('Error al cargar municipios:', err);
-        } finally {
-            setLoadingMunicipios(false);
-        }
-    };
-
-    const handleStateChange = (stateId) => {
-        form.setFieldsValue({ municipality_id: undefined });
-        fetchMunicipios(stateId);
-    };
-
     const handleExport = () => {
         const queryParams = new URLSearchParams();
         Object.entries(currentParams).forEach(([key, value]) => {
@@ -138,54 +77,11 @@ export default function PresidentesIndex({ presidentes }) {
     };
 
     const handleCreate = () => {
-        setEditingId(null);
-        form.resetFields();
-        form.setFieldsValue({ estado: true });
-        setFileListFoto([]);
-        setExistingFoto(null);
-        setFileListIneFrente([]);
-        setExistingIneFrente(null);
-        setFileListIneReverso([]);
-        setExistingIneReverso(null);
-        setMunicipios([]);
-        setIsModalOpen(true);
+        modalRef.current?.open();
     };
 
-    const handleEdit = async (record) => {
-        setEditingId(record.id);
-        form.resetFields();
-        setFileListFoto([]);
-        setExistingFoto(record.foto_url || null);
-        setFileListIneFrente([]);
-        setExistingIneFrente(record.ine_frente_url || null);
-        setFileListIneReverso([]);
-        setExistingIneReverso(record.ine_reverso_url || null);
-
-        if (record.state_id) {
-            await fetchMunicipios(record.state_id);
-        }
-
-        form.setFieldsValue({
-            nombre: record.nombre,
-            apellidos: record.apellidos,
-            email: record.email,
-            telefono: record.telefono,
-            curp: record.curp,
-            clave_electoral: record.clave_electoral,
-            state_id: record.state_id,
-            municipality_id: record.municipality_id,
-            sexo: record.sexo,
-            calle: record.calle,
-            numero_exterior: record.numero_exterior,
-            numero_interior: record.numero_interior,
-            colonia: record.colonia,
-            codigo_postal: record.codigo_postal,
-            apodo: record.apodo,
-            notas: record.notas,
-            estado: record.estado ?? true,
-        });
-
-        setIsModalOpen(true);
+    const handleEdit = (record) => {
+        modalRef.current?.open(record);
     };
 
     const handleDelete = (id) => {
@@ -221,71 +117,6 @@ export default function PresidentesIndex({ presidentes }) {
                 });
             }
         });
-    };
-
-    const handleFormSubmit = async (e) => {
-        if (e?.preventDefault) e.preventDefault();
-        try {
-            const values = await form.validateFields();
-            setSubmitting(true);
-
-            values.estado = values.estado ? 1 : 0;
-
-            if (fileListFoto.length > 0 && fileListFoto[0].originFileObj) {
-                values.foto = fileListFoto[0].originFileObj;
-            }
-            if (fileListIneFrente.length > 0 && fileListIneFrente[0].originFileObj) {
-                values.ine_frente = fileListIneFrente[0].originFileObj;
-            }
-            if (fileListIneReverso.length > 0 && fileListIneReverso[0].originFileObj) {
-                values.ine_reverso = fileListIneReverso[0].originFileObj;
-            }
-
-            if (editingId) {
-                values._method = 'PUT';
-                router.post(`/presidentes/${editingId}`, values, {
-                    forceFormData: true,
-                    onSuccess: () => {
-                        message.success('Presidente actualizado correctamente');
-                        setIsModalOpen(false);
-                        actionRef.current?.reload();
-                    },
-                    onError: (errors) => {
-                        if (errors) {
-                            const fieldErrors = Object.keys(errors).map((key) => ({
-                                name: key,
-                                errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                            }));
-                            form.setFields(fieldErrors);
-                        }
-                        message.error('Por favor revisa los campos en rojo');
-                    },
-                    onFinish: () => setSubmitting(false)
-                });
-            } else {
-                router.post('/presidentes', values, {
-                    forceFormData: true,
-                    onSuccess: () => {
-                        message.success('Presidente registrado correctamente');
-                        setIsModalOpen(false);
-                        actionRef.current?.reload();
-                    },
-                    onError: (errors) => {
-                        if (errors) {
-                            const fieldErrors = Object.keys(errors).map((key) => ({
-                                name: key,
-                                errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                            }));
-                            form.setFields(fieldErrors);
-                        }
-                        message.error('Por favor revisa los campos en rojo');
-                    },
-                    onFinish: () => setSubmitting(false)
-                });
-            }
-        } catch (err) {
-            setSubmitting(false);
-        }
     };
 
     const columns = [
@@ -649,7 +480,7 @@ export default function PresidentesIndex({ presidentes }) {
                     </div>
                 </div>
 
-                <TableCrud
+                <AppTable
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/presidentes"
@@ -661,245 +492,10 @@ export default function PresidentesIndex({ presidentes }) {
                 />
             </div>
 
-            {/* Modal de Registro / Edición de Presidente */}
-            <Modal
-                title={
-                    <div className="flex items-center justify-between w-full pr-8">
-                        <div className="flex items-center gap-2 text-lg font-bold text-gray-800">
-                            <CrownOutlined className="text-amber-500" />
-                            {editingId ? 'Editar Presidente Municipal' : 'Registrar Nuevo Presidente Municipal'}
-                        </div>
-                        {(auth?.user?.role === 'superuser' || auth?.is_impersonating || auth?.impersonator?.role === 'superuser') && (
-                            <Button
-                                type="primary"
-                                size="small"
-                                icon={<ThunderboltOutlined />}
-                                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold border-none shadow-sm"
-                                onClick={() => {
-                                    const dummy = generatePresidenteFormData({
-                                        estados,
-                                        municipios,
-                                    });
-                                    form.setFieldsValue(dummy);
-                                    if (dummy.state_id) {
-                                        fetchMunicipios(dummy.state_id);
-                                    }
-                                    message.success('⚡ Datos de prueba generados exitosamente');
-                                }}
-                            >
-                                ⚡ Llenar datos de prueba
-                            </Button>
-                        )}
-                    </div>
-                }
-                open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                onOk={handleFormSubmit}
-                confirmLoading={submitting}
-                okText={editingId ? 'Actualizar' : 'Guardar Presidente'}
-                cancelText="Cancelar"
-                width={720}
-                destroyOnClose
-            >
-                <Form 
-                    form={form} 
-                    layout="vertical" 
-                    className="mt-4"
-                    onFinish={handleFormSubmit}
-                    onSubmit={(e) => e.preventDefault()}
-                >
-                    <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
-                        Asignación Geográfica
-                    </Divider>
-                    
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item 
-                                name="state_id" 
-                                label="Estado (Entidad)" 
-                                rules={[{ required: true, message: 'Selecciona un estado' }]}
-                            >
-                                <Select
-                                    showSearch
-                                    placeholder="Seleccionar Estado"
-                                    loading={loadingEstados}
-                                    onChange={handleStateChange}
-                                    optionFilterProp="label"
-                                    filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-                                    options={estados.map(e => ({ label: e.nombre || e.name, value: e.id }))}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item 
-                                name="municipality_id" 
-                                label="Municipio" 
-                                rules={[{ required: true, message: 'Selecciona un municipio' }]}
-                            >
-                                <Select
-                                    showSearch
-                                    placeholder="Seleccionar Municipio"
-                                    loading={loadingMunicipios}
-                                    disabled={!form.getFieldValue('state_id') && municipios.length === 0}
-                                    optionFilterProp="label"
-                                    filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-                                    options={municipios.map(m => ({ label: m.nombre || m.name, value: m.id }))}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
-                        Datos Personales y de Acceso
-                    </Divider>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item 
-                                name="nombre" 
-                                label="Nombre(s)" 
-                                rules={[{ required: true, message: 'Ingresa el nombre' }]}
-                            >
-                                <Input prefix={<UserOutlined />} placeholder="Nombre(s)" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item 
-                                name="apellidos" 
-                                label="Apellidos" 
-                                rules={[{ required: true, message: 'Ingresa los apellidos' }]}
-                            >
-                                <Input prefix={<UserOutlined />} placeholder="Apellidos" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item 
-                                name="email" 
-                                label="Correo Electrónico (Login)" 
-                                rules={[{ required: true, type: 'email', message: 'Ingresa un email válido' }]}
-                            >
-                                <Input prefix={<MailOutlined />} placeholder="presidente@correo.com" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item 
-                                name="password" 
-                                label={editingId ? "Nueva Contraseña (Opcional)" : "Contraseña de Acceso"} 
-                                rules={editingId ? [] : [{ required: true, min: 6, message: 'Mínimo 6 caracteres' }]}
-                            >
-                                <Input.Password prefix={<LockOutlined />} placeholder="******" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item name="telefono" label="Teléfono (10 dígitos)">
-                                <Input prefix={<PhoneOutlined />} placeholder="3111234567" maxLength={10} />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item name="curp" label="CURP (18 Caracteres)">
-                                <Input prefix={<IdcardOutlined />} placeholder="18 Caracteres" maxLength={18} />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item name="clave_electoral" label="Clave Electoral">
-                                <Input prefix={<IdcardOutlined />} placeholder="Clave INE" maxLength={18} />
-                            </Form.Item>
-                        </Col>
-                        <Col span={6}>
-                            <Form.Item name="sexo" label="Sexo">
-                                <Select placeholder="Selecciona" options={[
-                                    { label: 'Masculino', value: 'Masculino' },
-                                    { label: 'Femenino', value: 'Femenino' },
-                                    { label: 'Otro', value: 'Otro' }
-                                ]} />
-                            </Form.Item>
-                        </Col>
-                        <Col span={6}>
-                            <Form.Item 
-                                name="estado" 
-                                label="Estatus" 
-                                valuePropName="checked"
-                                initialValue={true}
-                            >
-                                <Switch 
-                                    checkedChildren="Activo" 
-                                    unCheckedChildren="Inactivo" 
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
-                        Fotografía de Perfil e Identificación (Opcional)
-                    </Divider>
-
-                    <Row gutter={16}>
-                        <Col span={8}>
-                            <Form.Item label="Foto Perfil">
-                                <Upload
-                                    listType="picture-card"
-                                    maxCount={1}
-                                    fileList={fileListFoto}
-                                    beforeUpload={() => false}
-                                    onChange={({ fileList }) => setFileListFoto(fileList)}
-                                >
-                                    {fileListFoto.length === 0 && (
-                                        <div>
-                                            <CameraOutlined />
-                                            <div style={{ marginTop: 8 }}>Subir Foto</div>
-                                        </div>
-                                    )}
-                                </Upload>
-                            </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                            <Form.Item label="INE Frente">
-                                <Upload
-                                    listType="picture-card"
-                                    maxCount={1}
-                                    fileList={fileListIneFrente}
-                                    beforeUpload={() => false}
-                                    onChange={({ fileList }) => setFileListIneFrente(fileList)}
-                                >
-                                    {fileListIneFrente.length === 0 && (
-                                        <div>
-                                            <IdcardOutlined />
-                                            <div style={{ marginTop: 8 }}>INE Frente</div>
-                                        </div>
-                                    )}
-                                </Upload>
-                            </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                            <Form.Item label="INE Reverso">
-                                <Upload
-                                    listType="picture-card"
-                                    maxCount={1}
-                                    fileList={fileListIneReverso}
-                                    beforeUpload={() => false}
-                                    onChange={({ fileList }) => setFileListIneReverso(fileList)}
-                                >
-                                    {fileListIneReverso.length === 0 && (
-                                        <div>
-                                            <IdcardOutlined />
-                                            <div style={{ marginTop: 8 }}>INE Reverso</div>
-                                        </div>
-                                    )}
-                                </Upload>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                </Form>
-            </Modal>
+            <PresidenteFormModal 
+                ref={modalRef} 
+                onSuccess={() => actionRef.current?.reload()} 
+            />
         </MainLayout>
     );
 }

@@ -3,7 +3,7 @@ import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
 import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UsergroupAddOutlined, IdcardOutlined, MailOutlined, DownloadOutlined, SafetyCertificateOutlined, ReloadOutlined } from '@ant-design/icons';
-import TableCrud from '@/Components/TableCrud';
+import AppTable from '@/Components/AppTable';
 import PromovidoFormModal from '@/Components/PromovidoFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
 import { GiftOutlined } from '@ant-design/icons';
@@ -507,7 +507,7 @@ export default function PromovidosIndex({ availablePromotores }) {
                     </div>
                 </div>
 
-                <TableCrud
+                <AppTable
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/promovidos"

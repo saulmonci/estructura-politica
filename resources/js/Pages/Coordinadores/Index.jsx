@@ -3,7 +3,7 @@ import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
 import { PlusOutlined, UserOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, EditOutlined, DeleteOutlined, MailOutlined, GiftOutlined, DownloadOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons';
-import TableCrud from '@/Components/TableCrud';
+import AppTable from '@/Components/AppTable';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
 
@@ -371,7 +371,7 @@ export default function CoordinadoresIndex({ coordinadores, availablePresidentes
                     </div>
                 </div>
 
-                <TableCrud
+                <AppTable
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/coordinadores"

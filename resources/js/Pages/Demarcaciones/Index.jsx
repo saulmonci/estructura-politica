@@ -12,12 +12,11 @@ import {
     CompassOutlined,
     UnorderedListOutlined
 } from '@ant-design/icons';
-import TableCrud from '@/Components/TableCrud';
+import AppTable from '@/Components/AppTable';
 import DemarcacionFormModal from './DemarcacionFormModal';
 import SeccionesDrawer from '@/Components/SeccionesDrawer';
 
 export default function DemarcacionesIndex() {
-    const { auth } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
@@ -174,7 +173,7 @@ export default function DemarcacionesIndex() {
                     </div>
                 </div>
 
-                <TableCrud
+                <AppTable
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/demarcaciones"
