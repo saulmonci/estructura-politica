@@ -24,8 +24,12 @@ const AppModal = forwardRef(({ children, title, footer, onCancel, ...props }, re
     const [modalData, setModalData] = useState(null);
 
     useImperativeHandle(ref, () => ({
-        open: (data = null) => {
-            setModalData(data);
+        open: (data = null, url = null) => {
+            let resolvedData = data;
+            if (url !== null && url !== undefined) {
+                resolvedData = (typeof data === 'object' && data !== null) ? { ...data, url } : { id: data, url };
+            }
+            setModalData(resolvedData);
             setIsModalOpen(true);
         },
         close: () => {

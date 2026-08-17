@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef } from 'react';
+import React, { forwardRef, useRef, useImperativeHandle } from 'react';
 import { ProFormText, ProFormDigit } from '@ant-design/pro-components';
 import { Row, Col, Divider, Form } from 'antd';
 import { 
@@ -11,6 +11,18 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
     const modalRef = useRef();
     const [form] = Form.useForm();
 
+    useImperativeHandle(ref, () => ({
+        open(id = null, url = null) {
+            modalRef.current?.open({ id, url });
+        },
+        close() {
+            modalRef.current?.close();
+        },
+        getData() {
+            return modalRef.current?.getData();
+        }
+    }));
+
     const afterOpenChange = (isOpen) => {
         if (isOpen) {
             const data = modalRef.current?.getData();
@@ -22,14 +34,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
 
     return (
         <AppModal
-            ref={(r) => {
-                modalRef.current = r;
-                if (typeof ref === 'function') {
-                    ref(r);
-                } else if (ref) {
-                    ref.current = r;
-                }
-            }}
+            ref={modalRef}
             afterOpenChange={afterOpenChange}
             width={700}
             footer={null}
