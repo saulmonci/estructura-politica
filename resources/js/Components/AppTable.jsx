@@ -7,7 +7,7 @@ import { Grid } from 'antd';
 
 const { useBreakpoint } = Grid;
 
-export default function TableCrud({
+export default function AppTable({
     data, // Objeto de paginación de Laravel o un array simple (modo Inertia)
     endpoint, // Si se proporciona, la tabla maneja sus propios datos asíncronamente
     columns,

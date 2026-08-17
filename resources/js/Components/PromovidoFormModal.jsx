@@ -1,316 +1,148 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { ModalForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
-import { Row, Col, message, Alert, Button, Divider, Upload, Form, Image } from 'antd';
+import React, { useState, forwardRef, useRef, useImperativeHandle } from 'react';
+import { ProFormText, ProFormSelect } from '@ant-design/pro-components';
+import { Row, Col, Form, Button, message, Alert, Divider } from 'antd';
 import { 
     UserOutlined, 
     EnvironmentOutlined, 
     IdcardOutlined, 
     PhoneOutlined, 
-    SafetyCertificateOutlined,
-    TeamOutlined,
-    SaveOutlined,
-    CloseOutlined,
-    BankOutlined,
-    UsergroupAddOutlined,
     CameraOutlined,
-    PictureOutlined,
-    ThunderboltOutlined
+    SafetyCertificateOutlined,
+    UsergroupAddOutlined,
+    ThunderboltOutlined,
+    TeamOutlined,
+    BankOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import AppModal from './AppModal';
+import AppForm from './AppForm';
+import AppUpload from './AppUpload';
+import AppSelect from './AppSelect';
 import IneScanner from './IneScanner';
-import imageCompression from 'browser-image-compression';
 import { generatePromovidoFormData } from '@/Utils/dummyDataGenerator';
-
-const { Dragger } = Upload;
+import axios from 'axios';
 
 const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, ref) => {
     const { auth } = usePage().props;
     const userRole = auth?.user?.role;
 
-    const [open, setOpen] = useState(false);
-    const [editId, setEditingId] = useState(null);
-    const [fetchUrl, setFetchUrl] = useState(null);
-    const [fileList, setFileList] = useState([]);
-    const [existingFoto, setExistingFoto] = useState(null);
-    const [fileListIneFrente, setFileListIneFrente] = useState([]);
-    const [existingIneFrente, setExistingIneFrente] = useState(null);
-    const [fileListIneReverso, setFileListIneReverso] = useState([]);
-    const [existingIneReverso, setExistingIneReverso] = useState(null);
-
-    useImperativeHandle(ref, () => ({
-        open(id = null, url = null) {
-            setFileList([]);
-            setExistingFoto(null);
-            setFileListIneFrente([]);
-            setExistingIneFrente(null);
-            setFileListIneReverso([]);
-            setExistingIneReverso(null);
-            setEditingId(id);
-            setFetchUrl(url);
-            setOpen(true);
-        },
-        close() {
-            setOpen(false);
-        }
-    }));
-
+    const modalRef = useRef();
     const [form] = Form.useForm();
     const [demarcaciones, setDemarcaciones] = useState([]);
     const [secciones, setSecciones] = useState([]);
     const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
-    const [loadingDemarcaciones, setLoadingDemarcaciones] = useState(false);
-    const [loadingSecciones, setLoadingSecciones] = useState(false);
 
-    const fetchSecciones = async (demarcacionId) => {
-        if (!demarcacionId) {
-            setSecciones([]);
-            return;
+    const fotoRef = useRef(null);
+    const ineFrenteRef = useRef(null);
+    const ineReversoRef = useRef(null);
+
+    useImperativeHandle(ref, () => ({
+        open(id = null, url = null) {
+            modalRef.current?.open({ id, url });
+        },
+        close() {
+            modalRef.current?.close();
         }
-        setLoadingSecciones(true);
-        try {
-            const res = await axios.get(`/catalogos/demarcaciones/${demarcacionId}/secciones`);
-            setSecciones(res.data || []);
-        } catch (err) {
-            message.error('Error al cargar las secciones electorales');
-        } finally {
-            setLoadingSecciones(false);
-        }
-    };
+    }));
 
-    useEffect(() => {
-        if (open) {
-            setFileList([]);
-            setExistingFoto(null);
-            setFileListIneFrente([]);
-            setExistingIneFrente(null);
-            setFileListIneReverso([]);
-            setExistingIneReverso(null);
-            setSelectedDemarcacion(null);
-            setSecciones([]);
+    const afterOpenChange = (isOpen) => {
+        if (isOpen) {
+            const data = modalRef.current?.getData();
+            const editId = data?.id;
 
-            // Limpiar todos los campos inmediatamente al abrir para evitar stale data flash
-            form.resetFields();
-            form.setFieldsValue({
-                promotor_id: undefined,
-                nombre: '',
-                apellidos: '',
-                clave_elector: '',
-                curp: '',
-                telefono: '',
-                codigo_postal: '',
-                colonia: '',
-                calle: '',
-                numero: '',
-                demarcacion_id: undefined,
-                seccion_electoral: undefined
-            });
+            if (!editId) {
+                fotoRef.current?.reset();
+                ineFrenteRef.current?.reset();
+                ineReversoRef.current?.reset();
+                setSelectedDemarcacion(null);
+                setSecciones([]);
 
-            const fetchDemarcaciones = async () => {
-                setLoadingDemarcaciones(true);
-                try {
-                    const res = await axios.get('/catalogos/demarcaciones');
-                    setDemarcaciones(res.data || []);
-                } catch (err) {
-                    message.error('Error al cargar las demarcaciones');
-                } finally {
-                    setLoadingDemarcaciones(false);
-                }
-            };
-            fetchDemarcaciones();
-
-            if (editId) {
-                const url = fetchUrl || `/api/promovidos/${editId}`;
-                axios.get(url)
-                    .then(response => {
-                        const data = response.data;
-                        if (data.foto) {
-                            setExistingFoto(`/storage/${data.foto}`);
-                        } else {
-                            setExistingFoto(null);
-                        }
-                        if (data.ine_frente) {
-                            setExistingIneFrente(`/storage/${data.ine_frente}`);
-                        } else {
-                            setExistingIneFrente(null);
-                        }
-                        if (data.ine_reverso) {
-                            setExistingIneReverso(`/storage/${data.ine_reverso}`);
-                        } else {
-                            setExistingIneReverso(null);
-                        }
-
-                        if (data.demarcacion_id) {
-                            const demId = String(data.demarcacion_id);
-                            setSelectedDemarcacion(demId);
-                            setLoadingSecciones(true);
-                            axios.get(`/catalogos/demarcaciones/${demId}/secciones`)
-                                .then(secRes => {
-                                    setSecciones(secRes.data || []);
-                                    form.setFieldsValue({
-                                        ...data,
-                                        demarcacion_id: demId,
-                                        seccion_electoral: data.seccion_electoral ? String(data.seccion_electoral) : undefined
-                                    });
-                                })
-                                .catch(() => {
-                                    message.error('Error al cargar las secciones electorales');
-                                })
-                                .finally(() => {
-                                    setLoadingSecciones(false);
-                                });
-                        } else {
-                            setSelectedDemarcacion(null);
-                            setSecciones([]);
-                            form.setFieldsValue(data);
-                        }
-                    })
-                    .catch(() => {
-                        message.error('No se pudo cargar la información del registro');
-                    });
+                form.resetFields();
+                form.setFieldsValue({
+                    promotor_id: undefined,
+                    nombre: '',
+                    apellidos: '',
+                    clave_elector: '',
+                    curp: '',
+                    telefono: '',
+                    codigo_postal: '',
+                    colonia: '',
+                    calle: '',
+                    numero: '',
+                    demarcacion_id: undefined,
+                    seccion_electoral: undefined
+                });
             }
         }
-    }, [open, editId, fetchUrl]);
-
-    const compressImage = async (file) => {
-        const options = {
-            maxSizeMB: 3.8, // Ligeramente debajo de 4MB
-            maxWidthOrHeight: 1920,
-            useWebWorker: true
-        };
-        try {
-            message.loading({ content: 'Procesando y comprimiendo imagen...', key: 'compress' });
-            const compressedFile = await imageCompression(file, options);
-            message.success({ content: 'Imagen procesada', key: 'compress' });
-            return compressedFile;
-        } catch (error) {
-            console.error(error);
-            message.error({ content: 'Error procesando imagen', key: 'compress' });
-            return file;
-        }
-    };
-
-    const handleBeforeUploadFoto = async (file) => {
-        const compressedFile = await compressImage(file);
-        setFileList([{ originFileObj: compressedFile }]);
-        return Upload.LIST_IGNORE;
-    };
-
-    const handleBeforeUploadIneFrente = async (file) => {
-        const compressedFile = await compressImage(file);
-        setFileListIneFrente([{ originFileObj: compressedFile }]);
-        return Upload.LIST_IGNORE;
-    };
-
-    const handleBeforeUploadIneReverso = async (file) => {
-        const compressedFile = await compressImage(file);
-        setFileListIneReverso([{ originFileObj: compressedFile }]);
-        return Upload.LIST_IGNORE;
     };
 
     return (
-        <ModalForm
-            form={form}
-            title={null}
-            open={open}
-            onOpenChange={setOpen}
+        <AppModal
+            ref={modalRef}
+            afterOpenChange={afterOpenChange}
             width={1000}
-            modalProps={{
-                destroyOnClose: true,
-                maskClosable: false,
-                keyboard: true,
-                bodyStyle: { padding: 0 },
-                closeIcon: null,
-            }}
-            submitter={{
-                render: (props) => {
-                    const isDisabled = !editId && userRole !== 'promotor' && availablePromotores.length === 0;
-                    return (
-                        <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-                            <Button 
-                                key="cancel" 
-                                htmlType="button"
-                                onClick={() => setOpen(false)}
-                                icon={<CloseOutlined />}
-                                className="border-gray-300 text-gray-700"
-                            >
-                                Cancelar
-                            </Button>
-                            <Button 
-                                key="submit" 
-                                type="primary" 
-                                htmlType="button"
-                                onClick={() => props.form?.submit?.()}
-                                icon={<SaveOutlined />}
-                                className="bg-[#0f172a]"
-                                disabled={isDisabled}
-                            >
-                                Guardar registro
-                            </Button>
-                        </div>
-                    );
-                },
-            }}
-            onFinish={async (values) => {
+            footer={null}
+            destroyOnClose={true}
+            maskClosable={false}
+            keyboard={true}
+            closeIcon={null}
+            styles={{ body: { padding: 0 } }}
+            title={null}
+        >
+            {(data, close) => {
+                const editId = data?.id;
+                const fetchUrl = data?.url;
                 const endpoint = fetchUrl || (editId ? `/promovidos/${editId}` : '/promovidos');
 
-                if (fileList.length > 0 && fileList[0].originFileObj) {
-                    values.foto = fileList[0].originFileObj;
-                } else {
-                    delete values.foto;
-                }
-
-                if (fileListIneFrente.length > 0 && fileListIneFrente[0].originFileObj) {
-                    values.ine_frente = fileListIneFrente[0].originFileObj;
-                }
-                
-                if (fileListIneReverso.length > 0 && fileListIneReverso[0].originFileObj) {
-                    values.ine_reverso = fileListIneReverso[0].originFileObj;
-                }
-
-                if (editId) {
-                    values._method = 'put';
-                    router.post(endpoint, values, {
-                        forceFormData: true,
-                        onSuccess: () => {
-                            message.success('Registro actualizado exitosamente');
-                            if (onSuccess) onSuccess(values);
-                            setOpen(false);
-                        },
-                        onError: (errors) => {
-                            if (errors) {
-                                const fieldErrors = Object.keys(errors).map((key) => ({
-                                    name: key,
-                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                                }));
-                                form.setFields(fieldErrors);
+                return (
+                    <AppForm
+                        form={form}
+                        modalClose={close}
+                        fetchUrl={editId ? endpoint : null}
+                        onDataFetched={(data) => {
+                            if (data.foto) {
+                                fotoRef.current?.setExistingUrl(`/storage/${data.foto}`);
                             }
-                            message.error('Por favor revisa los campos en rojo');
-                        }
-                    });
-                } else {
-                    router.post(endpoint, values, {
-                        forceFormData: true,
-                        onSuccess: () => {
-                            message.success('Registro creado exitosamente');
-                            if (onSuccess) onSuccess(values);
-                            setOpen(false);
-                        },
-                        onError: (errors) => {
-                            if (errors) {
-                                const fieldErrors = Object.keys(errors).map((key) => ({
-                                    name: key,
-                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                                }));
-                                form.setFields(fieldErrors);
+                            if (data.ine_frente) {
+                                ineFrenteRef.current?.setExistingUrl(`/storage/${data.ine_frente}`);
                             }
-                            message.error('Por favor revisa los campos en rojo');
-                        }
-                    });
-                }
-                return false;
-            }}
-        >
+                            if (data.ine_reverso) {
+                                ineReversoRef.current?.setExistingUrl(`/storage/${data.ine_reverso}`);
+                            }
+
+                            if (data.demarcacion_id) {
+                                const demId = String(data.demarcacion_id);
+                                setSelectedDemarcacion(demId);
+                                form.setFieldsValue({
+                                    ...data,
+                                    demarcacion_id: demId,
+                                    seccion_electoral: data.seccion_electoral ? String(data.seccion_electoral) : undefined
+                                });
+                            } else {
+                                setSelectedDemarcacion(null);
+                                setSecciones([]);
+                                form.setFieldsValue(data);
+                            }
+                        }}
+                        endpoint={endpoint}
+                        method={editId ? 'PUT' : 'POST'}
+                        onSuccess={() => {
+                            if (onSuccess) onSuccess();
+                            close();
+                        }}
+                        beforeSubmit={(values) => {
+                            const fotoFile = fotoRef.current?.getFile();
+                            if (fotoFile) values.foto = fotoFile;
+            
+                            const ineFrenteFile = ineFrenteRef.current?.getFile();
+                            if (ineFrenteFile) values.ine_frente = ineFrenteFile;
+                            
+                            const ineReversoFile = ineReversoRef.current?.getFile();
+                            if (ineReversoFile) values.ine_reverso = ineReversoFile;
+            
+                            return values;
+                        }}
+                    >
             <div className="bg-[#0f172a] text-white p-6 rounded-t-lg flex justify-between items-center">
                 <div className="flex items-center gap-4">
                     <div className="bg-white/20 p-3 rounded-lg">
@@ -318,7 +150,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                     </div>
                     <div>
                         <h2 className="text-xl font-bold m-0 tracking-wide uppercase">
-                            {editId ? 'EDICIÓN DE' : 'REGISTRO DE'} PROMOVIDO
+                            {editId ? 'Editar Promovido' : 'Registro de Promovido'}
                         </h2>
                         <p className="text-gray-300 text-sm m-0">Registro Simpatizantes</p>
                     </div>
@@ -616,41 +448,29 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             </Row>
                             <Row gutter={16}>
                                 <Col xs={24} md={12}>
-                                    <ProFormSelect
+                                    <AppSelect
                                         name="demarcacion_id"
                                         label="Demarcación"
-                                        placeholder="Seleccionar demarcación"
                                         rules={[{ required: true, message: 'Requerido' }]}
-                                        fieldProps={{
-                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
-                                            loading: loadingDemarcaciones,
-                                            onChange: (value) => {
-                                                setSelectedDemarcacion(value);
-                                                form.setFieldsValue({ seccion_electoral: undefined });
-                                                fetchSecciones(value);
-                                            }
+                                        url="/catalogos/demarcaciones"
+                                        onChange={(value) => {
+                                            setSelectedDemarcacion(value);
+                                            form.setFieldValue('seccion_electoral', undefined);
                                         }}
-                                        options={demarcaciones.map(d => ({
-                                            label: d.nombre,
-                                            value: String(d.id)
-                                        }))}
+                                        disabled={!!editId}
+                                        icon={<EnvironmentOutlined />}
                                     />
                                 </Col>
                                 <Col xs={24} md={12}>
-                                    <ProFormSelect
+                                    <AppSelect
                                         name="seccion_electoral"
                                         label="Sección Electoral"
-                                        placeholder="Seleccionar sección"
                                         rules={[{ required: true, message: 'Requerido' }]}
-                                        disabled={!selectedDemarcacion}
-                                        fieldProps={{
-                                            prefix: <EnvironmentOutlined className="text-gray-400 mr-2" />,
-                                            loading: loadingSecciones,
-                                        }}
-                                        options={secciones.map(s => ({
-                                            label: `Sección ${s.numero}`,
-                                            value: String(s.numero)
-                                        }))}
+                                        url={selectedDemarcacion ? `/catalogos/demarcaciones/${selectedDemarcacion}/secciones` : null}
+                                        valueProp="numero"
+                                        labelProp="numero"
+                                        disabled={!selectedDemarcacion || !!editId}
+                                        icon={<EnvironmentOutlined />}
                                     />
                                 </Col>
                             </Row>
@@ -682,241 +502,34 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                 className="mb-6 bg-blue-50 border-blue-100"
                             />
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 min-h-[260px]">
-                                <span className="text-gray-500 font-bold mb-2">FOTO DE PERFIL</span>
-                                {fileList.length > 0 ? (
-                                    <div className="w-full flex flex-col items-center justify-center">
-                                        <Image 
-                                            src={URL.createObjectURL(fileList[0].originFileObj)} 
-                                            alt="avatar" 
-                                            width={96}
-                                            height={96}
-                                            style={{ objectFit: 'cover' }}
-                                            className="rounded-lg border-4 border-white shadow-md mb-3"
-                                        />
-                                        <Button danger size="small" onClick={() => setFileList([])}>Eliminar foto</Button>
-                                    </div>
-                                ) : existingFoto ? (
-                                    <div className="w-full flex flex-col items-center justify-center">
-                                        <Image 
-                                            src={existingFoto} 
-                                            alt="avatar" 
-                                            width={96}
-                                            height={96}
-                                            style={{ objectFit: 'cover' }}
-                                            className="rounded-lg border-4 border-white shadow-md mb-3"
-                                        />
-                                        <div className="flex gap-2 justify-center flex-wrap">
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadFoto}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                                capture="environment"
-                                            >
-                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
-                                                    Cámara
-                                                </Button>
-                                            </Upload>
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadFoto}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                            >
-                                                <Button size="small" icon={<PictureOutlined />}>
-                                                    Galería
-                                                </Button>
-                                            </Upload>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
-                                            <UserOutlined className="text-6xl text-gray-400" />
-                                        </div>
-                                        <div className="flex gap-2 justify-center flex-wrap">
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadFoto}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                                capture="environment"
-                                            >
-                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
-                                                    Cámara
-                                                </Button>
-                                            </Upload>
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadFoto}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                            >
-                                                <Button size="small" icon={<PictureOutlined />}>
-                                                    Galería
-                                                </Button>
-                                            </Upload>
-                                        </div>
-                                        <p className="text-gray-400 text-xs mt-2 mb-0">Max: 10MB</p>
-                                    </>
-                                )}
-                            </div>
+                            <AppUpload
+                                ref={fotoRef}
+                                title="Foto de Perfil"
+                                icon={<CameraOutlined />}
+                                className="bg-blue-50/50 border-blue-200"
+                            />
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 min-h-[260px] mt-4">
-                                <span className="text-gray-500 font-bold mb-2">INE FRENTE</span>
-                                {fileListIneFrente.length > 0 ? (
-                                    <div className="w-full flex flex-col items-center justify-center">
-                                        <Image 
-                                            src={URL.createObjectURL(fileListIneFrente[0].originFileObj)} 
-                                            alt="ine frente" 
-                                            width={128}
-                                            height={80}
-                                            style={{ objectFit: 'cover' }}
-                                            className="rounded-lg border-4 border-white shadow-md mb-3"
-                                        />
-                                        <Button danger size="small" onClick={() => setFileListIneFrente([])}>Eliminar foto</Button>
-                                    </div>
-                                ) : existingIneFrente ? (
-                                    <div className="w-full flex flex-col items-center justify-center">
-                                        <Image 
-                                            src={existingIneFrente} 
-                                            alt="ine frente" 
-                                            width={128}
-                                            height={80}
-                                            style={{ objectFit: 'cover' }}
-                                            className="rounded-lg border-4 border-white shadow-md mb-3"
-                                        />
-                                        <div className="flex gap-2 justify-center flex-wrap">
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneFrente}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                                capture="environment"
-                                            >
-                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
-                                                    Cámara
-                                                </Button>
-                                            </Upload>
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneFrente}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                            >
-                                                <Button size="small" icon={<PictureOutlined />}>
-                                                    Galería
-                                                </Button>
-                                            </Upload>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
-                                            <IdcardOutlined className="text-4xl text-gray-400" />
-                                        </div>
-                                        <div className="flex gap-2 justify-center flex-wrap">
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneFrente}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                                capture="environment"
-                                            >
-                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
-                                                    Cámara
-                                                </Button>
-                                            </Upload>
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneFrente}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                            >
-                                                <Button size="small" icon={<PictureOutlined />}>
-                                                    Galería
-                                                </Button>
-                                            </Upload>
-                                        </div>
-                                        <p className="text-gray-400 text-xs mt-2 mb-0">Max: 10MB</p>
-                                    </>
-                                )}
-                            </div>
+                            <AppUpload
+                                ref={ineFrenteRef}
+                                title="INE Frente"
+                                icon={<IdcardOutlined />}
+                                className="bg-slate-50 border-slate-200 mt-4"
+                            />
 
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 min-h-[260px] mt-4">
-                                <span className="text-gray-500 font-bold mb-2">INE REVERSO</span>
-                                {fileListIneReverso.length > 0 ? (
-                                    <div className="w-full flex flex-col items-center justify-center">
-                                        <Image 
-                                            src={URL.createObjectURL(fileListIneReverso[0].originFileObj)} 
-                                            alt="ine reverso" 
-                                            width={128}
-                                            height={80}
-                                            style={{ objectFit: 'cover' }}
-                                            className="rounded-lg border-4 border-white shadow-md mb-3"
-                                        />
-                                        <Button danger size="small" onClick={() => setFileListIneReverso([])}>Eliminar foto</Button>
-                                    </div>
-                                ) : existingIneReverso ? (
-                                    <div className="w-full flex flex-col items-center justify-center">
-                                        <Image 
-                                            src={existingIneReverso} 
-                                            alt="ine reverso" 
-                                            width={128}
-                                            height={80}
-                                            style={{ objectFit: 'cover' }}
-                                            className="rounded-lg border-4 border-white shadow-md mb-3"
-                                        />
-                                        <div className="flex gap-2 justify-center flex-wrap">
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneReverso}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                                capture="environment"
-                                            >
-                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
-                                                    Cámara
-                                                </Button>
-                                            </Upload>
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneReverso}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                            >
-                                                <Button size="small" icon={<PictureOutlined />}>
-                                                    Galería
-                                                </Button>
-                                            </Upload>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative shadow-inner">
-                                            <IdcardOutlined className="text-4xl text-gray-400" />
-                                        </div>
-                                        <div className="flex gap-2 justify-center flex-wrap">
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneReverso}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                                capture="environment"
-                                            >
-                                                <Button type="primary" size="small" className="bg-[#0f172a]" icon={<CameraOutlined />}>
-                                                    Cámara
-                                                </Button>
-                                            </Upload>
-                                            <Upload
-                                                beforeUpload={handleBeforeUploadIneReverso}
-                                                showUploadList={false}
-                                                accept="image/*"
-                                            >
-                                                <Button size="small" icon={<PictureOutlined />}>
-                                                    Galería
-                                                </Button>
-                                            </Upload>
-                                        </div>
-                                        <p className="text-gray-400 text-xs mt-2 mb-0">Max: 10MB</p>
-                                    </>
-                                )}
-                            </div>
+                            <AppUpload
+                                ref={ineReversoRef}
+                                title="INE Reverso"
+                                icon={<IdcardOutlined />}
+                                className="bg-slate-50 border-slate-200 mt-4"
+                            />
                         </div>
                     </Col>
                 </Row>
             </div>
-        </ModalForm>
+            </AppForm>
+                );
+            }}
+        </AppModal>
     );
 });
 

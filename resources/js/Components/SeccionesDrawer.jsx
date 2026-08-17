@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Button, Form, Input, InputNumber, message, Table, Popconfirm, Space, Card, Divider } from 'antd';
+import { Drawer, Button, InputNumber, message, Space, Card, Divider, Form, Table, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { ProFormText } from '@ant-design/pro-components';
 import axios from 'axios';
+import AppForm from './AppForm';
 
 const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
     const [secciones, setSecciones] = useState([]);
@@ -38,37 +40,6 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
             setSecciones(response.data);
         } catch (error) {
             message.error('Error al cargar las secciones electorales');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSubmit = async (values) => {
-        setLoading(true);
-        try {
-            if (editingId) {
-                // Update
-                const response = await axios.put(`/secciones/${editingId}`, values);
-                if (response.data.success) {
-                    message.success('Sección electoral actualizada exitosamente.');
-                    setEditingId(null);
-                    setIsFormVisible(false);
-                    form.resetFields();
-                    fetchSecciones();
-                }
-            } else {
-                // Create
-                const response = await axios.post(`/demarcaciones/${demarcacion.id}/secciones`, values);
-                if (response.data.success) {
-                    message.success('Sección electoral creada exitosamente.');
-                    setIsFormVisible(false);
-                    form.resetFields();
-                    fetchSecciones();
-                }
-            }
-        } catch (error) {
-            const errorMsg = error.response?.data?.message || 'Error al guardar la sección.';
-            message.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -187,39 +158,42 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
                     className="mb-6 border border-blue-100 bg-blue-50/20 shadow-sm"
                     styles={{ header: { background: '#f8fafc', fontWeight: 'bold' } }}
                 >
-                    <Form
+                    <AppForm
                         form={form}
-                        layout="vertical"
-                        onFinish={handleSubmit}
-                        initialValues={{ meta: 0 }}
+                        apiMode={true}
+                        endpoint={editingId ? `/secciones/${editingId}` : `/demarcaciones/${demarcacion.id}/secciones`}
+                        method={editingId ? 'PUT' : 'POST'}
+                        onSuccess={() => {
+                            setEditingId(null);
+                            setIsFormVisible(false);
+                            form.resetFields();
+                            fetchSecciones();
+                        }}
+                        onCancel={handleCancelForm}
+                        successMessage={editingId ? 'Sección electoral actualizada exitosamente.' : 'Sección electoral creada exitosamente.'}
+                        submitText={editingId ? 'Guardar Cambios' : 'Agregar'}
                     >
                         <div className="grid grid-cols-2 gap-4">
-                            <Form.Item
+                            <ProFormText
                                 name="numero"
                                 label="Número de Sección"
                                 rules={[{ required: true, message: 'Ingresa el número de sección.' }]}
-                            >
-                                <Input placeholder="Ej. 0120" />
-                            </Form.Item>
+                                placeholder="Ej. 0120"
+                            />
 
-                            <Form.Item
+                            <ProFormText
                                 name="meta"
                                 label="Meta de Votantes"
                                 rules={[{ required: true, message: 'Ingresa la meta.' }]}
-                            >
-                                <InputNumber min={0} style={{ width: '100%' }} placeholder="Ej. 100" />
-                            </Form.Item>
+                                fieldProps={{
+                                    type: 'number',
+                                    min: 0,
+                                    placeholder: "Ej. 100",
+                                    style: { width: '100%' }
+                                }}
+                            />
                         </div>
-
-                        <div className="flex justify-end gap-2 mt-2">
-                            <Button onClick={handleCancelForm}>
-                                Cancelar
-                            </Button>
-                            <Button type="primary" htmlType="submit" loading={loading} className="bg-blue-600 hover:bg-blue-700">
-                                {editingId ? 'Guardar Cambios' : 'Agregar'}
-                            </Button>
-                        </div>
-                    </Form>
+                    </AppForm>
                 </Card>
             )}
 

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space, Card, Modal } from 'antd';
-import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PaperClipOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { Drawer, Button, Input, DatePicker, Select, InputNumber, message, Table, Popconfirm, Tag, Space, Card, Modal, Form } from 'antd';
+import { PlusOutlined, DeleteOutlined, EditOutlined, PaperClipOutlined, CloudUploadOutlined } from '@ant-design/icons';
+import { ProFormText, ProFormDatePicker, ProFormSelect, ProFormDigit, ProFormTextArea } from '@ant-design/pro-components';
 import axios from 'axios';
 import dayjs from 'dayjs';
-
-const { Option } = Select;
+import AppForm from './AppForm';
+import AppUpload from './AppUpload';
 
 const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
-    // Soporte legacy: si se pasan promovido y no apiBasePath, construimos la ruta
     const resolvedEntity = entity || promovido;
     const resolvedBasePath = apiBasePath || (promovido ? `/promovidos/${promovido.id}` : null);
     const resolvedTitle = resolvedEntity?.nombre_completo || resolvedEntity?.name || '';
@@ -16,9 +16,9 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState(null);
-    const [currentEvidenciaUrl, setCurrentEvidenciaUrl] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
+    const evidenciaRef = useRef(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -54,43 +54,6 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
         }
     };
 
-    const handleSubmit = async (values) => {
-        try {
-            const formData = new FormData();
-            formData.append('fecha', values.fecha.format('YYYY-MM-DD'));
-            formData.append('tipo_apoyo', values.tipo_apoyo);
-            formData.append('estado', values.estado);
-            if (values.descripcion) formData.append('descripcion', values.descripcion);
-            if (values.cantidad_monetaria) formData.append('cantidad_monetaria', values.cantidad_monetaria);
-            
-            if (values.evidencia && values.evidencia.fileList.length > 0) {
-                formData.append('evidencia_file', values.evidencia.fileList[0].originFileObj);
-            }
-
-            if (editingId) {
-                // Para update con FormData puede ser engañoso en Laravel, simulamos put con _method
-                formData.append('_method', 'PUT');
-                await axios.post(`/apoyos/${editingId}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                message.success('Apoyo actualizado correctamente');
-            } else {
-                await axios.post(`${resolvedBasePath}/apoyos`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                message.success('Apoyo registrado correctamente');
-            }
-
-            setIsFormVisible(false);
-            form.resetFields();
-            setEditingId(null);
-            fetchApoyos();
-        } catch (error) {
-            console.error(error);
-            message.error('Error al guardar el apoyo');
-        }
-    };
-
     const handleDelete = async (id) => {
         try {
             await axios.delete(`/apoyos/${id}`);
@@ -103,22 +66,25 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
 
     const handleEdit = (record) => {
         setEditingId(record.id);
-        setCurrentEvidenciaUrl(record.evidencia_url || null);
+      
         form.setFieldsValue({
-            fecha: dayjs(record.fecha),
+            fecha: record.fecha, // ProFormDatePicker puede manejar strings
             tipo_apoyo: record.tipo_apoyo,
             descripcion: record.descripcion,
             estado: record.estado,
             cantidad_monetaria: record.cantidad_monetaria,
-            // No pre-llenamos el campo file — se muestra la URL debajo
         });
+        if (record.evidencia_url) {
+            setTimeout(() => {
+                evidenciaRef.current?.setExistingUrl(record.evidencia_url);
+            }, 100);
+        }
         setIsFormVisible(true);
     };
 
     const handleCancelForm = () => {
         setIsFormVisible(false);
         setEditingId(null);
-        setCurrentEvidenciaUrl(null);
         form.resetFields();
     };
 
@@ -262,69 +228,79 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     )}
                 </>
             ) : (
-                <Form layout="vertical" form={form} onFinish={handleSubmit}>
-                    <Form.Item name="fecha" label="Fecha" rules={[{ required: true, message: 'Seleccione fecha' }]}>
-                        <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
-                    </Form.Item>
+                <AppForm 
+                    form={form} 
+                    apiMode={true}
+                    endpoint={editingId ? `/apoyos/${editingId}` : `${resolvedBasePath}/apoyos`}
+                    method={editingId ? 'PUT' : 'POST'}
+                    onSuccess={() => {
+                        setIsFormVisible(false);
+                        form.resetFields();
+                        setEditingId(null);
+                        evidenciaRef.current?.reset();
+                        fetchApoyos();
+                    }}
+                    onCancel={handleCancelForm}
+                    successMessage={editingId ? 'Apoyo actualizado correctamente' : 'Apoyo registrado correctamente'}
+                    submitText={editingId ? 'Actualizar' : 'Guardar Apoyo'}
+                    beforeSubmit={(values) => {
+                        if (values.fecha && dayjs.isDayjs(values.fecha)) {
+                            values.fecha = values.fecha.format('YYYY-MM-DD');
+                        }
+                        
+                        const file = evidenciaRef.current?.getFile();
+                        if (file) {
+                            values.evidencia_file = file;
+                        }
+                        
+                        return values;
+                    }}
+                >
+                    <ProFormDatePicker 
+                        name="fecha" 
+                        label="Fecha" 
+                        rules={[{ required: true, message: 'Seleccione fecha' }]}
+                        fieldProps={{ style: { width: '100%' }, format: "YYYY-MM-DD" }}
+                    />
                     
-                    <Form.Item name="tipo_apoyo" label="Tipo de Apoyo" rules={[{ required: true, message: 'Ingrese tipo de apoyo' }]}>
-                        <Input placeholder="Ej. Despensa, Gestión Médica, etc." />
-                    </Form.Item>
+                    <ProFormText 
+                        name="tipo_apoyo" 
+                        label="Tipo de Apoyo" 
+                        rules={[{ required: true, message: 'Ingrese tipo de apoyo' }]}
+                        placeholder="Ej. Despensa, Gestión Médica, etc." 
+                    />
                     
-                    <Form.Item name="cantidad_monetaria" label="Cantidad Monetaria (Opcional)">
-                        <InputNumber style={{ width: '100%' }} prefix="$" min={0} />
-                    </Form.Item>
+                    <ProFormDigit 
+                        name="cantidad_monetaria" 
+                        label="Cantidad Monetaria (Opcional)"
+                        fieldProps={{ prefix: "$", min: 0, style: { width: '100%' } }} 
+                    />
 
-                    <Form.Item name="estado" label="Estado" initialValue="Entregado" rules={[{ required: true, message: 'Seleccione estado' }]}>
-                        <Select>
-                            <Option value="Entregado">Entregado</Option>
-                            <Option value="Pendiente">Pendiente</Option>
-                            <Option value="Cancelado">Cancelado</Option>
-                        </Select>
-                    </Form.Item>
+                    <ProFormSelect 
+                        name="estado" 
+                        label="Estado" 
+                        initialValue="Entregado" 
+                        rules={[{ required: true, message: 'Seleccione estado' }]}
+                        options={[
+                            { label: 'Entregado', value: 'Entregado' },
+                            { label: 'Pendiente', value: 'Pendiente' },
+                            { label: 'Cancelado', value: 'Cancelado' }
+                        ]}
+                    />
 
-                    <Form.Item name="descripcion" label="Descripción / Notas">
-                        <Input.TextArea rows={3} />
-                    </Form.Item>
+                    <ProFormTextArea 
+                        name="descripcion" 
+                        label="Descripción / Notas"
+                        fieldProps={{ rows: 3 }}
+                    />
 
-                    <Form.Item name="evidencia" label="Evidencia (Foto/Documento)">
-                        {/* Si estamos editando y hay evidencia guardada, la mostramos */}
-                        {editingId && currentEvidenciaUrl && (
-                            <div className="mb-2 p-2 bg-gray-50 border border-gray-200 rounded flex items-center gap-2">
-                                {isImageUrl(currentEvidenciaUrl) ? (
-                                    <div onClick={() => setPreviewImage(currentEvidenciaUrl)} className="cursor-pointer hover:opacity-80 transition-opacity" title="Ver imagen grande">
-                                        <img src={currentEvidenciaUrl} alt="evidencia actual" className="w-14 h-14 object-cover rounded border" />
-                                    </div>
-                                ) : (
-                                    <a href={currentEvidenciaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600">
-                                        <PaperClipOutlined /> Ver archivo actual
-                                    </a>
-                                )}
-                                <span className="text-xs text-gray-500 ml-1">Sube un nuevo archivo para reemplazarla.</span>
-                            </div>
-                        )}
-                        <Upload
-                            beforeUpload={(file) => {
-                                const maxSizeMB = 10;
-                                if (file.size / 1024 / 1024 > maxSizeMB) {
-                                    message.error(`❌ El archivo es demasiado pesado. El tamaño máximo permitido es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
-                                    return Upload.LIST_IGNORE;
-                                }
-                                return false;
-                            }}
-                            maxCount={1}
-                        >
-                            <Button icon={<UploadOutlined />}>Seleccionar Archivo</Button>
-                        </Upload>
-                    </Form.Item>
-
-                    <Space>
-                        <Button onClick={handleCancelForm}>Cancelar</Button>
-                        <Button type="primary" htmlType="submit">
-                            {editingId ? 'Actualizar' : 'Guardar Apoyo'}
-                        </Button>
-                    </Space>
-                </Form>
+                    <AppUpload
+                        ref={evidenciaRef}
+                        title="Evidencia (Foto/Documento)"
+                        icon={<CloudUploadOutlined />}
+                        className="bg-slate-50 border-slate-200 mt-4"
+                    />
+                </AppForm>
             )}
             
             <Modal
