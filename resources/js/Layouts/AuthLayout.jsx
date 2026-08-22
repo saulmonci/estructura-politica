@@ -12,8 +12,12 @@ export default function AuthLayout({ children }) {
                         <div className="absolute bottom-0 -right-1/4 w-full h-full bg-indigo-500 rounded-full blur-3xl mix-blend-multiply"></div>
                     </div>
                     
-                    <div className="relative z-10 mb-8 bg-white p-4 rounded-xl inline-block shadow-lg">
-                        <img src="/images/orion-logo.png" alt="ORION SISTEMAS" className="h-16 object-contain" />
+                    <div className="relative z-10 mb-8 rounded-xl overflow-hidden shadow-2xl border border-white/20 bg-slate-950/80 p-2 w-full">
+                        <img 
+                            src="/images/orion-legal-logo.png" 
+                            alt="ORION SISTEMAS - LEGAL SMART GOV" 
+                            className="w-full h-auto max-h-48 object-contain rounded-lg block" 
+                        />
                     </div>
 
                     <div className="relative z-10 mt-auto mb-auto">

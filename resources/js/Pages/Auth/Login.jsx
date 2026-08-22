@@ -18,15 +18,20 @@ export default function Login() {
     return (
         <AuthLayout>
             <Head title="Iniciar Sesión" />
-            
-            <div className="text-center mb-10">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 rounded-full mb-4">
-                    <UserOutlined className="text-4xl text-blue-600" />
-                    <div className="absolute ml-8 mt-8 bg-white rounded-full p-0.5">
-                        <LockOutlined className="text-blue-600 bg-blue-100 p-1 rounded-full text-xs" />
+
+            <div className="text-center mb-8">
+                {/* Mobile Logo Branding */}
+                <div className="flex justify-center mb-6 md:hidden w-full">
+                    <div className="p-2 bg-slate-950 rounded-xl shadow-xl border border-slate-800 w-full">
+                        <img
+                            src="/images/orion-legal-logo.png"
+                            alt="ORION SISTEMAS - LEGAL SMART GOV"
+                            className="w-full h-auto object-contain rounded-lg block"
+                        />
                     </div>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">Bienvenido</h2>
+
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Bienvenido</h2>
                 <p className="text-gray-500 text-sm">
                     Inicia sesión para continuar<br />
                     en la Plataforma de Estructura Política
@@ -45,9 +50,9 @@ export default function Login() {
                     validateStatus={errors.email ? 'error' : ''}
                     help={errors.email}
                 >
-                    <Input 
-                        prefix={<UserOutlined className="text-gray-400" />} 
-                        placeholder="Ingresa tu correo" 
+                    <Input
+                        prefix={<UserOutlined className="text-gray-400" />}
+                        placeholder="Ingresa tu correo"
                         size="large"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
@@ -60,9 +65,9 @@ export default function Login() {
                     validateStatus={errors.password ? 'error' : ''}
                     help={errors.password}
                 >
-                    <Input.Password 
-                        prefix={<LockOutlined className="text-gray-400" />} 
-                        placeholder="Ingresa tu contraseña" 
+                    <Input.Password
+                        prefix={<LockOutlined className="text-gray-400" />}
+                        placeholder="Ingresa tu contraseña"
                         size="large"
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
@@ -71,7 +76,7 @@ export default function Login() {
                 </Form.Item>
 
                 <div className="flex items-center justify-between mb-6 mt-2">
-                    <Checkbox 
+                    <Checkbox
                         checked={data.remember}
                         onChange={(e) => setData('remember', e.target.checked)}
                         className="text-gray-600 text-sm"
@@ -84,23 +89,23 @@ export default function Login() {
                 </div>
 
                 <Form.Item>
-                    <Button 
-                        type="primary" 
-                        htmlType="submit" 
+                    <Button
+                        type="primary"
+                        htmlType="submit"
                         className="w-full h-12 bg-blue-700 hover:bg-blue-800 text-base font-medium rounded-lg"
                         loading={processing}
                     >
                         Iniciar sesión
                     </Button>
                 </Form.Item>
-                
+
                 <div className="flex items-center justify-center space-x-4 my-6">
                     <span className="h-px w-full bg-gray-200"></span>
                     <span className="text-gray-400 text-xs uppercase font-medium">O</span>
                     <span className="h-px w-full bg-gray-200"></span>
                 </div>
-                
-                <Button 
+
+                <Button
                     className="w-full h-12 border-gray-300 text-gray-700 text-base font-medium rounded-lg flex items-center justify-center"
                 >
                     <span className="mr-2 text-blue-600">🛡️</span> Iniciar sesión con código

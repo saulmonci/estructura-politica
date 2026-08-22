@@ -52,10 +52,18 @@ export default function MainLayout({ children }) {
                 }}
             >
                 <ProLayout
-                    title="ORION Sistemas"
+                    title=""
                     collapsed={collapsed}
                     onCollapse={setCollapsed}
-                    logo={<div className="bg-white p-1 rounded"><img src="/images/orion-logo.png" alt="logo" style={{height: 32}} /></div>}
+                    menuHeaderRender={(logoDom, titleDom, props) => (
+                        <div className={`flex items-center justify-center w-full transition-all duration-200 ${props?.collapsed ? 'p-2' : 'p-3 px-4'}`}>
+                            <img 
+                                src="/images/orion-legal-logo.png" 
+                                alt="ORION Sistemas - Legal Smart Gov" 
+                                className={`object-contain transition-all duration-200 ${props?.collapsed ? 'h-8 w-auto' : 'w-full h-auto max-h-24 rounded-lg'}`}
+                            />
+                        </div>
+                    )}
                     layout="side"
                     navTheme="dark"
                     colorPrimary="#1677ff"
@@ -177,15 +185,12 @@ export default function MainLayout({ children }) {
                                 <span className="mx-2 text-gray-400 font-bold flex-shrink-0">&gt;</span>
                                 <span className="truncate">{user.id} - {displayName}</span>
                             </div>
-                            {/* Mobile title replacement & menu toggle */}
-                            <div className="md:hidden flex items-center gap-3 flex-1">
+                            {/* Mobile menu toggle */}
+                            <div className="md:hidden flex items-center mr-3">
                                 <MenuOutlined 
                                     className="text-xl text-gray-800 cursor-pointer" 
                                     onClick={() => setCollapsed(!collapsed)} 
                                 />
-                                <span className="font-bold text-gray-800 text-lg truncate">
-                                    ORION
-                                </span>
                             </div>
 
                             <div className="flex items-center gap-3 md:gap-6">
