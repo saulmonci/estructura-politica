@@ -359,20 +359,36 @@ class WebController extends Controller
 
         $presidenteId = in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true) ? $user->getPresidenteId() : null;
 
-        // Obtener demarcaciones filtradas por municipio
-        $demarcacionesQuery = \App\Models\Demarcacion::select(
-            'id',
-            'nombre',
-            'meta',
-            'municipality_id',
-            DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
-        )->orderBy('id');
+        // Obtener demarcaciones filtradas por municipio con meta del presidente si existe
+        $demarcacionesQuery = \App\Models\Demarcacion::query();
 
-        if ($municipalityId) {
-            $demarcacionesQuery->where('municipality_id', $municipalityId);
+        if ($presidenteId) {
+            $demarcacionesQuery->leftJoin('demarcacion_presidente', function ($join) use ($presidenteId) {
+                $join->on('demarcaciones.id', '=', 'demarcacion_presidente.demarcacion_id')
+                     ->where('demarcacion_presidente.presidente_id', '=', $presidenteId);
+            })
+            ->select(
+                'demarcaciones.id',
+                'demarcaciones.nombre',
+                'demarcaciones.municipality_id',
+                DB::raw('COALESCE(demarcacion_presidente.meta, demarcaciones.meta, 500) as meta'),
+                DB::raw('ST_AsGeoJSON(ST_Transform(demarcaciones.geom, 4326)) as geojson')
+            );
+        } else {
+            $demarcacionesQuery->select(
+                'demarcaciones.id',
+                'demarcaciones.nombre',
+                'demarcaciones.meta',
+                'demarcaciones.municipality_id',
+                DB::raw('ST_AsGeoJSON(ST_Transform(demarcaciones.geom, 4326)) as geojson')
+            );
         }
 
-        $demarcaciones = $demarcacionesQuery->get();
+        if ($municipalityId) {
+            $demarcacionesQuery->where('demarcaciones.municipality_id', $municipalityId);
+        }
+
+        $demarcaciones = $demarcacionesQuery->orderBy('demarcaciones.id')->get();
 
         // 1. Contar promovidos por demarcación
         $promovidosQuery = DB::table('promovidos')
@@ -446,21 +462,38 @@ class WebController extends Controller
 
         $avanceGlobal = $totalMeta > 0 ? round(($totalPromovidos / $totalMeta) * 100, 1) : 0;
 
-        // Obtener secciones electorales filtradas por municipio
-        $seccionesQuery = \App\Models\SeccionElectoral::select(
-            'id',
-            'numero',
-            'meta',
-            'demarcacion_id',
-            'municipality_id',
-            DB::raw('ST_AsGeoJSON(ST_Transform(geom, 4326)) as geojson')
-        )->orderBy('numero');
+        // Obtener secciones electorales filtradas por municipio con meta del presidente si existe
+        $seccionesQuery = \App\Models\SeccionElectoral::query();
 
-        if ($municipalityId) {
-            $seccionesQuery->where('municipality_id', $municipalityId);
+        if ($presidenteId) {
+            $seccionesQuery->leftJoin('seccion_electoral_presidente', function ($join) use ($presidenteId) {
+                $join->on('secciones_electorales.id', '=', 'seccion_electoral_presidente.seccion_electoral_id')
+                     ->where('seccion_electoral_presidente.presidente_id', '=', $presidenteId);
+            })
+            ->select(
+                'secciones_electorales.id',
+                'secciones_electorales.numero',
+                'secciones_electorales.demarcacion_id',
+                'secciones_electorales.municipality_id',
+                DB::raw('COALESCE(seccion_electoral_presidente.meta, secciones_electorales.meta, 50) as meta'),
+                DB::raw('ST_AsGeoJSON(ST_Transform(secciones_electorales.geom, 4326)) as geojson')
+            );
+        } else {
+            $seccionesQuery->select(
+                'secciones_electorales.id',
+                'secciones_electorales.numero',
+                'secciones_electorales.meta',
+                'secciones_electorales.demarcacion_id',
+                'secciones_electorales.municipality_id',
+                DB::raw('ST_AsGeoJSON(ST_Transform(secciones_electorales.geom, 4326)) as geojson')
+            );
         }
 
-        $secciones = $seccionesQuery->get();
+        if ($municipalityId) {
+            $seccionesQuery->where('secciones_electorales.municipality_id', $municipalityId);
+        }
+
+        $secciones = $seccionesQuery->orderBy('secciones_electorales.numero')->get();
 
         // 1. Contar promovidos por sección electoral
         $promovidosSeccionQuery = DB::table('promovidos')

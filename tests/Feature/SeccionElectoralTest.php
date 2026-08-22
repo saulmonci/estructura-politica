@@ -124,8 +124,39 @@ class SeccionElectoralTest extends TestCase
         $this->assertDatabaseHas('secciones_electorales', [
             'id' => $seccion->id,
             'numero' => '0122',
+        ]);
+        $this->assertDatabaseHas('seccion_electoral_presidente', [
+            'presidente_id' => $presidente->id,
+            'seccion_electoral_id' => $seccion->id,
             'meta' => 180
         ]);
+    }
+
+    public function test_multi_presidente_seccion_metas_isolation()
+    {
+        $presidente1 = User::factory()->create(['role' => UserRole::PRESIDENTE]);
+        $presidente2 = User::factory()->create(['role' => UserRole::PRESIDENTE]);
+
+        $seccion = SeccionElectoral::create([
+            'numero' => '0120',
+            'demarcacion_id' => $this->demarcacion->id,
+            'meta' => 50
+        ]);
+
+        // Presidente 1 updates meta to 80
+        $this->actingAs($presidente1)->put("/secciones/{$seccion->id}", [
+            'numero' => '0120',
+            'meta' => 80
+        ]);
+
+        // Presidente 2 updates meta to 120
+        $this->actingAs($presidente2)->put("/secciones/{$seccion->id}", [
+            'numero' => '0120',
+            'meta' => 120
+        ]);
+
+        $this->assertEquals(80, $seccion->fresh()->getMetaForPresidente($presidente1->id));
+        $this->assertEquals(120, $seccion->fresh()->getMetaForPresidente($presidente2->id));
     }
 
     public function test_presidente_can_delete_section()

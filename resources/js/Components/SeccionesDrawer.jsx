@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Button, Form, Input, InputNumber, message, Table, Popconfirm, Space, Card, Divider } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { Drawer, Button, Form, Input, InputNumber, message, Table, Space, Card, Divider, Tag } from 'antd';
+import { PlusOutlined, EditOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
-const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
+const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null }) => {
     const [secciones, setSecciones] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -29,12 +29,14 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
             form.resetFields();
             setEditingId(null);
         }
-    }, [visible, demarcacion]);
+    }, [visible, demarcacion, presidenteId]);
 
     const fetchSecciones = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`/demarcaciones/${demarcacion.id}/secciones`);
+            const response = await axios.get(`/demarcaciones/${demarcacion.id}/secciones`, {
+                params: presidenteId ? { presidente_id: presidenteId } : {}
+            });
             setSecciones(response.data);
         } catch (error) {
             message.error('Error al cargar las secciones electorales');
@@ -46,9 +48,14 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
     const handleSubmit = async (values) => {
         setLoading(true);
         try {
+            const payload = {
+                ...values,
+                ...(presidenteId ? { presidente_id: presidenteId } : {})
+            };
+
             if (editingId) {
                 // Update
-                const response = await axios.put(`/secciones/${editingId}`, values);
+                const response = await axios.put(`/secciones/${editingId}`, payload);
                 if (response.data.success) {
                     message.success('Sección electoral actualizada exitosamente.');
                     setEditingId(null);
@@ -58,7 +65,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
                 }
             } else {
                 // Create
-                const response = await axios.post(`/demarcaciones/${demarcacion.id}/secciones`, values);
+                const response = await axios.post(`/demarcaciones/${demarcacion.id}/secciones`, payload);
                 if (response.data.success) {
                     message.success('Sección electoral creada exitosamente.');
                     setIsFormVisible(false);
@@ -83,21 +90,6 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
         setIsFormVisible(true);
     };
 
-    const handleDelete = async (id) => {
-        setLoading(true);
-        try {
-            const response = await axios.delete(`/secciones/${id}`);
-            if (response.data.success) {
-                message.success('Sección electoral eliminada.');
-                fetchSecciones();
-            }
-        } catch (error) {
-            message.error('Error al eliminar la sección.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleCancelForm = () => {
         setIsFormVisible(false);
         setEditingId(null);
@@ -117,35 +109,29 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
             dataIndex: 'meta',
             key: 'meta',
             sorter: (a, b) => a.meta - b.meta,
-            render: (meta) => <span className="font-semibold text-blue-600">{meta}</span>
+            render: (meta, record) => (
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold text-blue-600">{meta}</span>
+                    {record.is_custom_meta ? (
+                        <Tag color="blue" className="text-[10px] leading-tight px-1 py-0 m-0">Personalizada</Tag>
+                    ) : (
+                        <Tag color="default" className="text-[10px] leading-tight px-1 py-0 m-0 text-gray-400">Base</Tag>
+                    )}
+                </div>
+            )
         },
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 100,
+            width: 80,
             align: 'center',
             render: (_, record) => (
-                <Space size="middle">
-                    <Button 
-                        type="text" 
-                        icon={<EditOutlined className="text-blue-600" />} 
-                        onClick={() => handleEdit(record)}
-                    />
-                    <Popconfirm
-                        title="¿Estás seguro de eliminar esta sección?"
-                        description="Esta acción eliminará el registro de la sección."
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Sí"
-                        cancelText="No"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Button 
-                            type="text" 
-                            danger 
-                            icon={<DeleteOutlined />} 
-                        />
-                    </Popconfirm>
-                </Space>
+                <Button 
+                    type="text" 
+                    icon={<EditOutlined className="text-blue-600" />} 
+                    onClick={() => handleEdit(record)}
+                    title="Editar Sección"
+                />
             )
         }
     ];
@@ -166,7 +152,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
         >
             <div className="flex justify-between items-center mb-4">
                 <span className="text-gray-500 text-sm">
-                    {secciones.length} secciones registradas
+                    {secciones.length} secciones registradas {presidenteId ? '(Metas para el candidato)' : ''}
                 </span>
                 {!isFormVisible && (
                     <Button 
@@ -204,7 +190,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
 
                             <Form.Item
                                 name="meta"
-                                label="Meta de Votantes"
+                                label={presidenteId ? "Meta para Candidato" : "Meta Base"}
                                 rules={[{ required: true, message: 'Ingresa la meta.' }]}
                             >
                                 <InputNumber min={0} style={{ width: '100%' }} placeholder="Ej. 100" />
@@ -233,7 +219,14 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
                         <Card key={record.id} size="small" className="shadow-sm border border-gray-100 rounded-lg">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="font-bold text-gray-800">Sección {record.numero}</span>
-                                <span className="font-semibold text-blue-600">Meta: {record.meta}</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-blue-600">Meta: {record.meta}</span>
+                                    {record.is_custom_meta ? (
+                                        <Tag color="blue" className="text-[10px] leading-tight px-1 py-0 m-0">Personalizada</Tag>
+                                    ) : (
+                                        <Tag color="default" className="text-[10px] leading-tight px-1 py-0 m-0 text-gray-400">Base</Tag>
+                                    )}
+                                </div>
                             </div>
                             <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                                 <Button 
@@ -243,21 +236,6 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion }) => {
                                 >
                                     Editar
                                 </Button>
-                                <Popconfirm
-                                    title="¿Estás seguro de eliminar?"
-                                    onConfirm={() => handleDelete(record.id)}
-                                    okText="Sí"
-                                    cancelText="No"
-                                    okButtonProps={{ danger: true }}
-                                >
-                                    <Button 
-                                        type="text" 
-                                        danger 
-                                        icon={<DeleteOutlined />}
-                                    >
-                                        Eliminar
-                                    </Button>
-                                </Popconfirm>
                             </div>
                         </Card>
                     ))}

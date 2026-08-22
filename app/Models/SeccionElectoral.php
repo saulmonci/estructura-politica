@@ -50,4 +50,33 @@ class SeccionElectoral extends Model
     {
         return $this->belongsTo(Demarcacion::class, 'demarcacion_id');
     }
+
+    /**
+     * Get president metas pivot relationship.
+     */
+    public function presidentes()
+    {
+        return $this->belongsToMany(User::class, 'seccion_electoral_presidente', 'seccion_electoral_id', 'presidente_id')
+            ->withoutGlobalScopes()
+            ->withPivot('meta')
+            ->withTimestamps();
+    }
+
+    /**
+     * Helper to get meta for a specific president, falling back to base meta.
+     */
+    public function getMetaForPresidente(?int $presidenteId): int
+    {
+        if ($presidenteId) {
+            $meta = \Illuminate\Support\Facades\DB::table('seccion_electoral_presidente')
+                ->where('seccion_electoral_id', $this->id)
+                ->where('presidente_id', $presidenteId)
+                ->value('meta');
+
+            if ($meta !== null) {
+                return (int) $meta;
+            }
+        }
+        return (int) ($this->meta ?? 0);
+    }
 }

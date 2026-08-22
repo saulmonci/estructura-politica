@@ -212,6 +212,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Metas personalizadas de demarcaciones para este presidente.
+     */
+    public function demarcacionesMetas()
+    {
+        return $this->belongsToMany(Demarcacion::class, 'demarcacion_presidente', 'presidente_id', 'demarcacion_id')
+            ->withPivot('meta')
+            ->withTimestamps();
+    }
+
+    /**
+     * Metas personalizadas de secciones electorales para este presidente.
+     */
+    public function seccionesMetas()
+    {
+        return $this->belongsToMany(SeccionElectoral::class, 'seccion_electoral_presidente', 'presidente_id', 'seccion_electoral_id')
+            ->withPivot('meta')
+            ->withTimestamps();
+    }
+
+    /**
      * Obtener el líder inmediato del usuario.
      */
     public function leader()

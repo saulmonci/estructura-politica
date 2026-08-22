@@ -1,25 +1,34 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { ModalForm, ProFormText, ProFormDigit, ProFormTextArea } from '@ant-design/pro-components';
-import { Row, Col, message, Alert, Button, Divider, Form } from 'antd';
+import { ModalForm, ProFormText, ProFormDigit } from '@ant-design/pro-components';
+import { Row, Col, message, Button, Divider, Form, Alert } from 'antd';
 import { 
     EnvironmentOutlined, 
     SaveOutlined, 
     CloseOutlined, 
-    InfoCircleOutlined,
-    GlobalOutlined
+    InfoCircleOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
 
-const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
+const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresidenteId = null }, ref) => {
     const [open, setOpen] = useState(false);
     const [editId, setEditingId] = useState(null);
     const [fetchUrl, setFetchUrl] = useState(null);
+    const [activePresidenteId, setActivePresidenteId] = useState(propPresidenteId);
+
+    useEffect(() => {
+        setActivePresidenteId(propPresidenteId);
+    }, [propPresidenteId]);
 
     useImperativeHandle(ref, () => ({
-        open(id = null, url = null) {
+        open(id = null, url = null, targetPresId = null) {
             setEditingId(id);
             setFetchUrl(url);
+            if (targetPresId !== undefined && targetPresId !== null) {
+                setActivePresidenteId(targetPresId);
+            } else {
+                setActivePresidenteId(propPresidenteId);
+            }
             setOpen(true);
         },
         close() {
@@ -31,7 +40,6 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
 
     useEffect(() => {
         if (open) {
-            // Limpiar campos inmediatamente al abrir para evitar stale data flash
             form.resetFields();
             form.setFieldsValue({
                 id: undefined,
@@ -41,20 +49,22 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
 
             if (editId) {
                 const url = fetchUrl || `/demarcaciones/${editId}`;
-                axios.get(url)
-                    .then(response => {
-                        form.setFieldsValue({
-                            id: response.data.id,
-                            nombre: response.data.nombre,
-                            meta: response.data.meta
-                        });
-                    })
-                    .catch(() => {
-                        message.error('No se pudo cargar la información de la demarcación');
+                axios.get(url, {
+                    params: activePresidenteId ? { presidente_id: activePresidenteId } : {}
+                })
+                .then(response => {
+                    form.setFieldsValue({
+                        id: response.data.id,
+                        nombre: response.data.nombre,
+                        meta: response.data.meta
                     });
+                })
+                .catch(() => {
+                    message.error('No se pudo cargar la información de la demarcación');
+                });
             }
         }
-    }, [open, editId, fetchUrl]);
+    }, [open, editId, fetchUrl, activePresidenteId]);
 
     return (
         <ModalForm
@@ -98,13 +108,17 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
             onFinish={async (values) => {
                 const basePath = '/demarcaciones';
                 const endpoint = fetchUrl || (editId ? `${basePath}/${editId}` : basePath);
+                const payload = {
+                    ...values,
+                    ...(activePresidenteId ? { presidente_id: activePresidenteId } : {})
+                };
 
                 if (editId) {
-                    values._method = 'put';
-                    router.post(endpoint, values, {
+                    payload._method = 'put';
+                    router.post(endpoint, payload, {
                         onSuccess: () => {
                             message.success('Demarcación actualizada exitosamente');
-                            if (onSuccess) onSuccess(values);
+                            if (onSuccess) onSuccess(payload);
                             setOpen(false);
                         },
                         onError: (errors) => {
@@ -119,10 +133,10 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
                         }
                     });
                 } else {
-                    router.post(endpoint, values, {
+                    router.post(endpoint, payload, {
                         onSuccess: () => {
                             message.success('Demarcación creada exitosamente');
-                            if (onSuccess) onSuccess(values);
+                            if (onSuccess) onSuccess(payload);
                             setOpen(false);
                         },
                         onError: (errors) => {
@@ -150,7 +164,11 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
                         <h2 className="text-xl font-bold m-0 tracking-wide uppercase">
                             {editId ? 'EDICIÓN DE' : 'REGISTRO DE'} Demarcación Territorial
                         </h2>
-                        <p className="text-gray-300 text-sm m-0">Estructura Electoral Municipal</p>
+                        <p className="text-gray-300 text-sm m-0">
+                            {activePresidenteId 
+                                ? 'Configurando meta para el candidato seleccionado' 
+                                : 'Estructura Electoral Municipal'}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -195,7 +213,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess }, ref) => {
                         <Col span={24}>
                             <ProFormDigit
                                 name="meta"
-                                label="Meta de Votantes"
+                                label={activePresidenteId ? "Meta de Votantes para el Candidato" : "Meta de Votantes Base"}
                                 placeholder="Número total de simpatizantes como objetivo"
                                 rules={[
                                     { required: true, message: 'Requerido' },

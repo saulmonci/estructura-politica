@@ -62,4 +62,33 @@ class Demarcacion extends Model
     {
         return $this->hasMany(SeccionElectoral::class, 'demarcacion_id');
     }
+
+    /**
+     * Get president metas pivot relationship.
+     */
+    public function presidentes()
+    {
+        return $this->belongsToMany(User::class, 'demarcacion_presidente', 'demarcacion_id', 'presidente_id')
+            ->withoutGlobalScopes()
+            ->withPivot('meta')
+            ->withTimestamps();
+    }
+
+    /**
+     * Helper to get meta for a specific president, falling back to base meta.
+     */
+    public function getMetaForPresidente(?int $presidenteId): int
+    {
+        if ($presidenteId) {
+            $meta = \Illuminate\Support\Facades\DB::table('demarcacion_presidente')
+                ->where('demarcacion_id', $this->id)
+                ->where('presidente_id', $presidenteId)
+                ->value('meta');
+
+            if ($meta !== null) {
+                return (int) $meta;
+            }
+        }
+        return (int) ($this->meta ?? 500);
+    }
 }

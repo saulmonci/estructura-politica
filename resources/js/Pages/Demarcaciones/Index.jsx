@@ -1,35 +1,36 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Space, Badge, Modal } from 'antd';
+import { Card, Button, Space, Badge, Modal, Select, Tag } from 'antd';
 import { 
     PlusOutlined, 
     EnvironmentOutlined, 
     EditOutlined, 
-    DeleteOutlined, 
     DownloadOutlined, 
     GlobalOutlined,
     CompassOutlined,
-    UnorderedListOutlined
+    UnorderedListOutlined,
+    UserOutlined
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import DemarcacionFormModal from './DemarcacionFormModal';
 import SeccionesDrawer from '@/Components/SeccionesDrawer';
 
 export default function DemarcacionesIndex() {
-    const { auth } = usePage().props;
+    const { auth, presidentes = [], currentPresidenteId = null, isGlobalAdmin = false } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
     const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
     const [isSeccionesOpen, setIsSeccionesOpen] = useState(false);
+    const [selectedPresidenteId, setSelectedPresidenteId] = useState(currentPresidenteId);
 
     const handleCreate = () => {
-        modalRef.current?.open();
+        modalRef.current?.open(null, null, selectedPresidenteId);
     };
 
     const handleEdit = (id) => {
-        modalRef.current?.open(id, `/demarcaciones/${id}`);
+        modalRef.current?.open(id, `/demarcaciones/${id}`, selectedPresidenteId);
     };
 
     const handleOpenSecciones = (record) => {
@@ -37,24 +38,13 @@ export default function DemarcacionesIndex() {
         setIsSeccionesOpen(true);
     };
 
-    const handleDelete = (id) => {
-        modal.confirm({
-            title: '¿Estás seguro de eliminar esta demarcación?',
-            content: 'Esta acción no se puede deshacer y puede dejar sin demarcación a los usuarios y promovidos asignados a ella.',
-            okText: 'Sí, eliminar',
-            okType: 'danger',
-            cancelText: 'Cancelar',
-            onOk: () => {
-                router.delete(`/demarcaciones/${id}`, {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        if (actionRef.current) {
-                            actionRef.current.reload();
-                        }
-                    }
-                });
-            }
-        });
+    const handlePresidenteChange = (val) => {
+        setSelectedPresidenteId(val);
+        if (actionRef.current) {
+            setTimeout(() => {
+                actionRef.current.reload();
+            }, 50);
+        }
     };
 
     const columns = [
@@ -82,14 +72,21 @@ export default function DemarcacionesIndex() {
             dataIndex: 'meta',
             key: 'meta',
             sorter: true,
-            render: (meta) => (
-                <span className="font-bold text-gray-700">{meta}</span>
+            render: (meta, record) => (
+                <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-800">{meta}</span>
+                    {record.is_custom_meta ? (
+                        <Tag color="blue" className="text-xs font-normal">Personalizada</Tag>
+                    ) : (
+                        <Tag color="default" className="text-xs font-normal text-gray-400">Base</Tag>
+                    )}
+                </div>
             )
         },
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 150,
+            width: 120,
             align: 'center',
             search: false,
             render: (_, record) => (
@@ -104,12 +101,7 @@ export default function DemarcacionesIndex() {
                         type="text" 
                         icon={<EditOutlined className="text-blue-600" />} 
                         onClick={() => handleEdit(record.id)}
-                    />
-                    <Button 
-                        type="text" 
-                        danger 
-                        icon={<DeleteOutlined />} 
-                        onClick={() => handleDelete(record.id)}
+                        title="Editar Demarcación"
                     />
                 </Space>
             )
@@ -124,6 +116,11 @@ export default function DemarcacionesIndex() {
                         <div className="font-bold text-base text-gray-800">{record.nombre}</div>
                         <div className="text-xs text-blue-600 font-bold mt-0.5">Demarcación: {record.id}</div>
                     </div>
+                    {record.is_custom_meta ? (
+                        <Tag color="blue" className="text-xs">Personalizada</Tag>
+                    ) : (
+                        <Tag color="default" className="text-xs text-gray-400">Base</Tag>
+                    )}
                 </div>
                 
                 <div className="space-y-2 mb-4 text-sm text-gray-600">
@@ -136,15 +133,13 @@ export default function DemarcacionesIndex() {
                 
                 <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
                     <Button type="primary" icon={<UnorderedListOutlined />} className="bg-[#0f172a] hover:bg-slate-800 w-full flex justify-center items-center" onClick={() => handleOpenSecciones(record)}>Ver Secciones</Button>
-                    <div className="flex justify-between w-full gap-2">
-                        <Button type="text" icon={<EditOutlined />} className="text-blue-600 w-1/2 flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
-                        <div className="w-px bg-gray-200 my-1"></div>
-                        <Button type="text" danger icon={<DeleteOutlined />} className="w-1/2 flex justify-center items-center" onClick={() => handleDelete(record.id)}>Eliminar</Button>
-                    </div>
+                    <Button type="default" icon={<EditOutlined />} className="text-blue-600 border-blue-200 hover:border-blue-400 w-full flex justify-center items-center" onClick={() => handleEdit(record.id)}>Editar</Button>
                 </div>
             </Card>
         );
     };
+
+    const endpoint = `/demarcaciones${selectedPresidenteId ? `?presidente_id=${selectedPresidenteId}` : ''}`;
 
     return (
         <MainLayout>
@@ -157,7 +152,7 @@ export default function DemarcacionesIndex() {
                         <h2 className="text-xl font-bold m-0 flex items-center gap-2">
                             <EnvironmentOutlined /> Administrar Demarcaciones
                         </h2>
-                        <p className="text-gray-500 text-sm mt-1">Configura las zonas electorales, sus metas y límites geográficos en el mapa.</p>
+                        <p className="text-gray-500 text-sm mt-1">Configura las zonas electorales, sus metas por candidato y secciones electorales.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <Button 
@@ -174,10 +169,34 @@ export default function DemarcacionesIndex() {
                     </div>
                 </div>
 
+                {isGlobalAdmin && presidentes.length > 0 && (
+                    <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                            <UserOutlined className="text-blue-600" />
+                            <span>Viendo metas para el candidato:</span>
+                        </div>
+                        <Select
+                            className="w-full sm:w-80"
+                            placeholder="Selecciona un Presidente / Candidato"
+                            allowClear
+                            value={selectedPresidenteId}
+                            onChange={handlePresidenteChange}
+                            options={[
+                                { label: '🌐 Meta Base General (Por Defecto)', value: null },
+                                ...presidentes.map(p => ({
+                                    label: `👤 ${p.name || p.nombre} (${p.municipality?.nombre || 'Municipio'})`,
+                                    value: p.id
+                                }))
+                            ]}
+                        />
+                    </div>
+                )}
+
                 <TableCrud
+                    key={selectedPresidenteId || 'global'}
                     actionRef={actionRef}
                     columns={columns}
-                    endpoint="/demarcaciones"
+                    endpoint={endpoint}
                     rowKey="id"
                     search={true} 
                     mobileCardRender={renderMobileCard}
@@ -186,6 +205,7 @@ export default function DemarcacionesIndex() {
 
             <DemarcacionFormModal 
                 ref={modalRef}
+                presidenteId={selectedPresidenteId}
                 onSuccess={() => {
                     if (actionRef.current) {
                         actionRef.current.reload();
@@ -197,6 +217,7 @@ export default function DemarcacionesIndex() {
                 visible={isSeccionesOpen}
                 onClose={() => setIsSeccionesOpen(false)}
                 demarcacion={selectedDemarcacion}
+                presidenteId={selectedPresidenteId}
             />
         </MainLayout>
     );
