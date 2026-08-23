@@ -1,6 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Button, Form, Input, DatePicker, Select, InputNumber, Upload, message, Table, Popconfirm, Tag, Space, Card, Modal } from 'antd';
-import { PlusOutlined, UploadOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PaperClipOutlined } from '@ant-design/icons';
+import {
+    Drawer,
+    Button,
+    Form,
+    Input,
+    DatePicker,
+    Select,
+    InputNumber,
+    Upload,
+    message,
+    Table,
+    Popconfirm,
+    Tag,
+    Space,
+    Card,
+    Modal,
+} from 'antd';
+import {
+    PlusOutlined,
+    UploadOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    EyeOutlined,
+    PaperClipOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 
@@ -62,7 +85,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
             formData.append('estado', values.estado);
             if (values.descripcion) formData.append('descripcion', values.descripcion);
             if (values.cantidad_monetaria) formData.append('cantidad_monetaria', values.cantidad_monetaria);
-            
+
             if (values.evidencia && values.evidencia.fileList.length > 0) {
                 formData.append('evidencia_file', values.evidencia.fileList[0].originFileObj);
             }
@@ -71,12 +94,12 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                 // Para update con FormData puede ser engañoso en Laravel, simulamos put con _method
                 formData.append('_method', 'PUT');
                 await axios.post(`/apoyos/${editingId}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                    headers: { 'Content-Type': 'multipart/form-data' },
                 });
                 message.success('Apoyo actualizado correctamente');
             } else {
                 await axios.post(`${resolvedBasePath}/apoyos`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                    headers: { 'Content-Type': 'multipart/form-data' },
                 });
                 message.success('Apoyo registrado correctamente');
             }
@@ -123,23 +146,39 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
     };
 
     const columns = [
-        { title: 'Fecha', dataIndex: 'fecha', key: 'fecha', width: 100 },
-        { title: 'Tipo de Apoyo', dataIndex: 'tipo_apoyo', key: 'tipo_apoyo' },
-        { title: 'Cantidad ($)', dataIndex: 'cantidad_monetaria', key: 'cantidad_monetaria', width: 110,
-            render: (val) => val ? `$${Number(val).toLocaleString()}` : '-'
+        {
+            title: 'Fecha',
+            dataIndex: 'fecha',
+            key: 'fecha',
+            width: 100,
         },
-        { 
-            title: 'Estado', 
-            dataIndex: 'estado', 
+        {
+            title: 'Tipo de Apoyo',
+            dataIndex: 'tipo_apoyo',
+            key: 'tipo_apoyo',
+        },
+        {
+            title: 'Cantidad ($)',
+            dataIndex: 'cantidad_monetaria',
+            key: 'cantidad_monetaria',
+            width: 110,
+            render: (val) => (val ? `$${Number(val).toLocaleString()}` : '-'),
+        },
+        {
+            title: 'Estado',
+            dataIndex: 'estado',
             key: 'estado',
             width: 100,
             render: (estado) => {
-                let color = estado === 'Entregado' ? 'green' : (estado === 'Pendiente' ? 'orange' : 'red');
+                let color = estado === 'Entregado' ? 'green' : estado === 'Pendiente' ? 'orange' : 'red';
                 return <Tag color={color}>{estado}</Tag>;
-            }
+            },
         },
-        { title: 'Descripción', dataIndex: 'descripcion', key: 'descripcion',
-            render: (v) => v || <span className="text-gray-400">-</span>
+        {
+            title: 'Descripción',
+            dataIndex: 'descripcion',
+            key: 'descripcion',
+            render: (v) => v || <span className="text-gray-400">-</span>,
         },
         {
             title: 'Evidencia',
@@ -151,17 +190,27 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                 if (!url) return <span className="text-gray-300">-</span>;
                 if (isImageUrl(url)) {
                     return (
-                        <div onClick={() => setPreviewImage(url)} className="cursor-pointer hover:opacity-80 transition-opacity" title="Ver imagen">
-                            <img src={url} alt="evidencia" className="w-10 h-10 object-cover rounded border border-gray-200" />
+                        <div
+                            onClick={() => setPreviewImage(url)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Ver imagen"
+                        >
+                            <img
+                                src={url}
+                                alt="evidencia"
+                                className="h-10 w-10 rounded border border-gray-200 object-cover"
+                            />
                         </div>
                     );
                 }
                 return (
                     <a href={url} target="_blank" rel="noopener noreferrer" title="Ver archivo">
-                        <Button size="small" icon={<PaperClipOutlined />} type="link">Ver</Button>
+                        <Button size="small" icon={<PaperClipOutlined />} type="link">
+                            Ver
+                        </Button>
                     </a>
                 );
-            }
+            },
         },
         {
             title: 'Acciones',
@@ -189,9 +238,9 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
         >
             {!isFormVisible ? (
                 <>
-                    <Button 
-                        type="primary" 
-                        icon={<PlusOutlined />} 
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
                         onClick={() => {
                             setIsFormVisible(true);
                             setEditingId(null);
@@ -205,43 +254,87 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     {isMobile ? (
                         <div className="flex flex-col gap-3">
                             {loading ? (
-                                <div className="text-center py-6 text-gray-500">Cargando apoyos...</div>
+                                <div className="py-6 text-center text-gray-500">Cargando apoyos...</div>
                             ) : apoyos.length === 0 ? (
-                                <div className="text-center py-6 text-gray-400 bg-gray-50 border rounded-lg">No hay apoyos registrados.</div>
+                                <div className="rounded-lg border bg-gray-50 py-6 text-center text-gray-400">
+                                    No hay apoyos registrados.
+                                </div>
                             ) : (
-                                apoyos.map(record => {
-                                    let tagColor = record.estado === 'Entregado' ? 'green' : (record.estado === 'Pendiente' ? 'orange' : 'red');
+                                apoyos.map((record) => {
+                                    let tagColor =
+                                        record.estado === 'Entregado'
+                                            ? 'green'
+                                            : record.estado === 'Pendiente'
+                                              ? 'orange'
+                                              : 'red';
                                     return (
-                                        <Card key={record.id} size="small" className="shadow-sm border border-gray-100 rounded-lg">
-                                            <div className="flex justify-between items-start mb-2">
+                                        <Card
+                                            key={record.id}
+                                            size="small"
+                                            className="rounded-lg border border-gray-100 shadow-sm"
+                                        >
+                                            <div className="mb-2 flex items-start justify-between">
                                                 <div>
-                                                    <span className="font-bold text-gray-800 text-sm">{record.tipo_apoyo}</span>
-                                                    <div className="text-xs text-gray-400 mt-0.5">Fecha: {record.fecha}</div>
+                                                    <span className="text-sm font-bold text-gray-800">
+                                                        {record.tipo_apoyo}
+                                                    </span>
+                                                    <div className="mt-0.5 text-xs text-gray-400">
+                                                        Fecha: {record.fecha}
+                                                    </div>
                                                 </div>
-                                                <Tag color={tagColor} className="m-0">{record.estado}</Tag>
+                                                <Tag color={tagColor} className="m-0">
+                                                    {record.estado}
+                                                </Tag>
                                             </div>
-                                            <div className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
-                                                <span className="font-semibold block text-gray-500 mb-0.5">Descripción:</span>
+                                            <div className="mb-3 rounded bg-gray-50 p-2 text-xs text-gray-600">
+                                                <span className="mb-0.5 block font-semibold text-gray-500">
+                                                    Descripción:
+                                                </span>
                                                 {record.descripcion || 'Sin descripción'}
                                             </div>
-                                            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                            <div className="flex items-center justify-between border-t border-gray-100 pt-2">
                                                 <div className="text-sm font-bold text-gray-900">
-                                                    {record.cantidad_monetaria ? `$${Number(record.cantidad_monetaria).toLocaleString()}` : '$0'}
+                                                    {record.cantidad_monetaria
+                                                        ? `$${Number(record.cantidad_monetaria).toLocaleString()}`
+                                                        : '$0'}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    {record.evidencia_url && (
-                                                        isImageUrl(record.evidencia_url) ? (
-                                                            <div onClick={() => setPreviewImage(record.evidencia_url)} className="cursor-pointer hover:opacity-80 transition-opacity">
-                                                                <img src={record.evidencia_url} alt="evidencia" className="w-8 h-8 object-cover rounded border" />
+                                                    {record.evidencia_url &&
+                                                        (isImageUrl(record.evidencia_url) ? (
+                                                            <div
+                                                                onClick={() => setPreviewImage(record.evidencia_url)}
+                                                                className="cursor-pointer transition-opacity hover:opacity-80"
+                                                            >
+                                                                <img
+                                                                    src={record.evidencia_url}
+                                                                    alt="evidencia"
+                                                                    className="h-8 w-8 rounded border object-cover"
+                                                                />
                                                             </div>
                                                         ) : (
-                                                            <a href={record.evidencia_url} target="_blank" rel="noopener noreferrer">
-                                                                <Button size="small" icon={<PaperClipOutlined />} type="link">Doc</Button>
+                                                            <a
+                                                                href={record.evidencia_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                <Button
+                                                                    size="small"
+                                                                    icon={<PaperClipOutlined />}
+                                                                    type="link"
+                                                                >
+                                                                    Doc
+                                                                </Button>
                                                             </a>
-                                                        )
-                                                    )}
-                                                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} size="small" />
-                                                    <Popconfirm title="¿Eliminar apoyo?" onConfirm={() => handleDelete(record.id)}>
+                                                        ))}
+                                                    <Button
+                                                        icon={<EditOutlined />}
+                                                        onClick={() => handleEdit(record)}
+                                                        size="small"
+                                                    />
+                                                    <Popconfirm
+                                                        title="¿Eliminar apoyo?"
+                                                        onConfirm={() => handleDelete(record.id)}
+                                                    >
                                                         <Button danger icon={<DeleteOutlined />} size="small" />
                                                     </Popconfirm>
                                                 </div>
@@ -252,11 +345,11 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                             )}
                         </div>
                     ) : (
-                        <Table 
-                            dataSource={apoyos} 
-                            columns={columns} 
-                            rowKey="id" 
-                            loading={loading} 
+                        <Table
+                            dataSource={apoyos}
+                            columns={columns}
+                            rowKey="id"
+                            loading={loading}
                             pagination={{ pageSize: 5 }}
                         />
                     )}
@@ -266,16 +359,25 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     <Form.Item name="fecha" label="Fecha" rules={[{ required: true, message: 'Seleccione fecha' }]}>
                         <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
                     </Form.Item>
-                    
-                    <Form.Item name="tipo_apoyo" label="Tipo de Apoyo" rules={[{ required: true, message: 'Ingrese tipo de apoyo' }]}>
+
+                    <Form.Item
+                        name="tipo_apoyo"
+                        label="Tipo de Apoyo"
+                        rules={[{ required: true, message: 'Ingrese tipo de apoyo' }]}
+                    >
                         <Input placeholder="Ej. Despensa, Gestión Médica, etc." />
                     </Form.Item>
-                    
+
                     <Form.Item name="cantidad_monetaria" label="Cantidad Monetaria (Opcional)">
                         <InputNumber style={{ width: '100%' }} prefix="$" min={0} />
                     </Form.Item>
 
-                    <Form.Item name="estado" label="Estado" initialValue="Entregado" rules={[{ required: true, message: 'Seleccione estado' }]}>
+                    <Form.Item
+                        name="estado"
+                        label="Estado"
+                        initialValue="Entregado"
+                        rules={[{ required: true, message: 'Seleccione estado' }]}
+                    >
                         <Select>
                             <Option value="Entregado">Entregado</Option>
                             <Option value="Pendiente">Pendiente</Option>
@@ -290,24 +392,41 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     <Form.Item name="evidencia" label="Evidencia (Foto/Documento)">
                         {/* Si estamos editando y hay evidencia guardada, la mostramos */}
                         {editingId && currentEvidenciaUrl && (
-                            <div className="mb-2 p-2 bg-gray-50 border border-gray-200 rounded flex items-center gap-2">
+                            <div className="mb-2 flex items-center gap-2 rounded border border-gray-200 bg-gray-50 p-2">
                                 {isImageUrl(currentEvidenciaUrl) ? (
-                                    <div onClick={() => setPreviewImage(currentEvidenciaUrl)} className="cursor-pointer hover:opacity-80 transition-opacity" title="Ver imagen grande">
-                                        <img src={currentEvidenciaUrl} alt="evidencia actual" className="w-14 h-14 object-cover rounded border" />
+                                    <div
+                                        onClick={() => setPreviewImage(currentEvidenciaUrl)}
+                                        className="cursor-pointer transition-opacity hover:opacity-80"
+                                        title="Ver imagen grande"
+                                    >
+                                        <img
+                                            src={currentEvidenciaUrl}
+                                            alt="evidencia actual"
+                                            className="h-14 w-14 rounded border object-cover"
+                                        />
                                     </div>
                                 ) : (
-                                    <a href={currentEvidenciaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600">
+                                    <a
+                                        href={currentEvidenciaUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-blue-600"
+                                    >
                                         <PaperClipOutlined /> Ver archivo actual
                                     </a>
                                 )}
-                                <span className="text-xs text-gray-500 ml-1">Sube un nuevo archivo para reemplazarla.</span>
+                                <span className="ml-1 text-xs text-gray-500">
+                                    Sube un nuevo archivo para reemplazarla.
+                                </span>
                             </div>
                         )}
                         <Upload
                             beforeUpload={(file) => {
                                 const maxSizeMB = 10;
                                 if (file.size / 1024 / 1024 > maxSizeMB) {
-                                    message.error(`❌ El archivo es demasiado pesado. El tamaño máximo permitido es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
+                                    message.error(
+                                        `❌ El archivo es demasiado pesado. El tamaño máximo permitido es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`
+                                    );
                                     return Upload.LIST_IGNORE;
                                 }
                                 return false;
@@ -326,7 +445,7 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                     </Space>
                 </Form>
             )}
-            
+
             <Modal
                 open={!!previewImage}
                 title="Evidencia de Apoyo"
@@ -335,7 +454,11 @@ const ApoyosDrawer = ({ visible, onClose, promovido, entity, apiBasePath }) => {
                 width={650}
                 centered
             >
-                <img alt="Evidencia" style={{ width: '100%', borderRadius: '8px', maxHeight: '75vh', objectFit: 'contain' }} src={previewImage} />
+                <img
+                    alt="Evidencia"
+                    style={{ width: '100%', borderRadius: '8px', maxHeight: '75vh', objectFit: 'contain' }}
+                    src={previewImage}
+                />
             </Modal>
         </Drawer>
     );

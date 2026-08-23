@@ -35,7 +35,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
         setLoading(true);
         try {
             const response = await axios.get(`/demarcaciones/${demarcacion.id}/secciones`, {
-                params: presidenteId ? { presidente_id: presidenteId } : {}
+                params: presidenteId ? { presidente_id: presidenteId } : {},
             });
             setSecciones(response.data);
         } catch (error) {
@@ -50,7 +50,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
         try {
             const payload = {
                 ...values,
-                ...(presidenteId ? { presidente_id: presidenteId } : {})
+                ...(presidenteId ? { presidente_id: presidenteId } : {}),
             };
 
             if (editingId) {
@@ -102,7 +102,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
             dataIndex: 'numero',
             key: 'numero',
             sorter: (a, b) => a.numero.localeCompare(b.numero),
-            render: (numero) => <span className="font-bold text-gray-800">Sección {numero}</span>
+            render: (numero) => <span className="font-bold text-gray-800">Sección {numero}</span>,
         },
         {
             title: 'META VOTANTES',
@@ -113,12 +113,16 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
                 <div className="flex items-center gap-2">
                     <span className="font-semibold text-blue-600">{meta}</span>
                     {record.is_custom_meta ? (
-                        <Tag color="blue" className="text-[10px] leading-tight px-1 py-0 m-0">Personalizada</Tag>
+                        <Tag color="blue" className="m-0 px-1 py-0 text-[10px] leading-tight">
+                            Personalizada
+                        </Tag>
                     ) : (
-                        <Tag color="default" className="text-[10px] leading-tight px-1 py-0 m-0 text-gray-400">Base</Tag>
+                        <Tag color="default" className="m-0 px-1 py-0 text-[10px] leading-tight text-gray-400">
+                            Base
+                        </Tag>
                     )}
                 </div>
-            )
+            ),
         },
         {
             title: 'ACCIONES',
@@ -126,14 +130,14 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
             width: 80,
             align: 'center',
             render: (_, record) => (
-                <Button 
-                    type="text" 
-                    icon={<EditOutlined className="text-blue-600" />} 
+                <Button
+                    type="text"
+                    icon={<EditOutlined className="text-blue-600" />}
                     onClick={() => handleEdit(record)}
                     title="Editar Sección"
                 />
-            )
-        }
+            ),
+        },
     ];
 
     return (
@@ -150,14 +154,14 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
             width={isMobile ? '100%' : 540}
             styles={{ body: { padding: '24px' } }}
         >
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-500 text-sm">
+            <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm text-gray-500">
                     {secciones.length} secciones registradas {presidenteId ? '(Metas para el candidato)' : ''}
                 </span>
                 {!isFormVisible && (
-                    <Button 
-                        type="primary" 
-                        icon={<PlusOutlined />} 
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
                         onClick={() => setIsFormVisible(true)}
                         className="bg-[#0f172a] hover:bg-slate-800"
                     >
@@ -167,18 +171,13 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
             </div>
 
             {isFormVisible && (
-                <Card 
-                    title={editingId ? "Editar Sección Electoral" : "Nueva Sección Electoral"} 
-                    size="small" 
+                <Card
+                    title={editingId ? 'Editar Sección Electoral' : 'Nueva Sección Electoral'}
+                    size="small"
                     className="mb-6 border border-blue-100 bg-blue-50/20 shadow-sm"
                     styles={{ header: { background: '#f8fafc', fontWeight: 'bold' } }}
                 >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={handleSubmit}
-                        initialValues={{ meta: 0 }}
-                    >
+                    <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ meta: 0 }}>
                         <div className="grid grid-cols-2 gap-4">
                             <Form.Item
                                 name="numero"
@@ -190,18 +189,21 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
 
                             <Form.Item
                                 name="meta"
-                                label={presidenteId ? "Meta para Candidato" : "Meta Base"}
+                                label={presidenteId ? 'Meta para Candidato' : 'Meta Base'}
                                 rules={[{ required: true, message: 'Ingresa la meta.' }]}
                             >
                                 <InputNumber min={0} style={{ width: '100%' }} placeholder="Ej. 100" />
                             </Form.Item>
                         </div>
 
-                        <div className="flex justify-end gap-2 mt-2">
-                            <Button onClick={handleCancelForm}>
-                                Cancelar
-                            </Button>
-                            <Button type="primary" htmlType="submit" loading={loading} className="bg-blue-600 hover:bg-blue-700">
+                        <div className="mt-2 flex justify-end gap-2">
+                            <Button onClick={handleCancelForm}>Cancelar</Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={loading}
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
                                 {editingId ? 'Guardar Cambios' : 'Agregar'}
                             </Button>
                         </div>
@@ -212,26 +214,33 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
             <Divider className="my-4" />
 
             {loading && secciones.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Cargando secciones...</div>
+                <div className="py-8 text-center text-gray-500">Cargando secciones...</div>
             ) : isMobile ? (
                 <div className="space-y-4">
-                    {secciones.map(record => (
-                        <Card key={record.id} size="small" className="shadow-sm border border-gray-100 rounded-lg">
-                            <div className="flex justify-between items-center mb-2">
+                    {secciones.map((record) => (
+                        <Card key={record.id} size="small" className="rounded-lg border border-gray-100 shadow-sm">
+                            <div className="mb-2 flex items-center justify-between">
                                 <span className="font-bold text-gray-800">Sección {record.numero}</span>
                                 <div className="flex items-center gap-1.5">
                                     <span className="font-semibold text-blue-600">Meta: {record.meta}</span>
                                     {record.is_custom_meta ? (
-                                        <Tag color="blue" className="text-[10px] leading-tight px-1 py-0 m-0">Personalizada</Tag>
+                                        <Tag color="blue" className="m-0 px-1 py-0 text-[10px] leading-tight">
+                                            Personalizada
+                                        </Tag>
                                     ) : (
-                                        <Tag color="default" className="text-[10px] leading-tight px-1 py-0 m-0 text-gray-400">Base</Tag>
+                                        <Tag
+                                            color="default"
+                                            className="m-0 px-1 py-0 text-[10px] leading-tight text-gray-400"
+                                        >
+                                            Base
+                                        </Tag>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                                <Button 
-                                    type="text" 
-                                    icon={<EditOutlined className="text-blue-600" />} 
+                            <div className="flex justify-end gap-2 border-t border-gray-100 pt-2">
+                                <Button
+                                    type="text"
+                                    icon={<EditOutlined className="text-blue-600" />}
                                     onClick={() => handleEdit(record)}
                                 >
                                     Editar
@@ -240,7 +249,9 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
                         </Card>
                     ))}
                     {secciones.length === 0 && (
-                        <div className="text-center py-8 text-gray-400">No hay secciones registradas para esta demarcación.</div>
+                        <div className="py-8 text-center text-gray-400">
+                            No hay secciones registradas para esta demarcación.
+                        </div>
                     )}
                 </div>
             ) : (

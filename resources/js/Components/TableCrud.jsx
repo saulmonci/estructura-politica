@@ -34,10 +34,10 @@ export default function TableCrud({
             }
         }, 500)
     ).current;
-    
+
     const internalRequest = async (params, sort, filter) => {
         const { current, pageSize, ...rest } = params;
-        
+
         let sortParams = {};
         if (sort && Object.keys(sort).length > 0) {
             const field = Object.keys(sort)[0];
@@ -50,7 +50,7 @@ export default function TableCrud({
             per_page: pageSize,
             ...rest,
             ...filter,
-            ...sortParams
+            ...sortParams,
         };
 
         if (props.onParamsChange) {
@@ -61,8 +61,8 @@ export default function TableCrud({
             const response = await axios.get(endpoint, {
                 params: requestParams,
                 headers: {
-                    'Accept': 'application/json'
-                }
+                    Accept: 'application/json',
+                },
             });
 
             // Compatible con paginador de Laravel o con arreglo simple
@@ -72,27 +72,27 @@ export default function TableCrud({
             return {
                 data: responseData,
                 success: true,
-                total: responseTotal
+                total: responseTotal,
             };
         } catch (error) {
-            console.error("Error fetching table data:", error);
+            console.error('Error fetching table data:', error);
             return { success: false, data: [], total: 0 };
         }
     };
 
     // Determinar si los datos vienen con el formato de paginación de Laravel (solo si no es async)
     const isPaginated = !isAsync && data && typeof data === 'object' && 'current_page' in data;
-    
-    const dataSource = isAsync ? undefined : (isPaginated ? data.data : (Array.isArray(data) ? data : []));
+
+    const dataSource = isAsync ? undefined : isPaginated ? data.data : Array.isArray(data) ? data : [];
     const current = isPaginated ? data.current_page : 1;
     const pageSize = isPaginated ? data.per_page : 10;
-    const total = isPaginated ? data.total : (dataSource ? dataSource.length : 0);
+    const total = isPaginated ? data.total : dataSource ? dataSource.length : 0;
 
     const fetchPage = (params) => {
         if (isAsync) return;
         const fetchUrl = url || window.location.pathname;
         const currentParams = Object.fromEntries(new URLSearchParams(window.location.search));
-        
+
         router.get(
             fetchUrl,
             { ...currentParams, ...params },
@@ -135,11 +135,7 @@ export default function TableCrud({
 
     const handleSearchReset = () => {
         if (isAsync) return;
-        router.get(
-            url || window.location.pathname,
-            {},
-            { preserveState: true, preserveScroll: true, replace: true }
-        );
+        router.get(url || window.location.pathname, {}, { preserveState: true, preserveScroll: true, replace: true });
     };
 
     // Lógica para renderizado condicional en móviles
@@ -150,11 +146,11 @@ export default function TableCrud({
     if (mobileCardRender && screens.md === false) {
         // En lugar de eliminar las columnas (lo cual rompe el buscador),
         // las mantenemos pero las ocultamos de la tabla
-        finalColumns = columns.map(col => ({
+        finalColumns = columns.map((col) => ({
             ...col,
             hideInTable: true,
         }));
-        
+
         // Agregamos nuestra única columna para la tarjeta móvil, pero la ocultamos del buscador
         finalColumns.push({
             title: '',
@@ -162,7 +158,7 @@ export default function TableCrud({
             hideInSearch: true,
             render: (_, record) => mobileCardRender(record),
         });
-        
+
         showHeader = false;
     }
 
@@ -176,18 +172,20 @@ export default function TableCrud({
         form: {
             onValuesChange: () => {
                 debouncedSubmit();
-            }
+            },
         },
-        search: search ? { 
-            layout: 'vertical',
-            defaultCollapsed: false, 
-            ...search
-        } : false,
+        search: search
+            ? {
+                  layout: 'vertical',
+                  defaultCollapsed: false,
+                  ...search,
+              }
+            : false,
         headerTitle,
         toolBarRender,
         size: 'small',
         scroll: showHeader ? { x: 'max-content' } : undefined,
-        ...restProps
+        ...restProps,
     };
 
     const containerClass = `table-crud-container ${!showHeader ? 'mobile-card-table' : ''}`;
@@ -273,7 +271,7 @@ export default function TableCrud({
                         defaultPageSize: 10,
                         showSizeChanger: true,
                         showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} registros`,
-                        ...(props.pagination || {})
+                        ...(props.pagination || {}),
                     }}
                 />
             </div>
@@ -359,18 +357,22 @@ export default function TableCrud({
                 onReset={handleSearchReset}
                 onChange={handleTableChange}
                 options={false}
-                pagination={isPaginated ? {
-                    current,
-                    pageSize,
-                    total,
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} registros`,
-                } : {
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} registros`,
-                }}
+                pagination={
+                    isPaginated
+                        ? {
+                              current,
+                              pageSize,
+                              total,
+                              defaultPageSize: 10,
+                              showSizeChanger: true,
+                              showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} registros`,
+                          }
+                        : {
+                              defaultPageSize: 10,
+                              showSizeChanger: true,
+                              showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} registros`,
+                          }
+                }
             />
         </div>
     );

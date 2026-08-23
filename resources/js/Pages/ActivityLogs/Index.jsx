@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head } from '@inertiajs/react';
 import { Card, Tag, Button, Modal, Descriptions, Table, Space, Segmented, message, Tooltip, Alert } from 'antd';
-import { 
-    EyeOutlined, 
-    HistoryOutlined, 
-    CalendarOutlined, 
+import {
+    EyeOutlined,
+    HistoryOutlined,
+    CalendarOutlined,
     ArrowRightOutlined,
     BugOutlined,
     CopyOutlined,
@@ -14,7 +14,7 @@ import {
     AppstoreOutlined,
     FileTextOutlined,
     GlobalOutlined,
-    CodeOutlined
+    CodeOutlined,
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 
@@ -78,7 +78,7 @@ const formatValue = (key, val) => {
         return val ? <Tag color="green">Activo</Tag> : <Tag color="red">Inactivo</Tag>;
     }
     if (key === 'geom') {
-        return <span className="text-blue-500 font-mono text-xs">(Datos geográficos/Polígono)</span>;
+        return <span className="font-mono text-xs text-blue-500">(Datos geográficos/Polígono)</span>;
     }
     if (typeof val === 'boolean') {
         return val ? 'Sí' : 'No';
@@ -104,13 +104,16 @@ export default function ActivityLogsIndex() {
 
     const handleCopyTrace = (traceText) => {
         if (!traceText) return;
-        navigator.clipboard.writeText(traceText).then(() => {
-            setCopied(true);
-            message.success('Stack trace copiado al portapapeles');
-            setTimeout(() => setCopied(false), 2500);
-        }).catch(() => {
-            message.error('No se pudo copiar al portapapeles');
-        });
+        navigator.clipboard
+            .writeText(traceText)
+            .then(() => {
+                setCopied(true);
+                message.success('Stack trace copiado al portapapeles');
+                setTimeout(() => setCopied(false), 2500);
+            })
+            .catch(() => {
+                message.error('No se pudo copiar al portapapeles');
+            });
     };
 
     const columns = [
@@ -125,17 +128,15 @@ export default function ActivityLogsIndex() {
                     <CalendarOutlined className="mr-2 text-gray-400" />
                     <span>{new Date(record.created_at).toLocaleString('es-MX')}</span>
                 </div>
-            )
+            ),
         },
         {
             title: 'USUARIO',
             dataIndex: 'user_identifier',
             key: 'user_identifier',
             render: (text) => (
-                <span className="font-semibold text-gray-800 text-xs">
-                    {text || 'Sistema / Anónimo'}
-                </span>
-            )
+                <span className="text-xs font-semibold text-gray-800">{text || 'Sistema / Anónimo'}</span>
+            ),
         },
         {
             title: 'ACCIÓN / TIPO',
@@ -175,12 +176,12 @@ export default function ActivityLogsIndex() {
                 }
 
                 return (
-                    <Tag color={color} className="uppercase font-bold text-[10px] inline-flex items-center">
+                    <Tag color={color} className="inline-flex items-center text-[10px] font-bold uppercase">
                         {icon}
                         {label}
                     </Tag>
                 );
-            }
+            },
         },
         {
             title: 'MÓDULO',
@@ -203,7 +204,7 @@ export default function ActivityLogsIndex() {
                         {MODULE_NAMES[text] || text}
                     </span>
                 );
-            }
+            },
         },
         {
             title: 'REGISTRO AFECTADO / MENSAJE',
@@ -216,12 +217,15 @@ export default function ActivityLogsIndex() {
                     const shortFile = file ? file.split('/').slice(-2).join('/') : null;
 
                     return (
-                        <div className="flex flex-col max-w-sm">
-                            <span className="font-medium text-rose-700 text-xs truncate" title={text}>
+                        <div className="flex max-w-sm flex-col">
+                            <span className="truncate text-xs font-medium text-rose-700" title={text}>
                                 {text}
                             </span>
                             {shortFile && (
-                                <span className="text-[10px] text-gray-400 font-mono truncate" title={`${file}:${line}`}>
+                                <span
+                                    className="truncate font-mono text-[10px] text-gray-400"
+                                    title={`${file}:${line}`}
+                                >
                                     {shortFile}:{line}
                                 </span>
                             )}
@@ -231,13 +235,13 @@ export default function ActivityLogsIndex() {
 
                 return (
                     <div className="flex flex-col">
-                        <span className="font-medium text-gray-800 text-xs">{text}</span>
+                        <span className="text-xs font-medium text-gray-800">{text}</span>
                         {record.model_id && (
-                            <span className="text-[10px] text-gray-400 font-mono">ID: {record.model_id}</span>
+                            <span className="font-mono text-[10px] text-gray-400">ID: {record.model_id}</span>
                         )}
                     </div>
                 );
-            }
+            },
         },
         {
             title: 'DIRECCIÓN IP',
@@ -248,12 +252,10 @@ export default function ActivityLogsIndex() {
                 return (
                     <div className="flex flex-col">
                         <span className="font-mono text-xs text-gray-600">{text || 'N/A'}</span>
-                        {method && (
-                            <span className="text-[10px] font-semibold text-gray-400">{method}</span>
-                        )}
+                        {method && <span className="text-[10px] font-semibold text-gray-400">{method}</span>}
                     </div>
                 );
-            }
+            },
         },
         {
             title: 'DETALLE',
@@ -262,24 +264,24 @@ export default function ActivityLogsIndex() {
             align: 'center',
             search: false,
             render: (_, record) => (
-                <Button 
+                <Button
                     type={record.action === 'error' ? 'default' : 'text'}
                     danger={record.action === 'error'}
-                    icon={record.action === 'error' ? <BugOutlined /> : <EyeOutlined className="text-blue-600" />} 
+                    icon={record.action === 'error' ? <BugOutlined /> : <EyeOutlined className="text-blue-600" />}
                     title={record.action === 'error' ? 'Inspeccionar Error' : 'Ver detalle de cambios'}
                     onClick={() => handleViewDetail(record)}
                     size="small"
                 >
                     {record.action === 'error' ? 'Inspeccionar' : ''}
                 </Button>
-            )
-        }
+            ),
+        },
     ];
 
     // Build data representation for creations/deletions details table
     const renderSimpleDataList = (data) => {
         if (!data || Object.keys(data).length === 0) {
-            return <div className="text-gray-400 italic text-center p-4">No hay datos registrados.</div>;
+            return <div className="p-4 text-center text-gray-400 italic">No hay datos registrados.</div>;
         }
 
         const tableDataSource = Object.keys(data).map((key) => ({
@@ -294,23 +296,23 @@ export default function ActivityLogsIndex() {
                 dataIndex: 'field',
                 key: 'field',
                 width: '40%',
-                render: (text) => <span className="font-semibold text-gray-700">{text}</span>
+                render: (text) => <span className="font-semibold text-gray-700">{text}</span>,
             },
             {
                 title: 'Valor',
                 dataIndex: 'value',
                 key: 'value',
-                render: (val, record) => formatValue(record.key, val)
-            }
+                render: (val, record) => formatValue(record.key, val),
+            },
         ];
 
         return (
-            <Table 
-                dataSource={tableDataSource} 
-                columns={detailColumns} 
-                pagination={false} 
-                size="small" 
-                bordered 
+            <Table
+                dataSource={tableDataSource}
+                columns={detailColumns}
+                pagination={false}
+                size="small"
+                bordered
                 className="mt-2"
                 rowKey="key"
             />
@@ -320,9 +322,9 @@ export default function ActivityLogsIndex() {
     // Build comparison table for updates
     const renderDiffTable = (original, changed) => {
         const keys = Array.from(new Set([...Object.keys(original || {}), ...Object.keys(changed || {})]));
-        
+
         if (keys.length === 0) {
-            return <div className="text-gray-400 italic text-center p-4">No se detectaron diferencias.</div>;
+            return <div className="p-4 text-center text-gray-400 italic">No se detectaron diferencias.</div>;
         }
 
         const tableDataSource = keys.map((key) => ({
@@ -338,7 +340,7 @@ export default function ActivityLogsIndex() {
                 dataIndex: 'field',
                 key: 'field',
                 width: '30%',
-                render: (text) => <span className="font-semibold text-gray-700">{text}</span>
+                render: (text) => <span className="font-semibold text-gray-700">{text}</span>,
             },
             {
                 title: 'Valor Anterior',
@@ -347,17 +349,15 @@ export default function ActivityLogsIndex() {
                 width: '35%',
                 className: 'bg-red-50/50',
                 render: (val, record) => (
-                    <div className="text-red-700 line-through">
-                        {formatValue(record.key, val)}
-                    </div>
-                )
+                    <div className="text-red-700 line-through">{formatValue(record.key, val)}</div>
+                ),
             },
             {
                 title: '',
                 key: 'separator',
                 width: '5%',
                 align: 'center',
-                render: () => <ArrowRightOutlined className="text-gray-400" />
+                render: () => <ArrowRightOutlined className="text-gray-400" />,
             },
             {
                 title: 'Valor Nuevo',
@@ -366,20 +366,18 @@ export default function ActivityLogsIndex() {
                 width: '30%',
                 className: 'bg-green-50/50',
                 render: (val, record) => (
-                    <div className="text-green-700 font-medium">
-                        {formatValue(record.key, val)}
-                    </div>
-                )
-            }
+                    <div className="font-medium text-green-700">{formatValue(record.key, val)}</div>
+                ),
+            },
         ];
 
         return (
-            <Table 
-                dataSource={tableDataSource} 
-                columns={diffColumns} 
-                pagination={false} 
-                size="small" 
-                bordered 
+            <Table
+                dataSource={tableDataSource}
+                columns={diffColumns}
+                pagination={false}
+                size="small"
+                bordered
                 className="mt-2"
                 rowKey="key"
             />
@@ -401,7 +399,7 @@ export default function ActivityLogsIndex() {
                 <Alert
                     message={
                         <div className="flex items-start justify-between gap-2">
-                            <span className="font-bold text-sm text-rose-900">
+                            <span className="text-sm font-bold text-rose-900">
                                 {changed.exception_class || log.model_type || 'Excepción del Sistema'}
                             </span>
                             {original.status_code && (
@@ -412,34 +410,47 @@ export default function ActivityLogsIndex() {
                         </div>
                     }
                     description={
-                        <div className="mt-1 text-xs text-rose-800 font-medium leading-relaxed">
+                        <div className="mt-1 text-xs leading-relaxed font-medium text-rose-800">
                             {changed.message || log.model_representation}
                         </div>
                     }
                     type="error"
                     showIcon
-                    icon={<BugOutlined className="text-rose-600 text-lg" />}
+                    icon={<BugOutlined className="text-lg text-rose-600" />}
                     className="border-rose-200 bg-rose-50"
                 />
 
                 {/* Metadata technical descriptions */}
                 <Descriptions bordered size="small" column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
                     <Descriptions.Item label="Usuario Ejecutor" span={2}>
-                        <span className="font-semibold text-gray-800">{log.user_identifier || 'Sistema / Anónimo'}</span>
+                        <span className="font-semibold text-gray-800">
+                            {log.user_identifier || 'Sistema / Anónimo'}
+                        </span>
                     </Descriptions.Item>
-                    
+
                     <Descriptions.Item label="Módulo / Origen">
-                        <Tag color="geekblue" className="font-semibold">{MODULE_NAMES[log.model_friendly_name] || log.model_friendly_name}</Tag>
+                        <Tag color="geekblue" className="font-semibold">
+                            {MODULE_NAMES[log.model_friendly_name] || log.model_friendly_name}
+                        </Tag>
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Petición HTTP">
                         <Space>
                             {original.method && (
-                                <Tag color={original.method === 'POST' ? 'blue' : original.method === 'GET' ? 'green' : 'orange'} className="font-bold font-mono">
+                                <Tag
+                                    color={
+                                        original.method === 'POST'
+                                            ? 'blue'
+                                            : original.method === 'GET'
+                                              ? 'green'
+                                              : 'orange'
+                                    }
+                                    className="font-mono font-bold"
+                                >
                                     {original.method}
                                 </Tag>
                             )}
-                            <span className="font-mono text-xs text-gray-700 break-all">
+                            <span className="font-mono text-xs break-all text-gray-700">
                                 {original.url || original.path || 'N/A'}
                             </span>
                         </Space>
@@ -447,7 +458,7 @@ export default function ActivityLogsIndex() {
 
                     {changed.file && (
                         <Descriptions.Item label="Archivo y Línea" span={2}>
-                            <span className="font-mono text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200 break-all">
+                            <span className="rounded border border-gray-200 bg-gray-100 px-2 py-0.5 font-mono text-xs break-all text-gray-800">
                                 {changed.file} : <strong className="text-rose-600">{changed.line}</strong>
                             </span>
                         </Descriptions.Item>
@@ -462,23 +473,25 @@ export default function ActivityLogsIndex() {
                     </Descriptions.Item>
 
                     <Descriptions.Item label="Navegador (User Agent)" span={2}>
-                        <span className="text-xs text-gray-500 break-all">{log.user_agent || 'N/A'}</span>
+                        <span className="text-xs break-all text-gray-500">{log.user_agent || 'N/A'}</span>
                     </Descriptions.Item>
                 </Descriptions>
 
                 {/* Payload / Context section */}
                 {(Object.keys(payload).length > 0 || Object.keys(context).length > 0) && (
                     <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5 border-b pb-1">
+                        <h4 className="flex items-center gap-1.5 border-b pb-1 text-xs font-bold tracking-wider text-gray-700 uppercase">
                             <FileTextOutlined className="text-blue-500" />
                             Contexto y Parámetros de Entrada
                         </h4>
 
                         {Object.keys(payload).length > 0 && (
                             <div>
-                                <span className="text-[11px] font-semibold text-gray-500">Parámetros Enviados (Payload):</span>
-                                <div className="mt-1 bg-gray-50 p-2.5 rounded border border-gray-200 max-h-48 overflow-y-auto">
-                                    <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap m-0">
+                                <span className="text-[11px] font-semibold text-gray-500">
+                                    Parámetros Enviados (Payload):
+                                </span>
+                                <div className="mt-1 max-h-48 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-2.5">
+                                    <pre className="m-0 font-mono text-xs whitespace-pre-wrap text-gray-800">
                                         {JSON.stringify(payload, null, 2)}
                                     </pre>
                                 </div>
@@ -487,9 +500,11 @@ export default function ActivityLogsIndex() {
 
                         {Object.keys(context).length > 0 && (
                             <div>
-                                <span className="text-[11px] font-semibold text-gray-500">Contexto Adicional del Proceso:</span>
-                                <div className="mt-1 bg-gray-50 p-2.5 rounded border border-gray-200 max-h-48 overflow-y-auto">
-                                    <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap m-0">
+                                <span className="text-[11px] font-semibold text-gray-500">
+                                    Contexto Adicional del Proceso:
+                                </span>
+                                <div className="mt-1 max-h-48 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-2.5">
+                                    <pre className="m-0 font-mono text-xs whitespace-pre-wrap text-gray-800">
                                         {JSON.stringify(context, null, 2)}
                                     </pre>
                                 </div>
@@ -501,8 +516,8 @@ export default function ActivityLogsIndex() {
                 {/* Stack Trace section */}
                 {traceString && (
                     <div className="space-y-2">
-                        <div className="flex justify-between items-center border-b pb-1">
-                            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5 m-0">
+                        <div className="flex items-center justify-between border-b pb-1">
+                            <h4 className="m-0 flex items-center gap-1.5 text-xs font-bold tracking-wider text-gray-700 uppercase">
                                 <CodeOutlined className="text-rose-500" />
                                 Pila de Ejecución (Stack Trace)
                             </h4>
@@ -517,7 +532,7 @@ export default function ActivityLogsIndex() {
                         </div>
 
                         <div className="relative">
-                            <pre className="bg-slate-900 text-slate-200 p-3 rounded-lg text-[11px] font-mono overflow-x-auto max-h-64 leading-relaxed shadow-inner border border-slate-800">
+                            <pre className="max-h-64 overflow-x-auto rounded-lg border border-slate-800 bg-slate-900 p-3 font-mono text-[11px] leading-relaxed text-slate-200 shadow-inner">
                                 {traceString}
                             </pre>
                         </div>
@@ -552,62 +567,66 @@ export default function ActivityLogsIndex() {
         }
 
         return (
-            <Card 
-                size="small" 
-                bordered 
-                className={`shadow-sm w-full transition-colors ${isError ? 'border-rose-200 bg-rose-50/20' : ''}`}
+            <Card
+                size="small"
+                bordered
+                className={`w-full shadow-sm transition-colors ${isError ? 'border-rose-200 bg-rose-50/20' : ''}`}
             >
-                <div className="flex justify-between items-start mb-2">
-                    <Tag color={actionColor} className="uppercase font-bold text-[10px] m-0">
+                <div className="mb-2 flex items-start justify-between">
+                    <Tag color={actionColor} className="m-0 text-[10px] font-bold uppercase">
                         {isError && <BugOutlined className="mr-1" />}
                         {actionLabel}
                     </Tag>
-                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
                         <CalendarOutlined />
                         {new Date(record.created_at).toLocaleString('es-MX')}
                     </span>
                 </div>
 
-                <div className="flex flex-col gap-1.5 mt-2">
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Usuario</span>
-                        <span className="font-semibold text-gray-800 text-xs">{record.user_identifier || 'Sistema / Anónimo'}</span>
+                <div className="mt-2 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                            Usuario
+                        </span>
+                        <span className="text-xs font-semibold text-gray-800">
+                            {record.user_identifier || 'Sistema / Anónimo'}
+                        </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Módulo</span>
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">Módulo</span>
                         <span className={`text-xs ${isError ? 'font-semibold text-rose-700' : 'text-gray-600'}`}>
                             {MODULE_NAMES[record.model_friendly_name] || record.model_friendly_name}
                         </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
                             {isError ? 'Mensaje' : 'Registro'}
                         </span>
-                        <div className="text-right max-w-[65%] truncate">
-                            <span className={`font-medium text-xs ${isError ? 'text-rose-700' : 'text-gray-800'}`}>
+                        <div className="max-w-[65%] truncate text-right">
+                            <span className={`text-xs font-medium ${isError ? 'text-rose-700' : 'text-gray-800'}`}>
                                 {record.model_representation}
                             </span>
                             {record.model_id && (
-                                <span className="text-[10px] text-gray-400 font-mono ml-1">ID: {record.model_id}</span>
+                                <span className="ml-1 font-mono text-[10px] text-gray-400">ID: {record.model_id}</span>
                             )}
                         </div>
                     </div>
                     {record.ip_address && (
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">IP</span>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">IP</span>
                             <span className="font-mono text-xs text-gray-500">{record.ip_address}</span>
                         </div>
                     )}
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-gray-100 flex justify-end">
+                <div className="mt-3 flex justify-end border-t border-gray-100 pt-2">
                     <Button
                         type="link"
                         danger={isError}
                         size="small"
                         icon={isError ? <BugOutlined /> : <EyeOutlined />}
                         onClick={() => handleViewDetail(record)}
-                        className="text-xs p-0 font-medium"
+                        className="p-0 text-xs font-medium"
                     >
                         {isError ? 'Inspeccionar Error' : 'Ver detalle'}
                     </Button>
@@ -621,19 +640,19 @@ export default function ActivityLogsIndex() {
             <Head title="Bitácora de Logs y Errores" />
 
             <Card bordered={false} className="shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+                <div className="mb-6 flex flex-col items-start justify-between gap-4 border-b border-gray-100 pb-4 md:flex-row md:items-center">
                     <div>
-                        <h2 className="text-xl font-bold m-0 flex items-center gap-2">
+                        <h2 className="m-0 flex items-center gap-2 text-xl font-bold">
                             <HistoryOutlined className="text-gray-800" />
                             Bitácora del Sistema
                         </h2>
-                        <p className="text-gray-500 text-sm mt-1 mb-0">
+                        <p className="mt-1 mb-0 text-sm text-gray-500">
                             Auditoría completa de movimientos de base de datos y registro de errores y excepciones.
                         </p>
                     </div>
 
                     {/* Fast category filter */}
-                    <div className="w-full md:w-auto flex justify-start md:justify-end">
+                    <div className="flex w-full justify-start md:w-auto md:justify-end">
                         <Segmented
                             value={category}
                             onChange={(val) => {
@@ -661,7 +680,7 @@ export default function ActivityLogsIndex() {
                                 },
                                 {
                                     label: (
-                                        <div className="flex items-center gap-1.5 px-1 py-0.5 text-rose-600 font-medium">
+                                        <div className="flex items-center gap-1.5 px-1 py-0.5 font-medium text-rose-600">
                                             <BugOutlined />
                                             <span>Errores del Sistema</span>
                                         </div>
@@ -669,7 +688,7 @@ export default function ActivityLogsIndex() {
                                     value: 'errors',
                                 },
                             ]}
-                            className="bg-gray-100 p-1 rounded-lg"
+                            className="rounded-lg bg-gray-100 p-1"
                         />
                     </div>
                 </div>
@@ -693,11 +712,10 @@ export default function ActivityLogsIndex() {
                         ) : (
                             <HistoryOutlined />
                         )}
-                        <span className={selectedLog?.action === 'error' ? 'text-rose-900 font-bold' : ''}>
-                            {selectedLog?.action === 'error' 
-                                ? `Inspección de Error #${selectedLog?.id}` 
-                                : `Detalles del Movimiento #${selectedLog?.id}`
-                            }
+                        <span className={selectedLog?.action === 'error' ? 'font-bold text-rose-900' : ''}>
+                            {selectedLog?.action === 'error'
+                                ? `Inspección de Error #${selectedLog?.id}`
+                                : `Detalles del Movimiento #${selectedLog?.id}`}
                         </span>
                     </Space>
                 }
@@ -706,42 +724,57 @@ export default function ActivityLogsIndex() {
                 footer={[
                     <Button key="close" type="primary" onClick={() => setIsModalOpen(false)}>
                         Cerrar
-                    </Button>
+                    </Button>,
                 ]}
                 width={850}
                 destroyOnClose
             >
-                {selectedLog && (
-                    selectedLog.action === 'error' ? (
+                {selectedLog &&
+                    (selectedLog.action === 'error' ? (
                         renderErrorInspector(selectedLog)
                     ) : (
                         <div className="space-y-6 pt-3">
                             <Descriptions bordered size="small" column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
                                 <Descriptions.Item label="Usuario Ejecutor" span={2}>
-                                    <span className="font-semibold text-gray-800">{selectedLog.user_identifier || 'Sistema / Anónimo'}</span>
+                                    <span className="font-semibold text-gray-800">
+                                        {selectedLog.user_identifier || 'Sistema / Anónimo'}
+                                    </span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Acción">
-                                    <Tag 
+                                    <Tag
                                         color={
-                                            selectedLog.action === 'created' ? 'green' : 
-                                            selectedLog.action === 'deleted' ? 'red' : 
-                                            selectedLog.action === 'impersonate_start' ? 'purple' : 
-                                            selectedLog.action === 'impersonate_stop' ? 'orange' : 'blue'
-                                        } 
-                                        className="uppercase font-bold text-[10px]"
+                                            selectedLog.action === 'created'
+                                                ? 'green'
+                                                : selectedLog.action === 'deleted'
+                                                  ? 'red'
+                                                  : selectedLog.action === 'impersonate_start'
+                                                    ? 'purple'
+                                                    : selectedLog.action === 'impersonate_stop'
+                                                      ? 'orange'
+                                                      : 'blue'
+                                        }
+                                        className="text-[10px] font-bold uppercase"
                                     >
-                                        {selectedLog.action === 'created' ? 'Creación' :
-                                         selectedLog.action === 'deleted' ? 'Eliminación' : 
-                                         selectedLog.action === 'impersonate_start' ? 'Inició Suplantación' : 
-                                         selectedLog.action === 'impersonate_stop' ? 'Detuvo Suplantación' : 
-                                         selectedLog.action === 'updated' ? 'Actualización' : selectedLog.action}
+                                        {selectedLog.action === 'created'
+                                            ? 'Creación'
+                                            : selectedLog.action === 'deleted'
+                                              ? 'Eliminación'
+                                              : selectedLog.action === 'impersonate_start'
+                                                ? 'Inició Suplantación'
+                                                : selectedLog.action === 'impersonate_stop'
+                                                  ? 'Detuvo Suplantación'
+                                                  : selectedLog.action === 'updated'
+                                                    ? 'Actualización'
+                                                    : selectedLog.action}
                                     </Tag>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Módulo">
                                     {MODULE_NAMES[selectedLog.model_friendly_name] || selectedLog.model_friendly_name}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Registro Relacionado">
-                                    <span className="font-semibold text-gray-800">{selectedLog.model_representation}</span>
+                                    <span className="font-semibold text-gray-800">
+                                        {selectedLog.model_representation}
+                                    </span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="ID de Fila">
                                     <span className="font-mono text-xs">{selectedLog.model_id}</span>
@@ -758,41 +791,49 @@ export default function ActivityLogsIndex() {
                             </Descriptions>
 
                             <div>
-                                <h3 className="text-sm font-bold text-gray-800 mb-2 border-b pb-1">
+                                <h3 className="mb-2 border-b pb-1 text-sm font-bold text-gray-800">
                                     Detalle de Atributos y Cambios
                                 </h3>
-                                
+
                                 {selectedLog.action === 'created' && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-2">Valores iniciales asignados al crear el registro:</p>
+                                        <p className="mb-2 text-xs text-gray-500">
+                                            Valores iniciales asignados al crear el registro:
+                                        </p>
                                         {renderSimpleDataList(selectedLog.changed_data)}
                                     </div>
                                 )}
 
                                 {selectedLog.action === 'deleted' && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-2">Valores originales que tenía el registro al ser eliminado:</p>
+                                        <p className="mb-2 text-xs text-gray-500">
+                                            Valores originales que tenía el registro al ser eliminado:
+                                        </p>
                                         {renderSimpleDataList(selectedLog.original_data)}
                                     </div>
                                 )}
 
                                 {selectedLog.action === 'updated' && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-2">Campos específicos que cambiaron en la base de datos:</p>
+                                        <p className="mb-2 text-xs text-gray-500">
+                                            Campos específicos que cambiaron en la base de datos:
+                                        </p>
                                         {renderDiffTable(selectedLog.original_data, selectedLog.changed_data)}
                                     </div>
                                 )}
 
-                                {(selectedLog.action === 'impersonate_start' || selectedLog.action === 'impersonate_stop') && (
+                                {(selectedLog.action === 'impersonate_start' ||
+                                    selectedLog.action === 'impersonate_stop') && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-2">Detalles de la sesión de suplantación:</p>
+                                        <p className="mb-2 text-xs text-gray-500">
+                                            Detalles de la sesión de suplantación:
+                                        </p>
                                         {renderSimpleDataList(selectedLog.changed_data || {})}
                                     </div>
                                 )}
                             </div>
                         </div>
-                    )
-                )}
+                    ))}
             </Modal>
         </MainLayout>
     );

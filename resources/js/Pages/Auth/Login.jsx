@@ -19,21 +19,22 @@ export default function Login() {
         <AuthLayout>
             <Head title="Iniciar Sesión" />
 
-            <div className="text-center mb-8">
+            <div className="mb-8 text-center">
                 {/* Mobile Logo Branding */}
-                <div className="flex justify-center mb-6 md:hidden w-full">
-                    <div className="p-2 bg-slate-950 rounded-xl shadow-xl border border-slate-800 w-full">
+                <div className="mb-6 flex w-full justify-center md:hidden">
+                    <div className="w-full rounded-xl border border-slate-800 bg-slate-950 p-2 shadow-xl">
                         <img
                             src="/images/orion-legal-logo.png"
                             alt="ORION SISTEMAS - LEGAL SMART GOV"
-                            className="w-full h-auto object-contain rounded-lg block"
+                            className="block h-auto w-full rounded-lg object-contain"
                         />
                     </div>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Bienvenido</h2>
-                <p className="text-gray-500 text-sm">
-                    Inicia sesión para continuar<br />
+                <h2 className="mb-1 text-2xl font-bold text-gray-800 sm:text-3xl">Bienvenido</h2>
+                <p className="text-sm text-gray-500">
+                    Inicia sesión para continuar
+                    <br />
                     en la Plataforma de Estructura Política
                 </p>
             </div>
@@ -43,7 +44,7 @@ export default function Login() {
                 layout="vertical"
                 onFinish={onFinish}
                 initialValues={{ remember: false }}
-                className="w-full max-w-sm mx-auto"
+                className="mx-auto w-full max-w-sm"
             >
                 <Form.Item
                     label={<span className="font-medium text-gray-700">Usuario</span>}
@@ -75,11 +76,11 @@ export default function Login() {
                     />
                 </Form.Item>
 
-                <div className="flex items-center justify-between mb-6 mt-2">
+                <div className="mt-2 mb-6 flex items-center justify-between">
                     <Checkbox
                         checked={data.remember}
                         onChange={(e) => setData('remember', e.target.checked)}
-                        className="text-gray-600 text-sm"
+                        className="text-sm text-gray-600"
                     >
                         Recordarme
                     </Checkbox>
@@ -92,28 +93,28 @@ export default function Login() {
                     <Button
                         type="primary"
                         htmlType="submit"
-                        className="w-full h-12 bg-blue-700 hover:bg-blue-800 text-base font-medium rounded-lg"
+                        className="h-12 w-full rounded-lg bg-blue-700 text-base font-medium hover:bg-blue-800"
                         loading={processing}
                     >
                         Iniciar sesión
                     </Button>
                 </Form.Item>
 
-                <div className="flex items-center justify-center space-x-4 my-6">
+                <div className="my-6 flex items-center justify-center space-x-4">
                     <span className="h-px w-full bg-gray-200"></span>
-                    <span className="text-gray-400 text-xs uppercase font-medium">O</span>
+                    <span className="text-xs font-medium text-gray-400 uppercase">O</span>
                     <span className="h-px w-full bg-gray-200"></span>
                 </div>
 
-                <Button
-                    className="w-full h-12 border-gray-300 text-gray-700 text-base font-medium rounded-lg flex items-center justify-center"
-                >
+                <Button className="flex h-12 w-full items-center justify-center rounded-lg border-gray-300 text-base font-medium text-gray-700">
                     <span className="mr-2 text-blue-600">🛡️</span> Iniciar sesión con código
                 </Button>
 
-                <div className="text-center mt-8 text-sm">
+                <div className="mt-8 text-center text-sm">
                     <span className="text-gray-500">¿No tienes acceso? </span>
-                    <a href="#" className="text-blue-600 hover:text-blue-800">Contacta al administrador</a>
+                    <a href="#" className="text-blue-600 hover:text-blue-800">
+                        Contacta al administrador
+                    </a>
                 </div>
             </Form>
         </AuthLayout>

@@ -3,38 +3,135 @@
  */
 
 const NOMBRES_HOMBRES = [
-    'Juan Carlos', 'José Luis', 'Miguel Ángel', 'Francisco Javier', 'Jesús', 'Alejandro', 
-    'Manuel', 'Roberto', 'Fernando', 'Ricardo', 'Eduardo', 'Jorge', 'Héctor', 'Raúl',
-    'Guillermo', 'Salvador', 'Arturo', 'Óscar', 'Mario', 'Antonio'
+    'Juan Carlos',
+    'José Luis',
+    'Miguel Ángel',
+    'Francisco Javier',
+    'Jesús',
+    'Alejandro',
+    'Manuel',
+    'Roberto',
+    'Fernando',
+    'Ricardo',
+    'Eduardo',
+    'Jorge',
+    'Héctor',
+    'Raúl',
+    'Guillermo',
+    'Salvador',
+    'Arturo',
+    'Óscar',
+    'Mario',
+    'Antonio',
 ];
 
 const NOMBRES_MUJERES = [
-    'María Elena', 'Guadalupe', 'Rosa María', 'Ana Patricia', 'Adriana', 'Leticia',
-    'Gabriela', 'Verónica', 'Patricia', 'Silvia', 'Claudia', 'Teresa', 'Laura',
-    'Mónica', 'Martha', 'Beatriz', 'Alejandra', 'Yolanda', 'Carmen', 'Sofía'
+    'María Elena',
+    'Guadalupe',
+    'Rosa María',
+    'Ana Patricia',
+    'Adriana',
+    'Leticia',
+    'Gabriela',
+    'Verónica',
+    'Patricia',
+    'Silvia',
+    'Claudia',
+    'Teresa',
+    'Laura',
+    'Mónica',
+    'Martha',
+    'Beatriz',
+    'Alejandra',
+    'Yolanda',
+    'Carmen',
+    'Sofía',
 ];
 
 const APELLIDOS = [
-    'García', 'Hernández', 'Martínez', 'López', 'González', 'Pérez', 'Rodríguez',
-    'Sánchez', 'Ramírez', 'Cruz', 'Flores', 'Gómez', 'Morales', 'Vázquez', 'Jiménez',
-    'Reyes', 'Díaz', 'Torres', 'Gutiérrez', 'Ruiz', 'Mendoza', 'Aguilar', 'Ortiz',
-    'Moreno', 'Castillo', 'Romero', 'Álvarez', 'Méndez', 'Chávez', 'Rivera'
+    'García',
+    'Hernández',
+    'Martínez',
+    'López',
+    'González',
+    'Pérez',
+    'Rodríguez',
+    'Sánchez',
+    'Ramírez',
+    'Cruz',
+    'Flores',
+    'Gómez',
+    'Morales',
+    'Vázquez',
+    'Jiménez',
+    'Reyes',
+    'Díaz',
+    'Torres',
+    'Gutiérrez',
+    'Ruiz',
+    'Mendoza',
+    'Aguilar',
+    'Ortiz',
+    'Moreno',
+    'Castillo',
+    'Romero',
+    'Álvarez',
+    'Méndez',
+    'Chávez',
+    'Rivera',
 ];
 
 const APODOS = [
-    'El Capi', 'El Inge', 'La Güera', 'El Profe', 'El Lic', 'Pepe', 'Paco', 'Beto',
-    'Charly', 'Toño', 'Rafa', 'Lalo', 'Memo', 'Monse', 'Gaby', 'Paty', 'El Puma', 'La Jefa'
+    'El Capi',
+    'El Inge',
+    'La Güera',
+    'El Profe',
+    'El Lic',
+    'Pepe',
+    'Paco',
+    'Beto',
+    'Charly',
+    'Toño',
+    'Rafa',
+    'Lalo',
+    'Memo',
+    'Monse',
+    'Gaby',
+    'Paty',
+    'El Puma',
+    'La Jefa',
 ];
 
 const CALLES = [
-    'Av. Insurgentes', 'Av. México', 'Calle Hidalgo', 'Calle Morelos', 'Calle Juárez',
-    'Calle Allende', 'Av. Independencia', 'Calle 5 de Mayo', 'Calle Zaragoza',
-    'Av. Jacarandas', 'Calle Lerdo', 'Calle Mina', 'Av. Universidad', 'Calle Bravo'
+    'Av. Insurgentes',
+    'Av. México',
+    'Calle Hidalgo',
+    'Calle Morelos',
+    'Calle Juárez',
+    'Calle Allende',
+    'Av. Independencia',
+    'Calle 5 de Mayo',
+    'Calle Zaragoza',
+    'Av. Jacarandas',
+    'Calle Lerdo',
+    'Calle Mina',
+    'Av. Universidad',
+    'Calle Bravo',
 ];
 
 const COLONIAS = [
-    'Centro', 'San Juan', 'Las Brisas', 'Los Sauces', 'Ciudad del Valle', 'Mololoa',
-    'Jardines del Valle', 'Versalles', 'Lindavista', 'El Rodeo', 'Amado Nervo', 'Lomas de la Cruz'
+    'Centro',
+    'San Juan',
+    'Las Brisas',
+    'Los Sauces',
+    'Ciudad del Valle',
+    'Mololoa',
+    'Jardines del Valle',
+    'Versalles',
+    'Lindavista',
+    'El Rodeo',
+    'Amado Nervo',
+    'Lomas de la Cruz',
 ];
 
 const CODIGOS_POSTALES = ['63000', '63175', '63190', '63038', '63150', '63130', '63060', '63180'];
@@ -50,7 +147,10 @@ function getRandomInt(min, max) {
 }
 
 function cleanString(str) {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
 }
 
 /**
@@ -80,12 +180,14 @@ export function generateRandomPerson() {
     const sexChar = isMale ? 'H' : 'M';
     const stateChar = getRandomItem(ESTADOS_CURP);
     const homoclave = `${getRandomInt(10, 99)}`;
-    
+
     // CURP de 18 caracteres
     const curp = `${letrasCurp}${yearStr}${month}${day}${sexChar}${stateChar}NNN${homoclave}`.slice(0, 18);
 
     // Clave de Elector de 18 caracteres
-    const cElec1 = cleanString(`${apellidoPaterno.slice(0, 2)}${apellidoMaterno.slice(0, 2)}${nombre.slice(0, 2)}`).padEnd(6, 'X').slice(0, 6);
+    const cElec1 = cleanString(`${apellidoPaterno.slice(0, 2)}${apellidoMaterno.slice(0, 2)}${nombre.slice(0, 2)}`)
+        .padEnd(6, 'X')
+        .slice(0, 6);
     const clave_electoral = `${cElec1}${yearStr}${month}${day}18H${getRandomInt(100, 999)}`.slice(0, 18);
 
     // Teléfono de 10 dígitos (ej. 311XXXXXXX)
@@ -173,11 +275,7 @@ export function generatePersonaFormData({
 /**
  * Genera datos completos para PromovidoFormModal.
  */
-export function generatePromovidoFormData({
-    availablePromotores = [],
-    demarcaciones = [],
-    secciones = [],
-} = {}) {
+export function generatePromovidoFormData({ availablePromotores = [], demarcaciones = [], secciones = [] } = {}) {
     const person = generateRandomPerson();
 
     const data = {
@@ -215,10 +313,7 @@ export function generatePromovidoFormData({
 /**
  * Genera datos completos para Presidentes Modal.
  */
-export function generatePresidenteFormData({
-    estados = [],
-    municipios = [],
-} = {}) {
+export function generatePresidenteFormData({ estados = [], municipios = [] } = {}) {
     const person = generateRandomPerson();
 
     const data = {

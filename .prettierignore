@@ -1,0 +1,12 @@
+/node_modules
+/vendor
+/public/build
+/public/hot
+/public/storage
+/storage
+/bootstrap/cache
+package-lock.json
+composer.lock
+.phpunit.result.cache
+*.min.js
+*.min.css

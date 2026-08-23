@@ -18,16 +18,16 @@ export default function ImpersonateBanner() {
     };
 
     return (
-        <div className="bg-amber-500 text-slate-950 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-md relative z-50 text-sm border-b border-amber-600">
+        <div className="relative z-50 flex flex-wrap items-center justify-between gap-2 border-b border-amber-600 bg-amber-500 px-4 py-2.5 text-sm text-slate-950 shadow-md">
             <div className="flex items-center gap-2 font-medium">
-                <WarningOutlined className="text-lg text-slate-950 animate-pulse" />
+                <WarningOutlined className="animate-pulse text-lg text-slate-950" />
                 <span>
                     <strong>MODO SUPLANTACIÓN ACTIVO:</strong> Estás navegando como{' '}
-                    <span className="underline font-bold">
+                    <span className="font-bold underline">
                         {currentUser?.name || currentUser?.nombre} ({currentUser?.role?.toUpperCase()})
                     </span>
                     {impersonator && (
-                        <span className="ml-1.5 opacity-90 text-xs font-semibold">
+                        <span className="ml-1.5 text-xs font-semibold opacity-90">
                             (Sesión original: {impersonator.name} - {impersonator.role})
                         </span>
                     )}
@@ -39,7 +39,7 @@ export default function ImpersonateBanner() {
                 size="small"
                 icon={<SwapOutlined />}
                 onClick={handleLeave}
-                className="bg-slate-900 hover:bg-slate-800 border-none font-semibold flex items-center gap-1 text-xs"
+                className="flex items-center gap-1 border-none bg-slate-900 text-xs font-semibold hover:bg-slate-800"
             >
                 Regresar a mi cuenta original
             </Button>

@@ -1,12 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ModalForm, ProFormText, ProFormDigit } from '@ant-design/pro-components';
 import { Row, Col, message, Button, Divider, Form, Alert } from 'antd';
-import { 
-    EnvironmentOutlined, 
-    SaveOutlined, 
-    CloseOutlined, 
-    InfoCircleOutlined
-} from '@ant-design/icons';
+import { EnvironmentOutlined, SaveOutlined, CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
 
@@ -33,7 +28,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
         },
         close() {
             setOpen(false);
-        }
+        },
     }));
 
     const [form] = Form.useForm();
@@ -44,24 +39,25 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
             form.setFieldsValue({
                 id: undefined,
                 nombre: '',
-                meta: undefined
+                meta: undefined,
             });
 
             if (editId) {
                 const url = fetchUrl || `/demarcaciones/${editId}`;
-                axios.get(url, {
-                    params: activePresidenteId ? { presidente_id: activePresidenteId } : {}
-                })
-                .then(response => {
-                    form.setFieldsValue({
-                        id: response.data.id,
-                        nombre: response.data.nombre,
-                        meta: response.data.meta
+                axios
+                    .get(url, {
+                        params: activePresidenteId ? { presidente_id: activePresidenteId } : {},
+                    })
+                    .then((response) => {
+                        form.setFieldsValue({
+                            id: response.data.id,
+                            nombre: response.data.nombre,
+                            meta: response.data.meta,
+                        });
+                    })
+                    .catch(() => {
+                        message.error('No se pudo cargar la información de la demarcación');
                     });
-                })
-                .catch(() => {
-                    message.error('No se pudo cargar la información de la demarcación');
-                });
             }
         }
     }, [open, editId, fetchUrl, activePresidenteId]);
@@ -83,18 +79,18 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
             submitter={{
                 render: (props) => {
                     return (
-                        <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-                            <Button 
-                                key="cancel" 
+                        <div className="flex justify-end gap-3 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4">
+                            <Button
+                                key="cancel"
                                 onClick={() => setOpen(false)}
                                 icon={<CloseOutlined />}
                                 className="border-gray-300 text-gray-700"
                             >
                                 Cancelar
                             </Button>
-                            <Button 
-                                key="submit" 
-                                type="primary" 
+                            <Button
+                                key="submit"
+                                type="primary"
                                 onClick={() => props.form?.submit?.()}
                                 icon={<SaveOutlined />}
                                 className="bg-[#0f172a]"
@@ -110,7 +106,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
                 const endpoint = fetchUrl || (editId ? `${basePath}/${editId}` : basePath);
                 const payload = {
                     ...values,
-                    ...(activePresidenteId ? { presidente_id: activePresidenteId } : {})
+                    ...(activePresidenteId ? { presidente_id: activePresidenteId } : {}),
                 };
 
                 if (editId) {
@@ -130,7 +126,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
                                 form.setFields(fieldErrors);
                             }
                             message.error('Por favor revisa los campos en rojo');
-                        }
+                        },
                     });
                 } else {
                     router.post(endpoint, payload, {
@@ -148,25 +144,25 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
                                 form.setFields(fieldErrors);
                             }
                             message.error('Por favor revisa los campos en rojo');
-                        }
+                        },
                     });
                 }
                 return false;
             }}
         >
             {/* Custom Header */}
-            <div className="bg-[#0f172a] text-white p-6 rounded-t-lg flex justify-between items-center">
+            <div className="flex items-center justify-between rounded-t-lg bg-[#0f172a] p-6 text-white">
                 <div className="flex items-center gap-4">
-                    <div className="bg-white/20 p-3 rounded-lg">
+                    <div className="rounded-lg bg-white/20 p-3">
                         <EnvironmentOutlined className="text-3xl text-white" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold m-0 tracking-wide uppercase">
+                        <h2 className="m-0 text-xl font-bold tracking-wide uppercase">
                             {editId ? 'EDICIÓN DE' : 'REGISTRO DE'} Demarcación Territorial
                         </h2>
-                        <p className="text-gray-300 text-sm m-0">
-                            {activePresidenteId 
-                                ? 'Configurando meta para el candidato seleccionado' 
+                        <p className="m-0 text-sm text-gray-300">
+                            {activePresidenteId
+                                ? 'Configurando meta para el candidato seleccionado'
                                 : 'Estructura Electoral Municipal'}
                         </p>
                     </div>
@@ -174,11 +170,11 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
             </div>
 
             <div className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="bg-[#0f172a] text-white p-1 rounded">
+                <div className="mb-4 flex items-center gap-2">
+                    <div className="rounded bg-[#0f172a] p-1 text-white">
                         <EnvironmentOutlined />
                     </div>
-                    <h3 className="text-[#0f172a] font-bold m-0 tracking-wide text-sm">DATOS DE LA DEMARCACIÓN</h3>
+                    <h3 className="m-0 text-sm font-bold tracking-wide text-[#0f172a]">DATOS DE LA DEMARCACIÓN</h3>
                 </div>
                 <Divider className="my-2 border-gray-200" />
 
@@ -192,7 +188,7 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
                                 disabled={!!editId}
                                 rules={[
                                     { required: true, message: 'Requerido' },
-                                    { type: 'number', min: 1, message: 'Debe ser mayor o igual a 1' }
+                                    { type: 'number', min: 1, message: 'Debe ser mayor o igual a 1' },
                                 ]}
                                 fieldProps={{
                                     precision: 0,
@@ -213,11 +209,13 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
                         <Col span={24}>
                             <ProFormDigit
                                 name="meta"
-                                label={activePresidenteId ? "Meta de Votantes para el Candidato" : "Meta de Votantes Base"}
+                                label={
+                                    activePresidenteId ? 'Meta de Votantes para el Candidato' : 'Meta de Votantes Base'
+                                }
                                 placeholder="Número total de simpatizantes como objetivo"
                                 rules={[
                                     { required: true, message: 'Requerido' },
-                                    { type: 'number', min: 0, message: 'Debe ser mayor o igual a 0' }
+                                    { type: 'number', min: 0, message: 'Debe ser mayor o igual a 0' },
                                 ]}
                                 fieldProps={{
                                     precision: 0,

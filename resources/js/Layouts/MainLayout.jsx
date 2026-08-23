@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { ProLayout } from '@ant-design/pro-components';
 import { Link, usePage, router } from '@inertiajs/react';
-import { 
-  DashboardOutlined, 
-  TeamOutlined, 
-  UsergroupAddOutlined, 
-  EnvironmentOutlined,
-  BarChartOutlined,
-  MessageOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-  BellOutlined,
-  SearchOutlined,
-  MenuOutlined,
-  HistoryOutlined,
-  UserOutlined,
-  CrownOutlined
+import {
+    DashboardOutlined,
+    TeamOutlined,
+    UsergroupAddOutlined,
+    EnvironmentOutlined,
+    BarChartOutlined,
+    MessageOutlined,
+    SettingOutlined,
+    LogoutOutlined,
+    BellOutlined,
+    SearchOutlined,
+    MenuOutlined,
+    HistoryOutlined,
+    UserOutlined,
+    CrownOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
@@ -26,7 +26,7 @@ export default function MainLayout({ children }) {
     const { auth } = usePage().props;
     const user = auth?.user || { name: 'Presidente', role: 'presidente', id: 'PRES-0001' };
     const displayName = user.name || `${user.nombre || ''} ${user.apellidos || ''}`.trim() || `Usuario ${user.id}`;
-    
+
     const ROLE_NAMES = {
         superuser: 'Superusuario',
         admin: 'Administrador',
@@ -56,11 +56,13 @@ export default function MainLayout({ children }) {
                     collapsed={collapsed}
                     onCollapse={setCollapsed}
                     menuHeaderRender={(logoDom, titleDom, props) => (
-                        <div className={`flex items-center justify-center w-full transition-all duration-200 ${props?.collapsed ? 'p-2' : 'p-3 px-4'}`}>
-                            <img 
-                                src="/images/orion-legal-logo.png" 
-                                alt="ORION Sistemas - Legal Smart Gov" 
-                                className={`object-contain transition-all duration-200 ${props?.collapsed ? 'h-8 w-auto' : 'w-full h-auto max-h-24 rounded-lg'}`}
+                        <div
+                            className={`flex w-full items-center justify-center transition-all duration-200 ${props?.collapsed ? 'p-2' : 'p-3 px-4'}`}
+                        >
+                            <img
+                                src="/images/orion-legal-logo.png"
+                                alt="ORION Sistemas - Legal Smart Gov"
+                                className={`object-contain transition-all duration-200 ${props?.collapsed ? 'h-8 w-auto' : 'h-auto max-h-24 w-full rounded-lg'}`}
                             />
                         </div>
                     )}
@@ -83,33 +85,36 @@ export default function MainLayout({ children }) {
                         },
                         header: {
                             colorBgHeader: '#ffffff',
-                        }
+                        },
                     }}
                     menuExtraRender={({ collapsed }) =>
                         !collapsed && (
-                            <div className="flex items-center gap-3 px-4 py-6 border-b border-gray-800 mb-2">
-                                <Avatar size={48} icon={<UserOutlined />} src={user?.foto ? `/storage/${user.foto}` : null} className="bg-gray-700" />
-                                <div className="flex flex-col min-w-0 flex-1">
-                                    <span className="font-bold text-white leading-tight truncate" title={displayName}>{displayName}</span>
-                                    <span className="text-gray-300 text-sm capitalize leading-tight mb-1 truncate">{roleName}</span>
+                            <div className="mb-2 flex items-center gap-3 border-b border-gray-800 px-4 py-6">
+                                <Avatar
+                                    size={48}
+                                    icon={<UserOutlined />}
+                                    src={user?.foto ? `/storage/${user.foto}` : null}
+                                    className="bg-gray-700"
+                                />
+                                <div className="flex min-w-0 flex-1 flex-col">
+                                    <span className="truncate leading-tight font-bold text-white" title={displayName}>
+                                        {displayName}
+                                    </span>
+                                    <span className="mb-1 truncate text-sm leading-tight text-gray-300 capitalize">
+                                        {roleName}
+                                    </span>
                                     <div className="flex items-center gap-1">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <span className="text-green-500 text-xs font-medium">En línea</span>
+                                        <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                        <span className="text-xs font-medium text-green-500">En línea</span>
                                     </div>
                                 </div>
                             </div>
                         )
                     }
                     menuItemRender={(item, dom) => (
-                        <Link 
-                            href={item.path} 
-                            onClick={() => setPathname(item.path)}
-                            className="flex items-center"
-                        >
+                        <Link href={item.path} onClick={() => setPathname(item.path)} className="flex items-center">
                             {dom}
-                            {item.badge && (
-                                <Badge count={item.badge} className="ml-auto" size="small" />
-                            )}
+                            {item.badge && <Badge count={item.badge} className="ml-auto" size="small" />}
                         </Link>
                     )}
                     avatarProps={false}
@@ -135,17 +140,28 @@ export default function MainLayout({ children }) {
                                         name: 'Coordinadores de Distrito',
                                         icon: <UserOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
+                                        user.role
+                                    ) && {
                                         path: '/representantes',
                                         name: 'Representantes (RD)',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito', 'rd'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito', 'rd'].includes(
+                                        user.role
+                                    ) && {
                                         path: '/operadores',
                                         name: 'Operadores',
                                         icon: <TeamOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito', 'rd', 'operador'].includes(user.role) && {
+                                    [
+                                        'presidente',
+                                        'admin',
+                                        'superuser',
+                                        'coordinador_distrito',
+                                        'rd',
+                                        'operador',
+                                    ].includes(user.role) && {
                                         path: '/promotores',
                                         name: 'Promotores',
                                         icon: <TeamOutlined />,
@@ -155,47 +171,55 @@ export default function MainLayout({ children }) {
                                         name: 'Promovidos',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
+                                        user.role
+                                    ) && {
                                         path: '/mapa',
                                         name: 'Mapa Territorial',
                                         icon: <EnvironmentOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
+                                        user.role
+                                    ) && {
                                         path: '/demarcaciones',
                                         name: 'Demarcaciones',
                                         icon: <EnvironmentOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(user.role) && {
+                                    ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
+                                        user.role
+                                    ) && {
                                         path: '/logs',
                                         name: 'Bitácora',
                                         icon: <HistoryOutlined />,
                                     },
-                                ].filter(Boolean)
-                            }
+                                ].filter(Boolean),
+                            },
                         ],
                     }}
                     headerRender={false}
                 >
-                    <div className="flex flex-col h-[calc(100vh-64px)] w-full relative">
+                    <div className="relative flex h-[calc(100vh-64px)] w-full flex-col">
                         <ImpersonateBanner />
                         {/* Custom Header that bypasses ProLayout header issues */}
-                        <div className="flex items-center justify-between w-full h-16 bg-white px-4 md:px-6 shadow-sm border-b border-gray-100 flex-shrink-0 relative z-10">
-                            <div className="hidden md:flex items-center text-sm text-gray-500 truncate mr-4 min-w-0">
-                                <span className="font-semibold text-gray-700 truncate">{roleName}</span>
-                                <span className="mx-2 text-gray-400 font-bold flex-shrink-0">&gt;</span>
-                                <span className="truncate">{user.id} - {displayName}</span>
+                        <div className="relative z-10 flex h-16 w-full flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 shadow-sm md:px-6">
+                            <div className="mr-4 hidden min-w-0 items-center truncate text-sm text-gray-500 md:flex">
+                                <span className="truncate font-semibold text-gray-700">{roleName}</span>
+                                <span className="mx-2 flex-shrink-0 font-bold text-gray-400">&gt;</span>
+                                <span className="truncate">
+                                    {user.id} - {displayName}
+                                </span>
                             </div>
                             {/* Mobile menu toggle */}
-                            <div className="md:hidden flex items-center mr-3">
-                                <MenuOutlined 
-                                    className="text-xl text-gray-800 cursor-pointer" 
-                                    onClick={() => setCollapsed(!collapsed)} 
+                            <div className="mr-3 flex items-center md:hidden">
+                                <MenuOutlined
+                                    className="cursor-pointer text-xl text-gray-800"
+                                    onClick={() => setCollapsed(!collapsed)}
                                 />
                             </div>
 
                             <div className="flex items-center gap-3 md:gap-6">
                                 <HeaderImpersonateSearch />
-                                <Badge count={5} size="small" className="cursor-pointer hidden sm:block">
+                                <Badge count={5} size="small" className="hidden cursor-pointer sm:block">
                                     <BellOutlined className="text-xl text-gray-600 hover:text-blue-600" />
                                 </Badge>
                                 <Dropdown
@@ -210,22 +234,31 @@ export default function MainLayout({ children }) {
                                         ],
                                     }}
                                 >
-                                    <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 md:p-1.5 rounded transition-colors">
-                                        <Avatar icon={<UserOutlined />} src={user?.foto ? `/storage/${user.foto}` : null} className="bg-blue-100 text-blue-600" />
-                                        <div className="hidden sm:flex flex-col leading-none text-left min-w-0 max-w-[120px]">
-                                            <span className="font-bold text-gray-800 text-sm truncate" title={displayName}>{displayName}</span>
-                                            <span className="text-xs text-gray-500 capitalize truncate">{roleName}</span>
+                                    <div className="flex cursor-pointer items-center gap-2 rounded p-1 transition-colors hover:bg-gray-50 md:p-1.5">
+                                        <Avatar
+                                            icon={<UserOutlined />}
+                                            src={user?.foto ? `/storage/${user.foto}` : null}
+                                            className="bg-blue-100 text-blue-600"
+                                        />
+                                        <div className="hidden max-w-[120px] min-w-0 flex-col text-left leading-none sm:flex">
+                                            <span
+                                                className="truncate text-sm font-bold text-gray-800"
+                                                title={displayName}
+                                            >
+                                                {displayName}
+                                            </span>
+                                            <span className="truncate text-xs text-gray-500 capitalize">
+                                                {roleName}
+                                            </span>
                                         </div>
-                                        <span className="text-gray-400 text-xs font-bold hidden sm:block">v</span>
+                                        <span className="hidden text-xs font-bold text-gray-400 sm:block">v</span>
                                     </div>
                                 </Dropdown>
                             </div>
                         </div>
 
                         {/* Page Content */}
-                        <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6 shadow-inner">
-                            {children}
-                        </div>
+                        <div className="flex-1 overflow-auto bg-gray-50 p-4 shadow-inner md:p-6">{children}</div>
                     </div>
                 </ProLayout>
             </div>

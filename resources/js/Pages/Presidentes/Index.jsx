@@ -1,17 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal, Image, Tag, Form, Row, Col, Upload, message, Input, Select, Divider, Switch } from 'antd';
-import { 
-    PlusOutlined, 
-    UserOutlined, 
-    PhoneOutlined, 
-    EnvironmentOutlined, 
-    CalendarOutlined, 
-    EditOutlined, 
-    DeleteOutlined, 
-    MailOutlined, 
-    DownloadOutlined, 
+import {
+    Card,
+    Button,
+    Avatar,
+    Space,
+    Badge,
+    Modal,
+    Image,
+    Tag,
+    Form,
+    Row,
+    Col,
+    Upload,
+    message,
+    Input,
+    Select,
+    Divider,
+    Switch,
+} from 'antd';
+import {
+    PlusOutlined,
+    UserOutlined,
+    PhoneOutlined,
+    EnvironmentOutlined,
+    CalendarOutlined,
+    EditOutlined,
+    DeleteOutlined,
+    MailOutlined,
+    DownloadOutlined,
     ReloadOutlined,
     BankOutlined,
     LockOutlined,
@@ -20,7 +38,7 @@ import {
     TeamOutlined,
     CrownOutlined,
     SwapOutlined,
-    ThunderboltOutlined
+    ThunderboltOutlined,
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import axios from 'axios';
@@ -65,7 +83,7 @@ export default function PresidentesIndex({ presidentes }) {
             cancelText: 'Cancelar',
             onOk: () => {
                 router.post(`/impersonate/${record.id}`);
-            }
+            },
         });
     };
 
@@ -125,7 +143,7 @@ export default function PresidentesIndex({ presidentes }) {
         Object.entries(currentParams).forEach(([key, value]) => {
             if (value !== undefined && value !== null && value !== '' && key !== 'page' && key !== 'per_page') {
                 if (Array.isArray(value)) {
-                    value.forEach(v => queryParams.append(`${key}[]`, v));
+                    value.forEach((v) => queryParams.append(`${key}[]`, v));
                 } else {
                     queryParams.append(key, value);
                 }
@@ -200,9 +218,9 @@ export default function PresidentesIndex({ presidentes }) {
                     preserveScroll: true,
                     onSuccess: () => {
                         actionRef.current?.reload();
-                    }
+                    },
                 });
-            }
+            },
         });
     };
 
@@ -213,13 +231,17 @@ export default function PresidentesIndex({ presidentes }) {
             okText: 'Sí, restaurar',
             cancelText: 'Cancelar',
             onOk: () => {
-                router.post(`/presidentes/${id}/restore`, {}, {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        actionRef.current?.reload();
+                router.post(
+                    `/presidentes/${id}/restore`,
+                    {},
+                    {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            actionRef.current?.reload();
+                        },
                     }
-                });
-            }
+                );
+            },
         });
     };
 
@@ -260,7 +282,7 @@ export default function PresidentesIndex({ presidentes }) {
                         }
                         message.error('Por favor revisa los campos en rojo');
                     },
-                    onFinish: () => setSubmitting(false)
+                    onFinish: () => setSubmitting(false),
                 });
             } else {
                 router.post('/presidentes', values, {
@@ -280,7 +302,7 @@ export default function PresidentesIndex({ presidentes }) {
                         }
                         message.error('Por favor revisa los campos en rojo');
                     },
-                    onFinish: () => setSubmitting(false)
+                    onFinish: () => setSubmitting(false),
                 });
             }
         } catch (err) {
@@ -295,9 +317,7 @@ export default function PresidentesIndex({ presidentes }) {
             key: 'id',
             width: 80,
             search: false,
-            render: (id) => (
-                <span className="text-blue-600 font-medium">PRES-{String(id).padStart(4, '0')}</span>
-            ),
+            render: (id) => <span className="font-medium text-blue-600">PRES-{String(id).padStart(4, '0')}</span>,
         },
         {
             title: 'FOTO',
@@ -306,19 +326,23 @@ export default function PresidentesIndex({ presidentes }) {
             width: 70,
             align: 'center',
             search: false,
-            render: (fotoUrl) => (
+            render: (fotoUrl) =>
                 fotoUrl ? (
                     <Image
                         src={fotoUrl}
                         width={44}
                         height={44}
-                        className="object-cover rounded-md border border-blue-200"
+                        className="rounded-md border border-blue-200 object-cover"
                         style={{ borderRadius: '6px' }}
                     />
                 ) : (
-                    <Avatar shape="square" size={44} icon={<UserOutlined />} className="bg-blue-100 text-blue-600 font-bold" />
-                )
-            ),
+                    <Avatar
+                        shape="square"
+                        size={44}
+                        icon={<UserOutlined />}
+                        className="bg-blue-100 font-bold text-blue-600"
+                    />
+                ),
         },
         {
             title: 'NOMBRE DEL PRESIDENTE',
@@ -326,8 +350,10 @@ export default function PresidentesIndex({ presidentes }) {
             key: 'nombre',
             render: (_, record) => (
                 <div className="flex flex-col">
-                    <span className="font-semibold text-gray-800 text-sm">{record.nombre || record.name} {record.apellidos || ''}</span>
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <span className="text-sm font-semibold text-gray-800">
+                        {record.nombre || record.name} {record.apellidos || ''}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
                         <MailOutlined className="text-gray-400" /> {record.email}
                     </span>
                 </div>
@@ -341,14 +367,14 @@ export default function PresidentesIndex({ presidentes }) {
             hideInTable: true,
             request: async () => {
                 const response = await axios.get('/catalogos/estados');
-                return response.data.map(e => ({ label: e.name || e.nombre, value: e.id }));
+                return response.data.map((e) => ({ label: e.name || e.nombre, value: e.id }));
             },
             fieldProps: {
                 showSearch: true,
                 optionFilterProp: 'label',
                 filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Estado',
-            }
+            },
         },
         {
             title: 'Municipio',
@@ -361,14 +387,14 @@ export default function PresidentesIndex({ presidentes }) {
                 const stateId = params?.state_id;
                 const url = stateId ? `/catalogos/municipios?state_id=${stateId}` : '/catalogos/municipios';
                 const response = await axios.get(url);
-                return response.data.map(m => ({ label: m.name || m.nombre, value: m.id }));
+                return response.data.map((m) => ({ label: m.name || m.nombre, value: m.id }));
             },
             fieldProps: {
                 showSearch: true,
                 optionFilterProp: 'label',
                 filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
                 placeholder: 'Filtrar por Municipio',
-            }
+            },
         },
         {
             title: 'ESTADO / MUNICIPIO',
@@ -377,10 +403,10 @@ export default function PresidentesIndex({ presidentes }) {
             render: (_, record) => (
                 <div className="flex flex-col text-xs">
                     <span className="font-medium text-gray-700">
-                        <EnvironmentOutlined className="text-blue-500 mr-1" />
+                        <EnvironmentOutlined className="mr-1 text-blue-500" />
                         {record.municipality?.nombre || record.municipality?.name || 'N/A'}
                     </span>
-                    <span className="text-gray-400 pl-4">{record.state?.nombre || record.state?.name || 'N/A'}</span>
+                    <span className="pl-4 text-gray-400">{record.state?.nombre || record.state?.name || 'N/A'}</span>
                 </div>
             ),
         },
@@ -418,7 +444,7 @@ export default function PresidentesIndex({ presidentes }) {
                 true: { text: 'Activo', status: 'Success' },
                 false: { text: 'Inactivo', status: 'Error' },
             },
-            render: (_, record) => (
+            render: (_, record) =>
                 record.deleted_at ? (
                     <Badge status="default" text="Eliminado" />
                 ) : (
@@ -429,8 +455,7 @@ export default function PresidentesIndex({ presidentes }) {
                         unCheckedChildren="Inactivo"
                         onChange={(checked) => handleStatusToggle(record, checked)}
                     />
-                )
-            ),
+                ),
         },
         {
             title: 'ACCIONES',
@@ -441,31 +466,31 @@ export default function PresidentesIndex({ presidentes }) {
             render: (_, record) => (
                 <Space size="small">
                     {record.deleted_at ? (
-                        <Button 
-                            type="text" 
-                            icon={<ReloadOutlined className="text-green-600" />} 
+                        <Button
+                            type="text"
+                            icon={<ReloadOutlined className="text-green-600" />}
                             onClick={() => handleRestore(record.id)}
                             title="Restaurar Presidente"
                         />
                     ) : (
                         <>
-                            <Button 
-                                type="text" 
-                                icon={<EditOutlined className="text-blue-600" />} 
+                            <Button
+                                type="text"
+                                icon={<EditOutlined className="text-blue-600" />}
                                 onClick={() => handleEdit(record)}
                                 title="Editar Presidente"
                             />
                             {auth?.can_impersonate && record.id !== auth.user?.id && (
-                                <Button 
-                                    type="text" 
-                                    icon={<SwapOutlined className="text-amber-600" />} 
+                                <Button
+                                    type="text"
+                                    icon={<SwapOutlined className="text-amber-600" />}
                                     onClick={() => handleImpersonate(record)}
                                     title="Impersonar usuario"
                                 />
                             )}
-                            <Button 
-                                type="text" 
-                                icon={<DeleteOutlined className="text-red-500" />} 
+                            <Button
+                                type="text"
+                                icon={<DeleteOutlined className="text-red-500" />}
                                 onClick={() => handleDelete(record.id)}
                                 title="Eliminar Presidente"
                             />
@@ -478,15 +503,18 @@ export default function PresidentesIndex({ presidentes }) {
 
     const renderMobileCard = (record) => {
         return (
-            <Card styles={{ body: { padding: '16px' } }} className="mb-4 shadow-sm rounded-lg border border-gray-200 w-full">
-                <div className="flex justify-between items-start mb-4">
+            <Card
+                styles={{ body: { padding: '16px' } }}
+                className="mb-4 w-full rounded-lg border border-gray-200 shadow-sm"
+            >
+                <div className="mb-4 flex items-start justify-between">
                     <div className="flex items-center gap-3">
                         {record.foto_url ? (
                             <Image
                                 src={record.foto_url}
                                 width={48}
                                 height={48}
-                                className="object-cover rounded-md border border-blue-200"
+                                className="rounded-md border border-blue-200 object-cover"
                                 style={{ borderRadius: '6px' }}
                             />
                         ) : (
@@ -494,21 +522,25 @@ export default function PresidentesIndex({ presidentes }) {
                                 shape="square"
                                 size={48}
                                 icon={<UserOutlined />}
-                                className="bg-amber-100 text-amber-600 font-bold rounded-md"
+                                className="rounded-md bg-amber-100 font-bold text-amber-600"
                             />
                         )}
                         <div>
-                            <div className="font-semibold text-base text-gray-800">
+                            <div className="text-base font-semibold text-gray-800">
                                 {record.nombre || record.name} {record.apellidos || ''}
                             </div>
-                            <div className="text-xs text-blue-600 font-medium">
+                            <div className="text-xs font-medium text-blue-600">
                                 PRES-{String(record.id).padStart(4, '0')}
                             </div>
                         </div>
                     </div>
                     <div>
                         {record.deleted_at ? (
-                            <Badge status="default" text="Eliminado" className="bg-gray-100 px-2 py-1 rounded text-xs border border-gray-200" />
+                            <Badge
+                                status="default"
+                                text="Eliminado"
+                                className="rounded border border-gray-200 bg-gray-100 px-2 py-1 text-xs"
+                            />
                         ) : (
                             <Switch
                                 checked={Boolean(record.estado)}
@@ -521,42 +553,51 @@ export default function PresidentesIndex({ presidentes }) {
                     </div>
                 </div>
 
-                <div className="space-y-2 mb-4 text-sm text-gray-600">
+                <div className="mb-4 space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                        <MailOutlined className="text-gray-400 shrink-0" />
-                        <span className="text-gray-400 shrink-0 w-16">Email:</span>
-                        <span className="truncate flex-1 text-gray-800" title={record.email}>{record.email || 'N/A'}</span>
+                        <MailOutlined className="shrink-0 text-gray-400" />
+                        <span className="w-16 shrink-0 text-gray-400">Email:</span>
+                        <span className="flex-1 truncate text-gray-800" title={record.email}>
+                            {record.email || 'N/A'}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <PhoneOutlined className="text-gray-400 shrink-0" />
-                        <span className="text-gray-400 shrink-0 w-16">Teléfono:</span>
-                        <span className="truncate flex-1 text-gray-800">{record.telefono || 'N/A'}</span>
+                        <PhoneOutlined className="shrink-0 text-gray-400" />
+                        <span className="w-16 shrink-0 text-gray-400">Teléfono:</span>
+                        <span className="flex-1 truncate text-gray-800">{record.telefono || 'N/A'}</span>
                     </div>
                     <div className="flex items-start gap-2">
-                        <EnvironmentOutlined className="text-blue-500 shrink-0 mt-0.5" />
-                        <span className="text-gray-400 shrink-0 w-16">Ubicación:</span>
-                        <span className="truncate flex-1 text-gray-800">
-                            {record.municipality?.nombre || record.municipality?.name || 'N/A'}, {record.state?.nombre || record.state?.name || 'N/A'}
+                        <EnvironmentOutlined className="mt-0.5 shrink-0 text-blue-500" />
+                        <span className="w-16 shrink-0 text-gray-400">Ubicación:</span>
+                        <span className="flex-1 truncate text-gray-800">
+                            {record.municipality?.nombre || record.municipality?.name || 'N/A'},{' '}
+                            {record.state?.nombre || record.state?.name || 'N/A'}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 pt-1">
-                        <TeamOutlined className="text-gray-400 shrink-0" />
-                        <span className="text-gray-400 shrink-0 w-16">Estructura:</span>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <Tag color="blue" className="mr-0">{record.rds_count || 0} RD</Tag>
-                            <Tag color="purple" className="mr-0">{record.operadores_count || 0} Op</Tag>
-                            <Tag color="cyan" className="mr-0">{record.promotores_count || 0} Prom</Tag>
+                        <TeamOutlined className="shrink-0 text-gray-400" />
+                        <span className="w-16 shrink-0 text-gray-400">Estructura:</span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <Tag color="blue" className="mr-0">
+                                {record.rds_count || 0} RD
+                            </Tag>
+                            <Tag color="purple" className="mr-0">
+                                {record.operadores_count || 0} Op
+                            </Tag>
+                            <Tag color="cyan" className="mr-0">
+                                {record.promotores_count || 0} Prom
+                            </Tag>
                         </div>
                     </div>
                 </div>
 
-                <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
+                <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
                     {record.deleted_at ? (
                         <Button
                             type="default"
                             icon={<ReloadOutlined className="text-green-600" />}
                             onClick={() => handleRestore(record.id)}
-                            className="text-xs text-green-600 border-green-200"
+                            className="border-green-200 text-xs text-green-600"
                         >
                             Restaurar
                         </Button>
@@ -567,7 +608,7 @@ export default function PresidentesIndex({ presidentes }) {
                                 icon={<EditOutlined className="text-blue-600" />}
                                 onClick={() => handleEdit(record)}
                                 size="small"
-                                className="text-xs border-gray-300"
+                                className="border-gray-300 text-xs"
                             >
                                 Editar
                             </Button>
@@ -577,7 +618,7 @@ export default function PresidentesIndex({ presidentes }) {
                                     icon={<SwapOutlined className="text-amber-600" />}
                                     onClick={() => handleImpersonate(record)}
                                     size="small"
-                                    className="text-xs border-amber-300 text-amber-700 bg-amber-50"
+                                    className="border-amber-300 bg-amber-50 text-xs text-amber-700"
                                 >
                                     Impersonar
                                 </Button>
@@ -604,10 +645,10 @@ export default function PresidentesIndex({ presidentes }) {
             <Head title="Gestión de Presidentes Municipales" />
             {contextHolder}
 
-            <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+                <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-800">
                             <CrownOutlined className="text-amber-500" />
                             Presidentes Municipales / Coordinadores
                         </h1>
@@ -617,7 +658,7 @@ export default function PresidentesIndex({ presidentes }) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-xs">
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs">
                             <span className="text-gray-600">Ver Eliminados:</span>
                             <input
                                 type="checkbox"
@@ -626,23 +667,23 @@ export default function PresidentesIndex({ presidentes }) {
                                     setShowTrashed(e.target.checked);
                                     actionRef.current?.reload();
                                 }}
-                                className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                className="cursor-pointer rounded text-blue-600 focus:ring-blue-500"
                             />
                         </div>
 
-                        <Button 
-                            icon={<DownloadOutlined />} 
+                        <Button
+                            icon={<DownloadOutlined />}
                             onClick={handleExport}
-                            className="bg-white border-gray-300 text-gray-700 hover:text-blue-600"
+                            className="border-gray-300 bg-white text-gray-700 hover:text-blue-600"
                         >
                             Exportar
                         </Button>
 
-                        <Button 
-                            type="primary" 
-                            icon={<PlusOutlined />} 
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
                             onClick={handleCreate}
-                            className="bg-amber-500 hover:bg-amber-600 font-medium"
+                            className="bg-amber-500 font-medium hover:bg-amber-600"
                         >
                             Nuevo Presidente
                         </Button>
@@ -664,17 +705,19 @@ export default function PresidentesIndex({ presidentes }) {
             {/* Modal de Registro / Edición de Presidente */}
             <Modal
                 title={
-                    <div className="flex items-center justify-between w-full pr-8">
+                    <div className="flex w-full items-center justify-between pr-8">
                         <div className="flex items-center gap-2 text-lg font-bold text-gray-800">
                             <CrownOutlined className="text-amber-500" />
                             {editingId ? 'Editar Presidente Municipal' : 'Registrar Nuevo Presidente Municipal'}
                         </div>
-                        {(auth?.user?.role === 'superuser' || auth?.is_impersonating || auth?.impersonator?.role === 'superuser') && (
+                        {(auth?.user?.role === 'superuser' ||
+                            auth?.is_impersonating ||
+                            auth?.impersonator?.role === 'superuser') && (
                             <Button
                                 type="primary"
                                 size="small"
                                 icon={<ThunderboltOutlined />}
-                                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold border-none shadow-sm"
+                                className="border-none bg-amber-500 font-semibold text-white shadow-sm hover:bg-amber-600"
                                 onClick={() => {
                                     const dummy = generatePresidenteFormData({
                                         estados,
@@ -701,22 +744,22 @@ export default function PresidentesIndex({ presidentes }) {
                 width={720}
                 destroyOnClose
             >
-                <Form 
-                    form={form} 
-                    layout="vertical" 
+                <Form
+                    form={form}
+                    layout="vertical"
                     className="mt-4"
                     onFinish={handleFormSubmit}
                     onSubmit={(e) => e.preventDefault()}
                 >
-                    <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
+                    <Divider orientation="left" className="!text-xs !font-normal !text-gray-400">
                         Asignación Geográfica
                     </Divider>
-                    
+
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Form.Item 
-                                name="state_id" 
-                                label="Estado (Entidad)" 
+                            <Form.Item
+                                name="state_id"
+                                label="Estado (Entidad)"
                                 rules={[{ required: true, message: 'Selecciona un estado' }]}
                             >
                                 <Select
@@ -725,15 +768,17 @@ export default function PresidentesIndex({ presidentes }) {
                                     loading={loadingEstados}
                                     onChange={handleStateChange}
                                     optionFilterProp="label"
-                                    filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-                                    options={estados.map(e => ({ label: e.nombre || e.name, value: e.id }))}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={estados.map((e) => ({ label: e.nombre || e.name, value: e.id }))}
                                 />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item 
-                                name="municipality_id" 
-                                label="Municipio" 
+                            <Form.Item
+                                name="municipality_id"
+                                label="Municipio"
                                 rules={[{ required: true, message: 'Selecciona un municipio' }]}
                             >
                                 <Select
@@ -742,31 +787,33 @@ export default function PresidentesIndex({ presidentes }) {
                                     loading={loadingMunicipios}
                                     disabled={!form.getFieldValue('state_id') && municipios.length === 0}
                                     optionFilterProp="label"
-                                    filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-                                    options={municipios.map(m => ({ label: m.nombre || m.name, value: m.id }))}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={municipios.map((m) => ({ label: m.nombre || m.name, value: m.id }))}
                                 />
                             </Form.Item>
                         </Col>
                     </Row>
 
-                    <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
+                    <Divider orientation="left" className="!text-xs !font-normal !text-gray-400">
                         Datos Personales y de Acceso
                     </Divider>
 
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Form.Item 
-                                name="nombre" 
-                                label="Nombre(s)" 
+                            <Form.Item
+                                name="nombre"
+                                label="Nombre(s)"
                                 rules={[{ required: true, message: 'Ingresa el nombre' }]}
                             >
                                 <Input prefix={<UserOutlined />} placeholder="Nombre(s)" />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item 
-                                name="apellidos" 
-                                label="Apellidos" 
+                            <Form.Item
+                                name="apellidos"
+                                label="Apellidos"
                                 rules={[{ required: true, message: 'Ingresa los apellidos' }]}
                             >
                                 <Input prefix={<UserOutlined />} placeholder="Apellidos" />
@@ -776,18 +823,18 @@ export default function PresidentesIndex({ presidentes }) {
 
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Form.Item 
-                                name="email" 
-                                label="Correo Electrónico (Login)" 
+                            <Form.Item
+                                name="email"
+                                label="Correo Electrónico (Login)"
                                 rules={[{ required: true, type: 'email', message: 'Ingresa un email válido' }]}
                             >
                                 <Input prefix={<MailOutlined />} placeholder="presidente@correo.com" />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item 
-                                name="password" 
-                                label={editingId ? "Nueva Contraseña (Opcional)" : "Contraseña de Acceso"} 
+                            <Form.Item
+                                name="password"
+                                label={editingId ? 'Nueva Contraseña (Opcional)' : 'Contraseña de Acceso'}
                                 rules={editingId ? [] : [{ required: true, min: 6, message: 'Mínimo 6 caracteres' }]}
                             >
                                 <Input.Password prefix={<LockOutlined />} placeholder="******" />
@@ -816,29 +863,24 @@ export default function PresidentesIndex({ presidentes }) {
                         </Col>
                         <Col span={6}>
                             <Form.Item name="sexo" label="Sexo">
-                                <Select placeholder="Selecciona" options={[
-                                    { label: 'Masculino', value: 'Masculino' },
-                                    { label: 'Femenino', value: 'Femenino' },
-                                    { label: 'Otro', value: 'Otro' }
-                                ]} />
+                                <Select
+                                    placeholder="Selecciona"
+                                    options={[
+                                        { label: 'Masculino', value: 'Masculino' },
+                                        { label: 'Femenino', value: 'Femenino' },
+                                        { label: 'Otro', value: 'Otro' },
+                                    ]}
+                                />
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item 
-                                name="estado" 
-                                label="Estatus" 
-                                valuePropName="checked"
-                                initialValue={true}
-                            >
-                                <Switch 
-                                    checkedChildren="Activo" 
-                                    unCheckedChildren="Inactivo" 
-                                />
+                            <Form.Item name="estado" label="Estatus" valuePropName="checked" initialValue={true}>
+                                <Switch checkedChildren="Activo" unCheckedChildren="Inactivo" />
                             </Form.Item>
                         </Col>
                     </Row>
 
-                    <Divider orientation="left" className="!text-xs !text-gray-400 !font-normal">
+                    <Divider orientation="left" className="!text-xs !font-normal !text-gray-400">
                         Fotografía de Perfil e Identificación (Opcional)
                     </Divider>
 

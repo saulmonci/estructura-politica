@@ -19,7 +19,7 @@ const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
                 maxWidthOrHeight: 1920,
                 useWebWorker: true,
             };
-            
+
             const compressedFile = await imageCompression(file, options);
 
             // 2. Enviar al backend
@@ -41,7 +41,10 @@ const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
                     onExtractionComplete(response.data.data, compressedFile);
                 }
             } else {
-                setErrorMsg(response.data?.message || 'No se pudieron extraer los datos. Por favor revisa la imagen e intenta de nuevo.');
+                setErrorMsg(
+                    response.data?.message ||
+                        'No se pudieron extraer los datos. Por favor revisa la imagen e intenta de nuevo.'
+                );
             }
         } catch (error) {
             console.error('Error extrayendo INE:', error);
@@ -57,12 +60,12 @@ const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
     return (
         <div style={{ marginBottom: 24 }}>
             {errorMsg && (
-                <Alert 
-                    message="Error de escaneo" 
-                    description={errorMsg} 
-                    type="error" 
-                    showIcon 
-                    closable 
+                <Alert
+                    message="Error de escaneo"
+                    description={errorMsg}
+                    type="error"
+                    showIcon
+                    closable
                     onClose={() => setErrorMsg(null)}
                     style={{ marginBottom: 16 }}
                 />
@@ -71,7 +74,8 @@ const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
                 message="Autollenado Inteligente"
                 description={
                     <div style={{ marginTop: 8 }}>
-                        Sube o toma una foto del <strong>frente de la INE</strong> para llenar los datos automáticamente.
+                        Sube o toma una foto del <strong>frente de la INE</strong> para llenar los datos
+                        automáticamente.
                         <div style={{ marginTop: 12 }} className="flex flex-wrap gap-2">
                             <Upload
                                 name="ine_image"
@@ -80,11 +84,7 @@ const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
                                 accept="image/jpeg,image/png,image/jpg"
                                 capture="environment"
                             >
-                                <Button 
-                                    type="primary" 
-                                    icon={<CameraOutlined />} 
-                                    loading={loading}
-                                >
+                                <Button type="primary" icon={<CameraOutlined />} loading={loading}>
                                     {loading ? 'Analizando...' : 'Tomar Foto'}
                                 </Button>
                             </Upload>
@@ -94,10 +94,7 @@ const IneScanner = ({ onDataExtracted, onExtractionComplete }) => {
                                 beforeUpload={handleUpload}
                                 accept="image/jpeg,image/png,image/jpg"
                             >
-                                <Button 
-                                    icon={<PictureOutlined />} 
-                                    loading={loading}
-                                >
+                                <Button icon={<PictureOutlined />} loading={loading}>
                                     {loading ? 'Analizando...' : 'Elegir de Galería'}
                                 </Button>
                             </Upload>
