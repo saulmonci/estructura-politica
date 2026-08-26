@@ -633,27 +633,29 @@ const PersonaFormModal = forwardRef(
                                     </Col>
                                 </Row>
 
-                                <Row gutter={16}>
-                                    <Col span={24}>
-                                        <ProFormText.Password
-                                            name="password"
-                                            label="Contraseña de acceso"
-                                            placeholder={
-                                                editId
-                                                    ? 'Dejar en blanco para conservar la actual'
-                                                    : 'Ingresar contraseña (mín. 6 caracteres)'
-                                            }
-                                            rules={[
-                                                {
-                                                    required: !editId,
-                                                    message: 'La contraseña es requerida para un nuevo registro',
-                                                },
-                                                { min: 6, message: 'Mínimo 6 caracteres' },
-                                            ]}
-                                            fieldProps={{ prefix: <LockOutlined className="mr-2 text-gray-400" /> }}
-                                        />
-                                    </Col>
-                                </Row>
+                                {entityType !== 'Promotor' && (
+                                    <Row gutter={16}>
+                                        <Col span={24}>
+                                            <ProFormText.Password
+                                                name="password"
+                                                label="Contraseña de acceso"
+                                                placeholder={
+                                                    editId
+                                                        ? 'Dejar en blanco para conservar la actual'
+                                                        : 'Ingresar contraseña (mín. 6 caracteres)'
+                                                }
+                                                rules={[
+                                                    {
+                                                        required: !editId,
+                                                        message: 'La contraseña es requerida para un nuevo registro',
+                                                    },
+                                                    { min: 6, message: 'Mínimo 6 caracteres' },
+                                                ]}
+                                                fieldProps={{ prefix: <LockOutlined className="mr-2 text-gray-400" /> }}
+                                            />
+                                        </Col>
+                                    </Row>
+                                )}
 
                                 <Row gutter={16}>
                                     <Col xs={24} md={12}>
