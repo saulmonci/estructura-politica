@@ -108,9 +108,25 @@ class PresidenteController extends BaseCrudController
             'numero_interior' => ['nullable', 'string', 'max:50'],
             'colonia' => ['nullable', 'string', 'max:255'],
             'codigo_postal' => ['nullable', 'digits:5'],
-            'clave_electoral' => ['nullable', 'string', 'max:255', Rule::unique('users', 'clave_electoral')->ignore($id)],
+            'clave_electoral' => [
+                'nullable', 
+                'string', 
+                'max:255', 
+                Rule::unique('users', 'clave_electoral')
+                    ->where('role', UserRole::PRESIDENTE->value)
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
+            ],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'curp' => ['nullable', 'string', 'max:255', Rule::unique('users', 'curp')->ignore($id)],
+            'curp' => [
+                'nullable', 
+                'string', 
+                'max:255', 
+                Rule::unique('users', 'curp')
+                    ->where('role', UserRole::PRESIDENTE->value)
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
+            ],
             'apodo' => ['nullable', 'string', 'max:100'],
             'notas' => ['nullable', 'string'],
             'foto' => ['nullable', 'image'],
@@ -131,8 +147,8 @@ class PresidenteController extends BaseCrudController
         }
 
         if (!$request->filled('email')) {
-            $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
-            $request->merge(['email' => 'presidente_' . $identificador . '@sistema.local']);
+            $identificador = ($request->input('curp') ?: ($request->input('telefono') ?: uniqid())) . '_' . uniqid();
+            $request->merge(['email' => 'presidente_' . strtolower($identificador) . '@sistema.local']);
         }
 
         if ($request->filled('password')) {

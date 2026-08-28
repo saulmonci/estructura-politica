@@ -104,6 +104,20 @@ class OperadorController extends BaseCrudController
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
         $user = $request->user();
+        $presidenteId = null;
+        if ($id) {
+            $existing = User::withoutGlobalScopes()->find($id);
+            $presidenteId = $existing?->presidente_id;
+        }
+        if (!$presidenteId) {
+            if ($request->filled('parent_id')) {
+                $parent = User::withoutGlobalScopes()->find($request->input('parent_id'));
+                $presidenteId = $parent?->getPresidenteId();
+            } elseif ($user) {
+                $presidenteId = $user->getPresidenteId();
+            }
+        }
+
         $rules = [
             'nombre' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
@@ -117,9 +131,25 @@ class OperadorController extends BaseCrudController
             'codigo_postal' => ['nullable', 'digits:5'],
             'demarcacion_id' => ['nullable', 'exists:demarcaciones,id'],
             'seccion_electoral' => ['nullable', 'string', 'max:255'],
-            'clave_electoral' => ['nullable', 'string', 'size:18', Rule::unique('users', 'clave_electoral')->ignore($id)],
+            'clave_electoral' => [
+                'nullable', 
+                'string', 
+                'size:18', 
+                Rule::unique('users', 'clave_electoral')
+                    ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
+            ],
             'telefono' => ['nullable', 'digits:10'],
-            'curp' => ['nullable', 'string', 'size:18', Rule::unique('users', 'curp')->ignore($id)],
+            'curp' => [
+                'nullable', 
+                'string', 
+                'size:18', 
+                Rule::unique('users', 'curp')
+                    ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
+            ],
             'apodo' => ['nullable', 'string', 'max:100'],
             'notas' => ['nullable', 'string'],
             'password' => ['nullable', 'string', 'min:6'],
@@ -151,8 +181,8 @@ class OperadorController extends BaseCrudController
         }
 
         if (!$request->filled('email')) {
-            $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
-            $request->merge(['email' => $identificador . '@sistema.local']);
+            $identificador = ($request->input('curp') ?: ($request->input('telefono') ?: uniqid())) . '_' . uniqid();
+            $request->merge(['email' => strtolower($identificador) . '@sistema.local']);
         }
 
         if ($request->filled('password')) {

@@ -142,6 +142,20 @@ class PromovidoController extends BaseCrudController
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
         $user = $request->user();
+        $presidenteId = null;
+        if ($id) {
+            $existing = Promovido::withoutGlobalScopes()->find($id);
+            $presidenteId = $existing?->presidente_id;
+        }
+        if (!$presidenteId) {
+            if ($request->filled('promotor_id')) {
+                $promotor = User::withoutGlobalScopes()->find($request->input('promotor_id'));
+                $presidenteId = $promotor?->getPresidenteId();
+            } elseif ($user) {
+                $presidenteId = $user->getPresidenteId();
+            }
+        }
+
         $rules = [
             'nombre'    => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
@@ -149,13 +163,19 @@ class PromovidoController extends BaseCrudController
                 'nullable', 
                 'string', 
                 'max:18', 
-                \Illuminate\Validation\Rule::unique('promovidos', 'clave_elector')->ignore($id)
+                \Illuminate\Validation\Rule::unique('promovidos', 'clave_elector')
+                    ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
             ],
             'curp'              => [
                 'nullable', 
                 'string', 
                 'max:18', 
-                \Illuminate\Validation\Rule::unique('promovidos', 'curp')->ignore($id)
+                \Illuminate\Validation\Rule::unique('promovidos', 'curp')
+                    ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
             ],
             'telefono'          => ['nullable', 'string', 'max:10'],
             'demarcacion_id'    => ['nullable', 'exists:demarcaciones,id'],

@@ -117,6 +117,83 @@ class User extends Authenticatable
                     $user->state_id = $municipality->state_id;
                 }
             }
+
+            // Validar unicidad compuesta por presidente_id
+            $roleVal = $user->role instanceof UserRole ? $user->role : (is_string($user->role) ? UserRole::tryFrom($user->role) : null);
+            if ($roleVal === UserRole::PRESIDENTE) {
+                if (!empty($user->curp)) {
+                    $curpExists = User::withoutGlobalScopes()
+                        ->where('role', UserRole::PRESIDENTE)
+                        ->where('curp', $user->curp)
+                        ->whereNull('deleted_at')
+                        ->when($user->exists, fn ($q) => $q->where('id', '!=', $user->id))
+                        ->exists();
+
+                    if ($curpExists) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'curp' => 'La CURP ya está registrada para otro presidente.',
+                        ]);
+                    }
+                }
+
+                if (!empty($user->clave_electoral)) {
+                    $claveExists = User::withoutGlobalScopes()
+                        ->where('role', UserRole::PRESIDENTE)
+                        ->where('clave_electoral', $user->clave_electoral)
+                        ->whereNull('deleted_at')
+                        ->when($user->exists, fn ($q) => $q->where('id', '!=', $user->id))
+                        ->exists();
+
+                    if ($claveExists) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'clave_electoral' => 'La clave electoral ya está registrada para otro presidente.',
+                        ]);
+                    }
+                }
+            } else {
+                $presId = $user->presidente_id;
+                if (empty($presId)) {
+                    if (!empty($user->parent_id)) {
+                        $parent = User::withoutGlobalScopes()->find($user->parent_id);
+                        $presId = $parent?->getPresidenteId();
+                    } elseif (auth()->check() && auth()->user()->getPresidenteId()) {
+                        $presId = auth()->user()->getPresidenteId();
+                    }
+                    if ($presId) {
+                        $user->presidente_id = $presId;
+                    }
+                }
+
+                if (!empty($user->curp)) {
+                    $curpExists = User::withoutGlobalScopes()
+                        ->where('curp', $user->curp)
+                        ->whereNull('deleted_at')
+                        ->when($presId, fn ($q) => $q->where('presidente_id', $presId))
+                        ->when($user->exists, fn ($q) => $q->where('id', '!=', $user->id))
+                        ->exists();
+
+                    if ($curpExists) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'curp' => 'La CURP ya está registrada para este presidente.',
+                        ]);
+                    }
+                }
+
+                if (!empty($user->clave_electoral)) {
+                    $claveExists = User::withoutGlobalScopes()
+                        ->where('clave_electoral', $user->clave_electoral)
+                        ->whereNull('deleted_at')
+                        ->when($presId, fn ($q) => $q->where('presidente_id', $presId))
+                        ->when($user->exists, fn ($q) => $q->where('id', '!=', $user->id))
+                        ->exists();
+
+                    if ($claveExists) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'clave_electoral' => 'La clave electoral ya está registrada para este presidente.',
+                        ]);
+                    }
+                }
+            }
         });
 
         static::created(function ($user) {

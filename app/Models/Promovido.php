@@ -52,6 +52,46 @@ class Promovido extends Model
                     $promovido->state_id = $demarcacion->municipality?->state_id;
                 }
             }
+
+            // Validar unicidad compuesta por presidente_id
+            $presId = $promovido->presidente_id;
+            if (empty($presId) && $promovido->promotor_id) {
+                $promotor = User::withoutGlobalScopes()->find($promovido->promotor_id);
+                $presId = $promotor?->getPresidenteId();
+                if ($presId) {
+                    $promovido->presidente_id = $presId;
+                }
+            }
+
+            if (!empty($promovido->curp)) {
+                $curpExists = Promovido::withoutGlobalScopes()
+                    ->where('curp', $promovido->curp)
+                    ->whereNull('deleted_at')
+                    ->when($presId, fn ($q) => $q->where('presidente_id', $presId))
+                    ->when($promovido->exists, fn ($q) => $q->where('id', '!=', $promovido->id))
+                    ->exists();
+
+                if ($curpExists) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'curp' => 'La CURP ya está registrada para este presidente.',
+                    ]);
+                }
+            }
+
+            if (!empty($promovido->clave_elector)) {
+                $claveExists = Promovido::withoutGlobalScopes()
+                    ->where('clave_elector', $promovido->clave_elector)
+                    ->whereNull('deleted_at')
+                    ->when($presId, fn ($q) => $q->where('presidente_id', $presId))
+                    ->when($promovido->exists, fn ($q) => $q->where('id', '!=', $promovido->id))
+                    ->exists();
+
+                if ($claveExists) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'clave_elector' => 'La clave de elector ya está registrada para este presidente.',
+                    ]);
+                }
+            }
         });
     }
 

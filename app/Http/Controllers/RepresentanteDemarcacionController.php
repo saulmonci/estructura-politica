@@ -94,6 +94,23 @@ class RepresentanteDemarcacionController extends BaseCrudController
 
     protected function getValidationRules(Request $request, ?string $id = null): array
     {
+        $user = $request->user();
+        $presidenteId = null;
+        if ($id) {
+            $existing = User::withoutGlobalScopes()->find($id);
+            $presidenteId = $existing?->presidente_id;
+        }
+        if (!$presidenteId) {
+            if ($request->filled('presidente_id')) {
+                $presidenteId = $request->input('presidente_id');
+            } elseif ($request->filled('parent_id')) {
+                $parent = User::withoutGlobalScopes()->find($request->input('parent_id'));
+                $presidenteId = $parent?->getPresidenteId();
+            } elseif ($user) {
+                $presidenteId = $user->getPresidenteId();
+            }
+        }
+
         return [
             'nombre' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
@@ -108,9 +125,25 @@ class RepresentanteDemarcacionController extends BaseCrudController
             'demarcacion_id' => ['nullable', 'exists:demarcaciones,id'],
             'demarcacion_asignada_id' => ['nullable', 'exists:demarcaciones,id'],
             'seccion_electoral' => ['nullable', 'string', 'max:255'],
-            'clave_electoral' => ['nullable', 'string', 'size:18', Rule::unique('users', 'clave_electoral')->ignore($id)],
+            'clave_electoral' => [
+                'nullable', 
+                'string', 
+                'size:18', 
+                Rule::unique('users', 'clave_electoral')
+                    ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
+            ],
             'telefono' => ['nullable', 'digits:10'],
-            'curp' => ['nullable', 'string', 'size:18', Rule::unique('users', 'curp')->ignore($id)],
+            'curp' => [
+                'nullable', 
+                'string', 
+                'size:18', 
+                Rule::unique('users', 'curp')
+                    ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
+                    ->whereNull('deleted_at')
+                    ->ignore($id)
+            ],
             'apodo' => ['nullable', 'string', 'max:100'],
             'notas' => ['nullable', 'string'],
             'foto' => ['nullable', 'image'],
@@ -133,8 +166,8 @@ class RepresentanteDemarcacionController extends BaseCrudController
         // Si no mandan email (ya que no está en el form actual), generamos uno falso por convención o pedimos que lo llenen.
         // Como el email es required en el migration original y unique, crearemos uno dummy basado en la curp o telefono.
         if (!$request->filled('email')) {
-            $identificador = $request->input('curp') ?: ($request->input('telefono') ?: uniqid());
-            $request->merge(['email' => $identificador . '@sistema.local']);
+            $identificador = ($request->input('curp') ?: ($request->input('telefono') ?: uniqid())) . '_' . uniqid();
+            $request->merge(['email' => strtolower($identificador) . '@sistema.local']);
         }
         
         if ($request->filled('password')) {
