@@ -45,25 +45,27 @@ export default function MapaPage({
                 attributionControl: true,
             });
 
-            // Definir capas base
-            const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution:
-                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
-                maxZoom: 20,
-            });
-
-            const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution:
-                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
-                maxZoom: 20,
-            });
-
+            // Definir capas base libres de marca de agua
             const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
             });
+
+            const lightLayer = L.tileLayer(
+                'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+                {
+                    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+                    maxZoom: 16,
+                }
+            );
+
+            const darkLayer = L.tileLayer(
+                'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+                {
+                    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+                    maxZoom: 16,
+                }
+            );
 
             const satelliteLayer = L.tileLayer(
                 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -74,8 +76,8 @@ export default function MapaPage({
                 }
             );
 
-            // Añadir la capa inicial por defecto (Clara)
-            lightLayer.addTo(mapInstance.current);
+            // Añadir la capa inicial por defecto (OpenStreetMap estándar limpio)
+            osmLayer.addTo(mapInstance.current);
 
             // Crear el contenedor de grupos de capas para cada demarcación/sección individual
             const demarcacionGroups = {};
