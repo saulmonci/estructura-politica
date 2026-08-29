@@ -20,6 +20,7 @@
     "dependencies": {
         "@ant-design/icons": "^6.2.5",
         "@ant-design/pro-components": "^2.8.10",
+        "@ant-design/v5-patch-for-react-19": "^1.0.3",
         "@inertiajs/react": "^3.3.0",
         "@vitejs/plugin-react": "^6.0.2",
         "antd": "^5.29.3",

@@ -56,6 +56,42 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
     }));
 
     const [form] = Form.useForm();
+
+    // Campos cuya duplicidad se valida por presidente en el backend (ver CompositeUniquenessTest)
+    const DUPLICATE_CHECK_FIELDS = ['curp', 'clave_elector'];
+
+    const handleFormErrors = (errors) => {
+        if (!errors) return;
+
+        const fieldErrors = Object.keys(errors).map((key) => ({
+            name: key,
+            errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
+        }));
+        form.setFields(fieldErrors);
+
+        const duplicatedFields = DUPLICATE_CHECK_FIELDS.filter((field) => errors[field]);
+        if (duplicatedFields.length > 0) {
+            const labels = duplicatedFields.map((f) => (f === 'curp' ? 'CURP' : 'Clave de Elector'));
+            message.error({
+                content: (
+                    <span>
+                        Ya existe un registro con {labels.length > 1 ? 'estos datos' : 'este dato'}:{' '}
+                        <strong>{labels.join(', ')}</strong>. Verifica {labels.length > 1 ? 'esos campos' : 'ese campo'}
+                        .
+                    </span>
+                ),
+                duration: 6,
+            });
+        } else {
+            message.error('Por favor revisa los campos en rojo');
+        }
+
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+            form.scrollToField(firstErrorField, { behavior: 'smooth', block: 'center' });
+        }
+    };
+
     const [demarcaciones, setDemarcaciones] = useState([]);
     const [secciones, setSecciones] = useState([]);
     const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
@@ -281,16 +317,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             if (onSuccess) onSuccess(values);
                             setOpen(false);
                         },
-                        onError: (errors) => {
-                            if (errors) {
-                                const fieldErrors = Object.keys(errors).map((key) => ({
-                                    name: key,
-                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                                }));
-                                form.setFields(fieldErrors);
-                            }
-                            message.error('Por favor revisa los campos en rojo');
-                        },
+                        onError: (errors) => handleFormErrors(errors),
                     });
                 } else {
                     router.post(endpoint, values, {
@@ -300,16 +327,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                             if (onSuccess) onSuccess(values);
                             setOpen(false);
                         },
-                        onError: (errors) => {
-                            if (errors) {
-                                const fieldErrors = Object.keys(errors).map((key) => ({
-                                    name: key,
-                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                                }));
-                                form.setFields(fieldErrors);
-                            }
-                            message.error('Por favor revisa los campos en rojo');
-                        },
+                        onError: (errors) => handleFormErrors(errors),
                     });
                 }
                 return false;

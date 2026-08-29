@@ -1,5 +1,6 @@
 import './bootstrap';
 import '../css/app.css';
+import '@ant-design/v5-patch-for-react-19';
 
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
