@@ -406,9 +406,9 @@ class WebController extends Controller
             ->pluck('total', 'demarcacion_id')
             ->toArray();
 
-        // 2. Contar usuarios de la estructura (RD, Operador, Promotor) por demarcación
+        // 2. Contar usuarios de la estructura (Coordinador de Distrito, RD, Operador, Promotor) por demarcación
         $usersDemarcacionQuery = DB::table('users')
-            ->whereIn('role', [UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR])
+            ->whereIn('role', [UserRole::COORDINADOR_DISTRITO, UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR])
             ->whereNull('deleted_at');
 
         if ($municipalityId) {
@@ -417,11 +417,27 @@ class WebController extends Controller
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $usersDemarcacionQuery->where('presidente_id', $presidenteId);
         }
-        $usersEnDemarcacion = $usersDemarcacionQuery->get(['role', 'demarcacion_id', 'demarcacion_asignada_id']);
+        $usersEnDemarcacion = $usersDemarcacionQuery->get(['role', 'demarcacion_id', 'demarcacion_asignada_id', 'seccion_electoral']);
+
+        // Coordinador de Distrito no captura demarcacion_id directamente (solo sección electoral),
+        // así que se resuelve su demarcación a través de la sección a la que pertenece.
+        $seccionToDemarcacion = \App\Models\SeccionElectoral::query()
+            ->when($municipalityId, fn ($q) => $q->where('municipality_id', $municipalityId))
+            ->pluck('demarcacion_id', 'numero');
 
         $estructuraPorDemarcacion = [];
         foreach ($usersEnDemarcacion as $u) {
-            $targetDem = ($u->role === UserRole::RD || $u->role === 'rd') ? ($u->demarcacion_asignada_id ?: $u->demarcacion_id) : $u->demarcacion_id;
+            $isRd = $u->role === UserRole::RD->value || $u->role === UserRole::RD;
+            $isCoordinador = $u->role === UserRole::COORDINADOR_DISTRITO->value || $u->role === UserRole::COORDINADOR_DISTRITO;
+
+            if ($isCoordinador) {
+                $targetDem = $u->demarcacion_id ?: ($seccionToDemarcacion[$u->seccion_electoral] ?? null);
+            } elseif ($isRd) {
+                $targetDem = $u->demarcacion_asignada_id ?: $u->demarcacion_id;
+            } else {
+                $targetDem = $u->demarcacion_id;
+            }
+
             if ($targetDem) {
                 $estructuraPorDemarcacion[$targetDem] = ($estructuraPorDemarcacion[$targetDem] ?? 0) + 1;
             }
@@ -511,10 +527,10 @@ class WebController extends Controller
             ->pluck('total', 'seccion_electoral')
             ->toArray();
 
-        // 2. Contar usuarios de la estructura (RD, Operador, Promotor) por sección electoral
+        // 2. Contar usuarios de la estructura (Coordinador de Distrito, RD, Operador, Promotor) por sección electoral
         $usersSeccionQuery = DB::table('users')
             ->select('seccion_electoral', DB::raw('count(*) as total'))
-            ->whereIn('role', [UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR])
+            ->whereIn('role', [UserRole::COORDINADOR_DISTRITO, UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR])
             ->whereNotNull('seccion_electoral')
             ->whereNull('deleted_at');
 

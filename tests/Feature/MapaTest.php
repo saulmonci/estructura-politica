@@ -133,6 +133,61 @@ class MapaTest extends TestCase
         );
     }
 
+    public function test_coordinador_distrito_counts_toward_map_totals()
+    {
+        $state = State::create(['nombre' => 'Nayarit']);
+        $muni1 = Municipality::create([
+            'state_id' => $state->id,
+            'nombre' => 'Bahía de Banderas',
+            'lat' => 20.8000000,
+            'lng' => -105.2500000,
+            'zoom' => 11,
+        ]);
+
+        $dem1 = Demarcacion::create([
+            'id' => 1,
+            'nombre' => 'Demarcación 1 - Valle',
+            'meta' => 400,
+            'municipality_id' => $muni1->id,
+            'state_id' => $state->id,
+        ]);
+        $sec1 = SeccionElectoral::create([
+            'numero' => '0120',
+            'demarcacion_id' => $dem1->id,
+            'municipality_id' => $muni1->id,
+            'state_id' => $state->id,
+            'meta' => 100,
+        ]);
+
+        $presidente = User::factory()->create([
+            'role' => UserRole::PRESIDENTE,
+            'municipality_id' => $muni1->id,
+            'state_id' => $state->id,
+        ]);
+
+        // Coordinador de distrito: solo captura seccion_electoral, no demarcacion_id directamente.
+        User::factory()->create([
+            'role' => UserRole::COORDINADOR_DISTRITO,
+            'parent_id' => $presidente->id,
+            'presidente_id' => $presidente->id,
+            'municipality_id' => $muni1->id,
+            'state_id' => $state->id,
+            'seccion_electoral' => '0120',
+        ]);
+
+        $response = $this->actingAs($presidente)->get('/mapa');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Mapa')
+            ->where('demarcaciones.0.id', $dem1->id)
+            ->where('demarcaciones.0.promovidos', 1)
+            ->where('secciones.0.numero', '0120')
+            ->where('secciones.0.promovidos', 1)
+            ->where('globalStats.total_promovidos', 1)
+        );
+    }
+
     public function test_superuser_can_switch_municipality_via_query_parameter()
     {
         $state = State::create(['nombre' => 'Nayarit']);
