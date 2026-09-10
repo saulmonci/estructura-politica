@@ -15,6 +15,7 @@ import {
 import TableCrud from '@/Components/TableCrud';
 import DemarcacionFormModal from './DemarcacionFormModal';
 import SeccionesDrawer from '@/Components/SeccionesDrawer';
+import GeomUploadModal from '@/Components/GeomUploadModal';
 
 export default function DemarcacionesIndex() {
     const { auth, presidentes = [], currentPresidenteId = null, isGlobalAdmin = false } = usePage().props;
@@ -24,6 +25,7 @@ export default function DemarcacionesIndex() {
     const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
     const [isSeccionesOpen, setIsSeccionesOpen] = useState(false);
     const [selectedPresidenteId, setSelectedPresidenteId] = useState(currentPresidenteId);
+    const [geomModal, setGeomModal] = useState({ open: false, id: null, nombre: null });
 
     const handleCreate = () => {
         modalRef.current?.open(null, null, selectedPresidenteId);
@@ -31,6 +33,10 @@ export default function DemarcacionesIndex() {
 
     const handleEdit = (id) => {
         modalRef.current?.open(id, `/demarcaciones/${id}`, selectedPresidenteId);
+    };
+
+    const handleUploadGeom = (record) => {
+        setGeomModal({ open: true, id: record.id, nombre: record.nombre });
     };
 
     const handleOpenSecciones = (record) => {
@@ -103,6 +109,12 @@ export default function DemarcacionesIndex() {
                         onClick={() => handleEdit(record.id)}
                         title="Editar Demarcación"
                     />
+                    <Button
+                        type="text"
+                        icon={<GlobalOutlined className="text-purple-600" />}
+                        onClick={() => handleUploadGeom(record)}
+                        title="Subir capa geográfica"
+                    />
                 </Space>
             ),
         },
@@ -154,6 +166,14 @@ export default function DemarcacionesIndex() {
                         onClick={() => handleEdit(record.id)}
                     >
                         Editar
+                    </Button>
+                    <Button
+                        type="default"
+                        icon={<GlobalOutlined />}
+                        className="flex w-full items-center justify-center border-purple-200 text-purple-600 hover:border-purple-400"
+                        onClick={() => handleUploadGeom(record)}
+                    >
+                        Subir capa geográfica
                     </Button>
                 </div>
             </Card>
@@ -246,6 +266,14 @@ export default function DemarcacionesIndex() {
                 onClose={() => setIsSeccionesOpen(false)}
                 demarcacion={selectedDemarcacion}
                 presidenteId={selectedPresidenteId}
+            />
+
+            <GeomUploadModal
+                open={geomModal.open}
+                onClose={() => setGeomModal({ open: false, id: null, nombre: null })}
+                endpoint={geomModal.id ? `/demarcaciones/${geomModal.id}/geom` : null}
+                resourceLabel={geomModal.nombre ? `Demarcación: ${geomModal.nombre}` : ''}
+                onSuccess={() => actionRef.current?.reload()}
             />
         </MainLayout>
     );

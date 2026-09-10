@@ -2,31 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
+use App\Exceptions\InvalidGeoJsonException;
 use App\Models\Demarcacion;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Services\GeoJsonUploadService;
+use App\Traits\LogsGeomUpload;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use App\Enums\UserRole;
 
 class DemarcacionController extends BaseCrudController
 {
+    use LogsGeomUpload;
+
     protected string $modelClass = Demarcacion::class;
+
     protected string $indexView = 'Demarcaciones/Index';
+
     protected string $dataKey = 'demarcaciones';
 
     protected function checkAccess(Request $request): void
     {
         // Solo el Presidente, Coordinadores o Administradores tienen acceso para administrar las demarcaciones
-        abort_if(!$request->user() || !in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden administrar las demarcaciones.');
+        abort_if(! $request->user() || ! in_array($request->user()->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true), 403, 'Acceso denegado. Solo los administradores pueden administrar las demarcaciones.');
     }
 
     protected function resolvePresidenteId(Request $request): ?int
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -52,7 +60,7 @@ class DemarcacionController extends BaseCrudController
         $municipalityId = null;
         if ($user && in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
             $municipalityId = $user->municipality_id;
-            if (!$municipalityId && $presidenteId) {
+            if (! $municipalityId && $presidenteId) {
                 $pres = User::withoutGlobalScopes()->find($presidenteId);
                 $municipalityId = $pres?->municipality_id;
             }
@@ -70,17 +78,17 @@ class DemarcacionController extends BaseCrudController
         if ($presidenteId) {
             $query->leftJoin('demarcacion_presidente', function ($join) use ($presidenteId) {
                 $join->on('demarcaciones.id', '=', 'demarcacion_presidente.demarcacion_id')
-                     ->where('demarcacion_presidente.presidente_id', '=', $presidenteId);
+                    ->where('demarcacion_presidente.presidente_id', '=', $presidenteId);
             })
-            ->select(
-                'demarcaciones.id',
-                'demarcaciones.nombre',
-                'demarcaciones.municipality_id',
-                'demarcaciones.created_at',
-                'demarcaciones.updated_at',
-                DB::raw('COALESCE(demarcacion_presidente.meta, demarcaciones.meta, 500) as meta'),
-                DB::raw('CASE WHEN demarcacion_presidente.id IS NOT NULL THEN true ELSE false END as is_custom_meta')
-            );
+                ->select(
+                    'demarcaciones.id',
+                    'demarcaciones.nombre',
+                    'demarcaciones.municipality_id',
+                    'demarcaciones.created_at',
+                    'demarcaciones.updated_at',
+                    DB::raw('COALESCE(demarcacion_presidente.meta, demarcaciones.meta, 500) as meta'),
+                    DB::raw('CASE WHEN demarcacion_presidente.id IS NOT NULL THEN true ELSE false END as is_custom_meta')
+                );
         } else {
             $query->select(
                 'demarcaciones.id',
@@ -134,9 +142,9 @@ class DemarcacionController extends BaseCrudController
     protected function applySearch(Builder $query, string $search): void
     {
         $searchLower = strtolower($search);
-        $query->where(function($q) use ($searchLower, $search) {
+        $query->where(function ($q) use ($searchLower, $search) {
             $q->whereRaw('LOWER(demarcaciones.nombre) LIKE ?', ["%{$searchLower}%"])
-              ->orWhere('demarcaciones.id', 'like', "%{$search}%");
+                ->orWhere('demarcaciones.id', 'like', "%{$search}%");
         });
     }
 
@@ -150,7 +158,7 @@ class DemarcacionController extends BaseCrudController
         if (isset($filters['meta']) && $filters['meta'] !== '') {
             $query->where(function ($q) use ($filters) {
                 $q->where('demarcacion_presidente.meta', $filters['meta'])
-                  ->orWhere('demarcaciones.meta', $filters['meta']);
+                    ->orWhere('demarcaciones.meta', $filters['meta']);
             });
         }
     }
@@ -164,7 +172,7 @@ class DemarcacionController extends BaseCrudController
             'municipality_id' => ['nullable', 'integer', 'exists:municipalities,id'],
         ];
 
-        if (!$id) {
+        if (! $id) {
             $rules['id'] = ['required', 'integer', 'min:1', 'unique:demarcaciones,id'];
         } else {
             $rules['id'] = ['required', 'integer', 'min:1', Rule::unique('demarcaciones', 'id')->ignore($id)];
@@ -176,7 +184,7 @@ class DemarcacionController extends BaseCrudController
     protected function getValidationMessages(Request $request): array
     {
         return [
-            'id.unique' => 'El número de demarcación ya está registrado.'
+            'id.unique' => 'El número de demarcación ya está registrado.',
         ];
     }
 
@@ -192,11 +200,11 @@ class DemarcacionController extends BaseCrudController
         $user = $request->user();
 
         $municipalityId = $validated['municipality_id'] ?? null;
-        if (!$municipalityId && $presidenteId) {
+        if (! $municipalityId && $presidenteId) {
             $pres = User::withoutGlobalScopes()->find($presidenteId);
             $municipalityId = $pres?->municipality_id;
         }
-        if (!$municipalityId && $user) {
+        if (! $municipalityId && $user) {
             $municipalityId = $user->municipality_id;
         }
 
@@ -224,7 +232,7 @@ class DemarcacionController extends BaseCrudController
             $this->getValidationRules($request, $id),
             $this->getValidationMessages($request)
         );
-        
+
         $demarcacion = Demarcacion::findOrFail($id);
         $presidenteId = $this->resolvePresidenteId($request);
 
@@ -253,7 +261,55 @@ class DemarcacionController extends BaseCrudController
     {
         $this->checkAccess($request);
         $item = $this->getBaseQuery($request)->findOrFail($id);
+
         return response()->json($item);
+    }
+
+    public function uploadGeom(Request $request, string $id)
+    {
+        $this->checkAccess($request);
+
+        $item = $this->getBaseQuery($request)->findOrFail($id);
+
+        try {
+            $request->validate([
+                'geojson' => ['required', 'file', 'max:'.GeoJsonUploadService::MAX_FILE_SIZE_KB],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
+        }
+
+        $file = $request->file('geojson');
+        if (! in_array(strtolower($file->getClientOriginalExtension()), ['geojson', 'json'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El archivo debe tener extensión .geojson o .json.',
+            ], 422);
+        }
+
+        try {
+            $result = app(GeoJsonUploadService::class)->extractGeometry($file, ['Polygon']);
+        } catch (InvalidGeoJsonException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        try {
+            DB::statement(
+                'UPDATE demarcaciones SET geom = ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), 32613) WHERE id = ?',
+                [$result['geometryJson'], $item->id]
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'La geometría no pudo ser procesada por el servidor geoespacial. Verifica que el polígono esté bien formado (anillos cerrados, sin auto-intersecciones).',
+            ], 422);
+        }
+
+        $this->logGeomUpload($item, 'Polygon');
+
+        return response()->json(['success' => true, 'message' => 'Geometría de la demarcación actualizada exitosamente.']);
     }
 
     protected function getExportHeaders(): array

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, Button, Form, Input, InputNumber, message, Table, Space, Card, Divider, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, FolderOpenOutlined, GlobalOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import GeomUploadModal from '@/Components/GeomUploadModal';
 
 const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null }) => {
     const [secciones, setSecciones] = useState([]);
@@ -10,6 +11,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
     const [form] = Form.useForm();
     const [editingId, setEditingId] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [geomModal, setGeomModal] = useState({ open: false, id: null, numero: null });
 
     useEffect(() => {
         const handleResize = () => {
@@ -96,6 +98,10 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
         form.resetFields();
     };
 
+    const handleUploadGeom = (record) => {
+        setGeomModal({ open: true, id: record.id, numero: record.numero });
+    };
+
     const columns = [
         {
             title: 'SECCIÓN',
@@ -127,15 +133,23 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 80,
+            width: 120,
             align: 'center',
             render: (_, record) => (
-                <Button
-                    type="text"
-                    icon={<EditOutlined className="text-blue-600" />}
-                    onClick={() => handleEdit(record)}
-                    title="Editar Sección"
-                />
+                <Space size="small">
+                    <Button
+                        type="text"
+                        icon={<EditOutlined className="text-blue-600" />}
+                        onClick={() => handleEdit(record)}
+                        title="Editar Sección"
+                    />
+                    <Button
+                        type="text"
+                        icon={<GlobalOutlined className="text-purple-600" />}
+                        onClick={() => handleUploadGeom(record)}
+                        title="Subir capa geográfica"
+                    />
+                </Space>
             ),
         },
     ];
@@ -245,6 +259,13 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
                                 >
                                     Editar
                                 </Button>
+                                <Button
+                                    type="text"
+                                    icon={<GlobalOutlined className="text-purple-600" />}
+                                    onClick={() => handleUploadGeom(record)}
+                                >
+                                    Subir capa
+                                </Button>
                             </div>
                         </Card>
                     ))}
@@ -265,6 +286,14 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
                     locale={{ emptyText: 'No hay secciones registradas para esta demarcación.' }}
                 />
             )}
+
+            <GeomUploadModal
+                open={geomModal.open}
+                onClose={() => setGeomModal({ open: false, id: null, numero: null })}
+                endpoint={geomModal.id ? `/secciones/${geomModal.id}/geom` : null}
+                resourceLabel={geomModal.numero ? `Sección: ${geomModal.numero}` : ''}
+                onSuccess={fetchSecciones}
+            />
         </Drawer>
     );
 };
