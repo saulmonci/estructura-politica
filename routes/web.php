@@ -124,18 +124,6 @@ Route::get('/orion/qr', function () {
     $apiKey = config('services.whatsapp.key', env('WHATSAPP_API_KEY', 'orion_secret_key_123'));
     $instance = config('services.whatsapp.instance', env('WHATSAPP_INSTANCE', 'orion'));
 
-    if (request()->has('debug')) {
-        dd([
-            'gatewayUrl_resuelto' => $gatewayUrl,
-            'config_services_whatsapp_url' => config('services.whatsapp.url'),
-            'env_directo_WHATSAPP_GATEWAY_URL' => env('WHATSAPP_GATEWAY_URL'),
-            'config_esta_cacheada' => app()->configurationIsCached(),
-            'ruta_config_cache' => app()->getCachedConfigPath(),
-            'existe_config_cache' => file_exists(app()->getCachedConfigPath()),
-            'app_env' => app()->environment(),
-        ]);
-    }
-
     try {
         $response = \Illuminate\Support\Facades\Http::withHeaders([
             'apikey' => $apiKey,
