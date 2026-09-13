@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->prefix('v1/dashboard')->group(function () {
 });
 
 use App\Http\Controllers\Api\MobileSyncController;
+use App\Http\Controllers\Api\WhatsAppWebhookController;
 use App\Http\Controllers\IneExtractionController;
 
 // Rutas para App Móvil Offline-First
@@ -38,3 +39,7 @@ Route::prefix('mobile')->group(function () {
         Route::post('/ine-extract', [IneExtractionController::class, 'extract']);
     });
 });
+
+// Agente IA War Room ORION - Webhook WhatsApp
+Route::post('/v1/whatsapp/webhook', [WhatsAppWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');

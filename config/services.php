@@ -39,4 +39,8 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
     ],
 
+    'whatsapp' => [
+        'webhook_secret' => env('WHATSAPP_WEBHOOK_SECRET'),
+    ],
+
 ];

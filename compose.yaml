@@ -41,9 +41,36 @@ services:
             test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE}", "-U", "${DB_USERNAME}"]
             retries: 3
             timeout: 5s
+    evolution-api:
+        image: 'evoapicloud/evolution-api:latest'
+        restart: always
+        ports:
+            - '${EVOLUTION_PORT:-8080}:8080'
+        environment:
+            - SERVER_URL=http://localhost:8080
+            - AUTHENTICATION_API_KEY=${WHATSAPP_API_KEY:-orion_secret_key_123}
+            - DEL_INSTANCE=false
+            - DATABASE_PROVIDER=postgresql
+            - DATABASE_CONNECTION_URI=postgresql://${DB_USERNAME:-root}:${DB_PASSWORD:-secret}@pgsql:5432/${DB_DATABASE:-estructura}?schema=evolution
+            - DATABASE_SAVE_DATA_INSTANCE=true
+            - DATABASE_SAVE_DATA_CHATS=true
+            - DATABASE_SAVE_DATA_MESSAGES=true
+            - CACHE_REDIS_ENABLED=false
+            - CACHE_LOCAL_ENABLED=true
+        volumes:
+            - 'sail-evolution:/evolution/instances'
+        networks:
+            - sail
+        depends_on:
+            pgsql:
+                condition: service_healthy
 networks:
     sail:
         driver: bridge
 volumes:
     sail-pgsql:
         driver: local
+    sail-evolution:
+        driver: local
+
+

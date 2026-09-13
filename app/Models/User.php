@@ -299,6 +299,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Configuración del War Room y WhatsApp para este presidente.
+     */
+    public function warRoomConfig()
+    {
+        return $this->hasOne(WarRoomConfig::class, 'presidente_id');
+    }
+
+    /**
      * Metas personalizadas de secciones electorales para este presidente.
      */
     public function seccionesMetas()

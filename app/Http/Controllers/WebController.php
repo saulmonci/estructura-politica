@@ -397,7 +397,12 @@ class WebController extends Controller
             ->whereNull('deleted_at');
 
         if ($municipalityId) {
-            $promovidosQuery->where('municipality_id', $municipalityId);
+            $promovidosQuery->where(function ($q) use ($municipalityId) {
+                $q->where('promovidos.municipality_id', $municipalityId)
+                  ->orWhereIn('promovidos.demarcacion_id', function ($sub) use ($municipalityId) {
+                      $sub->select('id')->from('demarcaciones')->where('municipality_id', $municipalityId);
+                  });
+            });
         }
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $promovidosQuery->where('presidente_id', $presidenteId);
@@ -412,7 +417,15 @@ class WebController extends Controller
             ->whereNull('deleted_at');
 
         if ($municipalityId) {
-            $usersDemarcacionQuery->where('municipality_id', $municipalityId);
+            $usersDemarcacionQuery->where(function ($q) use ($municipalityId) {
+                $q->where('users.municipality_id', $municipalityId)
+                  ->orWhereIn('users.demarcacion_id', function ($sub) use ($municipalityId) {
+                      $sub->select('id')->from('demarcaciones')->where('municipality_id', $municipalityId);
+                  })
+                  ->orWhereIn('users.demarcacion_asignada_id', function ($sub) use ($municipalityId) {
+                      $sub->select('id')->from('demarcaciones')->where('municipality_id', $municipalityId);
+                  });
+            });
         }
         if ($presidenteId && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             $usersDemarcacionQuery->where('presidente_id', $presidenteId);
