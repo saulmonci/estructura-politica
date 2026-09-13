@@ -120,9 +120,9 @@ Route::get('/app-promotores/{any?}', function () {
 
 // Vista visual del Código QR para el Agente ORION
 Route::get('/orion/qr', function () {
-    $gatewayUrl = env('WHATSAPP_GATEWAY_URL', 'http://evolution-api:8080');
-    $apiKey = env('WHATSAPP_API_KEY', 'orion_secret_key_123');
-    $instance = env('WHATSAPP_INSTANCE', 'orion');
+    $gatewayUrl = config('services.whatsapp.url', env('WHATSAPP_GATEWAY_URL', 'http://evolution-api:8080'));
+    $apiKey = config('services.whatsapp.key', env('WHATSAPP_API_KEY', 'orion_secret_key_123'));
+    $instance = config('services.whatsapp.instance', env('WHATSAPP_INSTANCE', 'orion'));
 
     try {
         $response = \Illuminate\Support\Facades\Http::withHeaders([
