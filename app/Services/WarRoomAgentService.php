@@ -21,7 +21,7 @@ class WarRoomAgentService
     {
         $this->reportService = $reportService;
         try {
-            $this->geminiApiKey = config('services.gemini.key', env('GEMINI_API_KEY'));
+            $this->geminiApiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
         } catch (\Throwable $e) {
             $this->geminiApiKey = env('GEMINI_API_KEY');
         }

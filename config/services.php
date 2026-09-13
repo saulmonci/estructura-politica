@@ -40,6 +40,10 @@ return [
     ],
 
     'whatsapp' => [
+        'url' => env('WHATSAPP_GATEWAY_URL'),
+        'key' => env('WHATSAPP_API_KEY'),
+        'instance' => env('WHATSAPP_INSTANCE', 'orion'),
+        'group_id' => env('WHATSAPP_WARROOM_GROUP_ID'),
         'webhook_secret' => env('WHATSAPP_WEBHOOK_SECRET'),
     ],
 
