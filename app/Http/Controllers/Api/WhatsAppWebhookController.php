@@ -46,8 +46,15 @@ class WhatsAppWebhookController extends Controller
         $isGroup = str_ends_with($remoteJid, '@g.us');
         $groupId = $isGroup ? $remoteJid : null;
 
-        // En grupos, el emisor real viene en 'participant'; en DMs viene en 'remoteJid'
-        $senderJid = $key['participant'] ?? ($data['participant'] ?? $remoteJid);
+        // En grupos, el emisor real viene en 'participant'; en DMs viene en 'remoteJid'.
+        // Con el modo de direccionamiento "lid" (privacidad de WhatsApp), 'participant'/'remoteJid'
+        // traen un identificador interno (@lid) en vez del número telefónico real; el número real
+        // viene en 'participantAlt'/'remoteJidAlt' cuando addressingMode === 'lid'.
+        $dmJid = str_ends_with($remoteJid, '@lid') ? ($key['remoteJidAlt'] ?? $remoteJid) : $remoteJid;
+
+        $senderJid = $key['participantAlt']
+            ?? $key['participant']
+            ?? ($data['participant'] ?? $dmJid);
         $senderPhone = explode('@', $senderJid)[0];
         $senderName = $data['pushName'] ?? ($payload['senderName'] ?? 'Usuario');
 
