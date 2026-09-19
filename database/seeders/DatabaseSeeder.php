@@ -19,8 +19,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 0. Sembrar Catálogos de Demarcación y Sección
+        // 0. Sembrar Estados, Municipios y Catálogos de Demarcación y Sección
         $this->call([
+            MexicoStatesAndMunicipalitiesSeeder::class,
+            UpdateInegiClavesSeeder::class,
+            UpdateMunicipalityCoordinatesSeeder::class,
             CatalogoSeeder::class,
             TerritoryPresidentesSeeder::class,
             TerritoryAdminsSeeder::class, // In case this isn't there already

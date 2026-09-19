@@ -29,13 +29,23 @@ class OrionInitWhatsApp extends Command
         $gatewayUrl = config('services.whatsapp.url', env('WHATSAPP_GATEWAY_URL', 'http://evolution-api:8080'));
         $apiKey = config('services.whatsapp.key', env('WHATSAPP_API_KEY', 'orion_secret_key_123'));
         $instance = config('services.whatsapp.instance', env('WHATSAPP_INSTANCE', 'orion'));
+        $webhookUrl = config('services.whatsapp.webhook_url')
+            ?: rtrim(config('app.url'), '/').'/api/v1/whatsapp/webhook';
+        $webhookSecret = config('services.whatsapp.webhook_secret');
 
         // Si se ejecuta en el host
         if (str_contains($gatewayUrl, 'evolution-api') && ! file_exists('/.dockerenv')) {
             $gatewayUrl = str_replace('evolution-api', '127.0.0.1', $gatewayUrl);
         }
 
+        if (empty($webhookSecret)) {
+            $this->error('❌ WHATSAPP_WEBHOOK_SECRET no está configurado. El webhook será rechazado (fail-closed) hasta que lo definas en .env.');
+
+            return Command::FAILURE;
+        }
+
         $this->info("⚡ Conectando con Evolution API en {$gatewayUrl}...");
+        $this->info("🔗 Webhook configurado a: {$webhookUrl}");
 
         $endpoint = rtrim($gatewayUrl, '/').'/instance/create';
 
@@ -49,9 +59,12 @@ class OrionInitWhatsApp extends Command
                 'qrcode' => true,
                 'integration' => 'WHATSAPP-BAILEYS',
                 'webhook' => [
-                    'url' => 'http://laravel.test/api/v1/whatsapp/webhook',
+                    'url' => $webhookUrl,
                     'byEvents' => true,
                     'events' => ['MESSAGES_UPSERT'],
+                    'headers' => [
+                        'X-Webhook-Token' => $webhookSecret,
+                    ],
                 ],
             ]);
 

@@ -45,6 +45,7 @@ return [
         'instance' => env('WHATSAPP_INSTANCE', 'orion'),
         'group_id' => env('WHATSAPP_WARROOM_GROUP_ID'),
         'webhook_secret' => env('WHATSAPP_WEBHOOK_SECRET'),
+        'webhook_url' => env('WHATSAPP_WEBHOOK_URL'),
     ],
 
 ];
