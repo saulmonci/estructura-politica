@@ -103,12 +103,27 @@ class WarRoomReportService
             ->get()
             ->keyBy('demarcacion_id');
 
+        // RD, Operadores y Promotores asignados a cada demarcación también cuentan como votos
+        // potenciales de la campaña, no solo los Promovidos capturados en campo.
+        $structureCounts = DB::table('users')
+            ->select(DB::raw('COALESCE(demarcacion_id, demarcacion_asignada_id) as dem_id'), DB::raw('count(*) as total'))
+            ->when($presidenteId, fn ($q) => $q->where('presidente_id', $presidenteId))
+            ->whereIn('role', ['rd', 'operador', 'promotor'])
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($demIds) {
+                $q->whereIn('demarcacion_id', $demIds)
+                    ->orWhereIn('demarcacion_asignada_id', $demIds);
+            })
+            ->groupBy(DB::raw('COALESCE(demarcacion_id, demarcacion_asignada_id)'))
+            ->pluck('total', 'dem_id');
+
         $summary = [];
         $now = Carbon::now();
 
         foreach ($demarcaciones as $dem) {
             $row = $stats->get($dem->id);
-            $totalCapturado = $row ? (int) $row->total : 0;
+            $estructuraDem = (int) ($structureCounts[$dem->id] ?? 0);
+            $totalCapturado = ($row ? (int) $row->total : 0) + $estructuraDem;
             $meta = (int) $dem->target_meta;
             if ($meta <= 0) {
                 $meta = 1;
@@ -362,7 +377,20 @@ class WarRoomReportService
             $promovidosQuery->where('presidente_id', $presidenteId);
         }
 
-        $totalCapturado = (int) $promovidosQuery->count();
+        // RD, Operadores y Promotores asignados a esta demarcación también cuentan como votos
+        // potenciales de la campaña, no solo los Promovidos capturados en campo.
+        $estructuraQuery = User::withoutGlobalScopes()
+            ->where(function ($q) use ($dem) {
+                $q->where('demarcacion_id', $dem->id)
+                    ->orWhere('demarcacion_asignada_id', $dem->id);
+            })
+            ->whereIn('role', [UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR]);
+
+        if ($presidenteId) {
+            $estructuraQuery->where('presidente_id', $presidenteId);
+        }
+
+        $totalCapturado = (int) $promovidosQuery->count() + (int) $estructuraQuery->count();
         $porcentaje = min(100, round(($totalCapturado / $meta) * 100));
         $faltan = max(0, $meta - $totalCapturado);
 
