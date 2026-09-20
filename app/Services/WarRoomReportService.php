@@ -103,12 +103,12 @@ class WarRoomReportService
             ->get()
             ->keyBy('demarcacion_id');
 
-        // RD, Operadores y Promotores asignados a cada demarcación también cuentan como votos
-        // potenciales de la campaña, no solo los Promovidos capturados en campo.
+        // Coordinadores, RD, Operadores y Promotores asignados a cada demarcación también
+        // cuentan como votos potenciales de la campaña, no solo los Promovidos capturados en campo.
         $structureCounts = DB::table('users')
             ->select(DB::raw('COALESCE(demarcacion_id, demarcacion_asignada_id) as dem_id'), DB::raw('count(*) as total'))
             ->when($presidenteId, fn ($q) => $q->where('presidente_id', $presidenteId))
-            ->whereIn('role', ['rd', 'operador', 'promotor'])
+            ->whereIn('role', ['coordinador_distrito', 'rd', 'operador', 'promotor'])
             ->whereNull('deleted_at')
             ->where(function ($q) use ($demIds) {
                 $q->whereIn('demarcacion_id', $demIds)
@@ -384,7 +384,7 @@ class WarRoomReportService
                 $q->where('demarcacion_id', $dem->id)
                     ->orWhere('demarcacion_asignada_id', $dem->id);
             })
-            ->whereIn('role', [UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR]);
+            ->whereIn('role', [UserRole::COORDINADOR_DISTRITO, UserRole::RD, UserRole::OPERADOR, UserRole::PROMOTOR]);
 
         if ($presidenteId) {
             $estructuraQuery->where('presidente_id', $presidenteId);
