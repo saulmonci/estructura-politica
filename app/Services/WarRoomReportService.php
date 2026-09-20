@@ -246,6 +246,40 @@ class WarRoomReportService
     }
 
     /**
+     * Conteo total de toda la estructura dada de alta para el presidente: coordinadores de
+     * distrito, RDs, operadores, promotores y promovidos. Todos representan votos potenciales
+     * de la campaña, no solo los promovidos capturados en campo.
+     */
+    public function getStructureTotals(?int $presidenteId = null): array
+    {
+        $porRol = DB::table('users')
+            ->select('role', DB::raw('count(*) as total'))
+            ->when($presidenteId, fn ($q) => $q->where('presidente_id', $presidenteId))
+            ->whereIn('role', ['coordinador_distrito', 'rd', 'operador', 'promotor'])
+            ->whereNull('deleted_at')
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
+        $coordinadores = (int) ($porRol['coordinador_distrito'] ?? 0);
+        $rds = (int) ($porRol['rd'] ?? 0);
+        $operadores = (int) ($porRol['operador'] ?? 0);
+        $promotores = (int) ($porRol['promotor'] ?? 0);
+
+        $promovidos = (int) Promovido::withoutGlobalScopes()
+            ->when($presidenteId, fn ($q) => $q->where('presidente_id', $presidenteId))
+            ->count();
+
+        return [
+            'coordinadores' => $coordinadores,
+            'rds' => $rds,
+            'operadores' => $operadores,
+            'promotores' => $promotores,
+            'promovidos' => $promovidos,
+            'total' => $coordinadores + $rds + $operadores + $promotores + $promovidos,
+        ];
+    }
+
+    /**
      * Construye el texto exacto del reporte matutino para WhatsApp.
      */
     public function buildDailyReportMessage(?int $presidenteId = null, ?int $municipalityId = null, ?string $tituloMunicipio = null): string
@@ -287,6 +321,9 @@ class WarRoomReportService
             $opTexto .= " - {$todayStats['operador_demarcacion']}";
         }
         $lines[] = "Operador del día: *{$opTexto}*";
+
+        $estructura = $this->getStructureTotals($presidenteId);
+        $lines[] = "👥 *Estructura total*: {$estructura['total']} (Coord: {$estructura['coordinadores']}, RD: {$estructura['rds']}, Operadores: {$estructura['operadores']}, Promotores: {$estructura['promotores']}, Promovidos: {$estructura['promovidos']})";
 
         return implode("\n", $lines);
     }
