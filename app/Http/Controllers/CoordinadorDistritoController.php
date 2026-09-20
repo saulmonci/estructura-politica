@@ -187,6 +187,7 @@ class CoordinadorDistritoController extends BaseCrudController
             'state_id' => ['nullable', 'integer'],
             'municipality_id' => ['nullable', 'integer'],
             'scope_level' => ['nullable', 'string'],
+            'demarcacion_id' => ['nullable', 'exists:demarcaciones,id'],
         ];
     }
 
