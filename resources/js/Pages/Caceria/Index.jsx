@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     Card,
     Row,
@@ -11,13 +11,12 @@ import {
     Button,
     Tag,
     Badge,
-    Space,
     Table,
-    Tooltip,
     message,
     Typography,
     Segmented,
     Empty,
+    Grid,
 } from 'antd';
 import {
     CheckCircleFilled,
@@ -28,16 +27,17 @@ import {
     DownloadOutlined,
     ReloadOutlined,
     TeamOutlined,
-    UserOutlined,
     EnvironmentOutlined,
     FireOutlined,
     CheckSquareOutlined,
     AuditOutlined,
+    UserOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+const { useBreakpoint } = Grid;
 
 export default function CaceriaIndex({
     voters: initialVoters,
@@ -48,6 +48,9 @@ export default function CaceriaIndex({
     presidentesList = [],
     selectedPresidenteId,
 }) {
+    const screens = useBreakpoint();
+    const isMobile = screens.md === false;
+
     const [stats, setStats] = useState(initialStats);
     const [votersData, setVotersData] = useState(initialVoters?.data || []);
     const [pagination, setPagination] = useState({
@@ -249,13 +252,168 @@ export default function CaceriaIndex({
         return `https://wa.me/${phone}?text=${text}`;
     };
 
-    // Definición de columnas de la tabla
-    const columns = [
+    // Renderizado de tarjeta para vista móvil
+    const renderMobileCard = (record) => {
+        const isUpdating = updatingId === `${record.source_type}-${record.id}`;
+        const waUrl = getWhatsAppUrl(record);
+
+        return (
+            <Card
+                key={`${record.source_type}-${record.id}`}
+                className={`mb-3.5 overflow-hidden rounded-2xl border shadow-sm transition-all ${
+                    record.ha_votado ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-white'
+                }`}
+                styles={{ body: { padding: '14px' } }}
+            >
+                {/* Cabecera de la tarjeta: Nombre, Rol y Badge de Voto */}
+                <div className="mb-2.5 flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-sm leading-snug font-bold text-slate-900">
+                                {record.nombre_completo}
+                            </span>
+                            {renderRoleTag(record.role)}
+                            {record.source_type === 'user' && (
+                                <Tag color="volcano" className="m-0 px-1 py-0 text-[10px] font-bold uppercase">
+                                    Estructura
+                                </Tag>
+                            )}
+                        </div>
+                        {record.responsable_nombre && (
+                            <div className="mt-0.5 truncate text-[11px] text-slate-400">
+                                Resp: {record.responsable_nombre}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="shrink-0">
+                        {record.ha_votado ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                                <CheckCircleFilled className="text-emerald-600" /> Votó
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
+                                <FireOutlined className="text-amber-600" /> Pendiente
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Detalles: Casilla, Ubicación, Identificación */}
+                <div className="mb-3.5 space-y-2 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Tag color="cyan" className="m-0 font-mono text-xs font-semibold">
+                            Sección: {record.seccion_electoral || 'S/S'}
+                        </Tag>
+                        {record.demarcacion_nombre && (
+                            <span className="flex items-center gap-1 font-medium text-slate-700">
+                                <EnvironmentOutlined className="text-blue-500" />
+                                {record.demarcacion_nombre}
+                            </span>
+                        )}
+                    </div>
+
+                    {(record.colonia || record.calle) && (
+                        <div className="flex items-start gap-1.5 text-slate-500">
+                            <EnvironmentOutlined className="mt-0.5 shrink-0 text-slate-400" />
+                            <span className="truncate">
+                                {[record.calle, record.colonia ? `Col. ${record.colonia}` : null]
+                                    .filter(Boolean)
+                                    .join(', ')}
+                            </span>
+                        </div>
+                    )}
+
+                    {(record.curp || record.clave_elector) && (
+                        <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] text-slate-400">
+                            {record.curp && <span>CURP: {record.curp}</span>}
+                            {record.clave_elector && <span>Clave: {record.clave_elector}</span>}
+                        </div>
+                    )}
+
+                    {/* Contacto directo si tiene teléfono */}
+                    {record.telefono && (
+                        <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5">
+                            <span className="flex items-center gap-1 font-mono text-xs font-semibold text-slate-700">
+                                <PhoneOutlined className="text-slate-400" />
+                                {record.telefono}
+                            </span>
+                            <div className="flex items-center gap-2">
+                                {waUrl && (
+                                    <a
+                                        href={waUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                                    >
+                                        <WhatsAppOutlined className="text-sm text-emerald-600" />
+                                        WhatsApp
+                                    </a>
+                                )}
+                                <a
+                                    href={`tel:${record.telefono}`}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                                >
+                                    <PhoneOutlined />
+                                    Llamar
+                                </a>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* BOTÓN DE CHECK DE VOTO (Grande, táctil para móvil) */}
+                <div className="border-t border-slate-100 pt-2">
+                    <Button
+                        type={record.ha_votado ? 'primary' : 'default'}
+                        size="large"
+                        loading={isUpdating}
+                        onClick={() => handleToggleVoto(record)}
+                        className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-black shadow-sm transition-all ${
+                            record.ha_votado
+                                ? 'border-green-600 bg-green-600 text-white hover:bg-green-500'
+                                : 'border-blue-600 bg-blue-600 text-white hover:bg-blue-500 hover:text-white'
+                        }`}
+                        icon={
+                            record.ha_votado ? (
+                                <CheckCircleFilled className="text-base" />
+                            ) : (
+                                <CheckSquareOutlined className="text-base" />
+                            )
+                        }
+                    >
+                        {record.ha_votado ? '¡YA VOTÓ! (Toca para desmarcar)' : 'REGISTRAR VOTO'}
+                    </Button>
+
+                    {record.ha_votado && record.voto_at && (
+                        <div className="mt-1.5 flex items-center justify-center gap-1.5 text-center font-mono text-[11px] text-slate-500">
+                            <ClockCircleOutlined className="text-slate-400" />
+                            <span>
+                                Votó a las{' '}
+                                <b>
+                                    {new Date(record.voto_at).toLocaleTimeString('es-MX', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })}
+                                </b>
+                            </span>
+                            {record.marcado_por_nombre && (
+                                <span className="text-slate-400">· por {record.marcado_por_nombre}</span>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </Card>
+        );
+    };
+
+    // Columnas de tabla para versión Escritorio
+    const desktopColumns = [
         {
             title: 'CHECK DE VOTO',
             dataIndex: 'ha_votado',
             key: 'ha_votado',
-            width: 175,
+            width: 180,
             align: 'center',
             render: (haVotado, record) => {
                 const isUpdating = updatingId === `${record.source_type}-${record.id}`;
@@ -401,39 +559,49 @@ export default function CaceriaIndex({
         },
     ];
 
+    // Columnas adaptativas para móviles
+    const mobileColumns = [
+        {
+            title: '',
+            key: 'mobile_card',
+            render: (_, record) => renderMobileCard(record),
+        },
+    ];
+
+    const finalColumns = isMobile ? mobileColumns : desktopColumns;
+
     return (
         <MainLayout>
             <Head title="Cacería Electoral (Día D) - Control de Voto" />
 
-            <div className="mx-auto max-w-[1600px] space-y-5 p-4 md:p-6">
+            <div className="mx-auto max-w-[1600px] space-y-4 p-3 md:space-y-5 md:p-6">
                 {/* Cabecera Principal */}
-                <div className="flex flex-col gap-4 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-white shadow-lg md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 p-4 text-white shadow-lg md:flex-row md:items-center md:justify-between md:gap-4 md:p-5">
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-black text-white uppercase shadow-sm">
+                            <span className="flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-0.5 text-[11px] font-black text-white uppercase shadow-sm">
                                 <FireOutlined /> DÍA D EN VIVO
                             </span>
                             <span className="text-xs text-slate-400">Jornada Electoral</span>
                         </div>
-                        <h1 className="mt-1 mb-0 text-2xl font-black tracking-tight text-white md:text-3xl">
-                            Cacería y Movilización Electoral
+                        <h1 className="mt-1 mb-0 text-xl font-black tracking-tight text-white md:text-3xl">
+                            Cacería y Movilización
                         </h1>
-                        <p className="mt-1 mb-0 text-sm text-slate-300">
-                            Pase de lista en casilla y control en tiempo real de estructura y promovidos.
+                        <p className="mt-0.5 mb-0 text-xs text-slate-300 md:text-sm">
+                            Pase de lista y control en tiempo real de estructura y promovidos.
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         {presidentesList.length > 0 && (
-                            <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5">
+                            <div className="flex w-full items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1 sm:w-auto">
                                 <AuditOutlined className="text-slate-400" />
                                 <Select
                                     value={presidenteId}
                                     onChange={handlePresidenteChange}
                                     placeholder="Filtrar Presidente"
-                                    style={{ width: 220 }}
+                                    className="w-full text-white sm:w-56"
                                     variant="borderless"
-                                    className="text-white"
                                     options={presidentesList.map((p) => ({
                                         value: p.id,
                                         label: p.name,
@@ -446,7 +614,7 @@ export default function CaceriaIndex({
                             icon={<ReloadOutlined />}
                             onClick={() => fetchData()}
                             loading={loading}
-                            className="rounded-xl border-slate-600 bg-slate-700/80 text-white hover:bg-slate-600"
+                            className="flex-1 rounded-xl border-slate-600 bg-slate-700/80 text-white hover:bg-slate-600 sm:flex-none"
                         >
                             Actualizar
                         </Button>
@@ -455,7 +623,7 @@ export default function CaceriaIndex({
                             type="primary"
                             icon={<DownloadOutlined />}
                             onClick={handleExport}
-                            className="rounded-xl bg-blue-600 font-semibold shadow-md hover:bg-blue-500"
+                            className="flex-1 rounded-xl bg-blue-600 font-semibold shadow-md hover:bg-blue-500 sm:flex-none"
                         >
                             Exportar CSV
                         </Button>
@@ -463,7 +631,7 @@ export default function CaceriaIndex({
                 </div>
 
                 {/* Tarjetas KPI de Avance en Tiempo Real */}
-                <Row gutter={[16, 16]}>
+                <Row gutter={[12, 12]}>
                     {/* Tarjeta 1: Gran Total Padrón */}
                     <Col xs={24} sm={12} lg={6}>
                         <Card className="h-full rounded-2xl border-slate-200 shadow-sm transition-shadow hover:shadow">
@@ -473,7 +641,7 @@ export default function CaceriaIndex({
                                     <TeamOutlined className="text-lg" />
                                 </div>
                             </div>
-                            <div className="mb-1 text-3xl font-black text-slate-900">
+                            <div className="mb-1 text-2xl font-black text-slate-900 md:text-3xl">
                                 {stats?.total_general?.toLocaleString() || 0}
                             </div>
                             <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs text-slate-500">
@@ -497,7 +665,7 @@ export default function CaceriaIndex({
                                 </div>
                             </div>
                             <div className="mb-2 flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-emerald-800">
+                                <span className="text-2xl font-black text-emerald-800 md:text-3xl">
                                     {stats?.votaron_general?.toLocaleString() || 0}
                                 </span>
                                 <span className="text-sm font-bold text-emerald-600">({stats?.pct_general || 0}%)</span>
@@ -522,17 +690,17 @@ export default function CaceriaIndex({
                                 </div>
                             </div>
                             <div className="mb-2 flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-amber-900">
+                                <span className="text-2xl font-black text-amber-900 md:text-3xl">
                                     {stats?.faltan_general?.toLocaleString() || 0}
                                 </span>
-                                <span className="text-xs font-medium text-amber-700">(Pendientes de movilizar)</span>
+                                <span className="text-xs font-medium text-amber-700">(Por movilizar)</span>
                             </div>
                             <div className="flex justify-between border-t border-amber-200/60 pt-2 text-xs text-amber-800">
                                 <span>
-                                    Faltan en estructura: <b>{stats?.faltan_estructura || 0}</b>
+                                    Estructura: <b>{stats?.faltan_estructura || 0}</b>
                                 </span>
                                 <span>
-                                    Faltan promovidos: <b>{stats?.faltan_promovidos?.toLocaleString() || 0}</b>
+                                    Promovidos: <b>{stats?.faltan_promovidos?.toLocaleString() || 0}</b>
                                 </span>
                             </div>
                         </Card>
@@ -581,19 +749,21 @@ export default function CaceriaIndex({
                     </Col>
                 </Row>
 
-                {/* Desglose rápido de roles de estructura */}
+                {/* Desglose de roles de estructura */}
                 {stats?.desglose_roles && (
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
                         {Object.entries(stats.desglose_roles).map(([roleKey, item]) => {
                             const pct = item.total > 0 ? Math.round((item.votaron / item.total) * 100) : 0;
                             return (
                                 <div
                                     key={roleKey}
-                                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm"
                                 >
-                                    <div>
-                                        <div className="text-xs font-medium text-slate-500">{item.nombre}</div>
-                                        <div className="text-base font-black text-slate-800">
+                                    <div className="min-w-0 pr-1">
+                                        <div className="truncate text-[11px] font-medium text-slate-500">
+                                            {item.nombre}
+                                        </div>
+                                        <div className="text-sm font-black text-slate-800 md:text-base">
                                             {item.votaron}{' '}
                                             <span className="text-xs font-normal text-slate-400">/ {item.total}</span>
                                         </div>
@@ -611,22 +781,23 @@ export default function CaceriaIndex({
                     </div>
                 )}
 
-                {/* Controles de Filtro & Búsqueda */}
-                <Card className="rounded-2xl border-slate-200 shadow-sm">
-                    <div className="flex flex-col gap-4">
-                        {/* Fila 1: Pestañas de estatus y buscador principal */}
+                {/* Controles de Filtro & Búsqueda (100% Adaptables a Pantallas Móviles) */}
+                <Card className="rounded-2xl border-slate-200 shadow-sm" styles={{ body: { padding: '14px' } }}>
+                    <div className="flex flex-col gap-3">
+                        {/* Fila 1: Estatus de Voto (Full Width en móvil con Segmented block) */}
                         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="mr-1 text-xs font-bold tracking-wider text-slate-500 uppercase">
-                                    Estatus:
-                                </span>
+                            <div className="w-full md:w-auto">
+                                <div className="mb-1.5 text-[11px] font-bold tracking-wider text-slate-500 uppercase md:hidden">
+                                    Estatus de Voto:
+                                </div>
                                 <Segmented
+                                    block
                                     value={estatus}
                                     onChange={handleEstatusChange}
                                     options={[
                                         {
                                             label: (
-                                                <div className="px-2 py-0.5 font-bold">
+                                                <div className="truncate px-1 py-1 text-center text-xs font-bold">
                                                     Todos ({stats?.total_general || 0})
                                                 </div>
                                             ),
@@ -634,25 +805,28 @@ export default function CaceriaIndex({
                                         },
                                         {
                                             label: (
-                                                <div className="flex items-center gap-1 px-2 py-0.5 font-bold text-amber-700">
-                                                    <FireOutlined /> Faltan por Votar ({stats?.faltan_general || 0})
+                                                <div className="flex items-center justify-center gap-1 truncate px-1 py-1 text-center text-xs font-bold text-amber-700">
+                                                    <FireOutlined className="text-amber-500" />
+                                                    <span>Faltan ({stats?.faltan_general || 0})</span>
                                                 </div>
                                             ),
                                             value: 'pendientes',
                                         },
                                         {
                                             label: (
-                                                <div className="flex items-center gap-1 px-2 py-0.5 font-bold text-emerald-700">
-                                                    <CheckCircleFilled /> Ya Votaron ({stats?.votaron_general || 0})
+                                                <div className="flex items-center justify-center gap-1 truncate px-1 py-1 text-center text-xs font-bold text-emerald-700">
+                                                    <CheckCircleFilled className="text-emerald-500" />
+                                                    <span>Votaron ({stats?.votaron_general || 0})</span>
                                                 </div>
                                             ),
                                             value: 'votaron',
                                         },
                                     ]}
-                                    className="rounded-xl bg-slate-100 p-1"
+                                    className="w-full rounded-xl bg-slate-100 p-1"
                                 />
                             </div>
 
+                            {/* Buscador */}
                             <div className="w-full md:w-80">
                                 <Input
                                     placeholder="Buscar nombre, clave, CURP o tel..."
@@ -660,20 +834,20 @@ export default function CaceriaIndex({
                                     value={search}
                                     onChange={handleSearchChange}
                                     allowClear
+                                    size={isMobile ? 'large' : 'middle'}
                                     className="rounded-xl"
                                 />
                             </div>
                         </div>
 
                         {/* Fila 2: Filtros de grupo, demarcación y sección */}
-                        <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-600">Grupo:</span>
+                        <div className="grid grid-cols-1 items-center gap-2.5 border-t border-slate-100 pt-3 sm:grid-cols-3 md:flex md:flex-wrap">
+                            <div className="flex w-full flex-col gap-1.5 sm:flex-row sm:items-center md:w-auto">
+                                <span className="text-xs font-semibold text-slate-600 sm:w-auto">Grupo:</span>
                                 <Select
                                     value={tipo}
                                     onChange={handleTipoChange}
-                                    style={{ width: 180 }}
-                                    className="rounded-xl"
+                                    className="w-full md:w-[200px]"
                                     options={[
                                         { label: 'Todos (Estructura + Promovidos)', value: 'todos' },
                                         { label: 'Toda la Estructura', value: 'estructura' },
@@ -686,27 +860,27 @@ export default function CaceriaIndex({
                                 />
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-600">Demarcación:</span>
+                            <div className="flex w-full flex-col gap-1.5 sm:flex-row sm:items-center md:w-auto">
+                                <span className="text-xs font-semibold text-slate-600 sm:w-auto">Demarcación:</span>
                                 <Select
                                     value={demarcacionId}
                                     onChange={handleDemarcacionChange}
                                     placeholder="Todas las demarcaciones"
                                     allowClear
-                                    style={{ width: 210 }}
+                                    className="w-full md:w-[210px]"
                                     options={demarcaciones}
                                 />
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-600">Sección:</span>
+                            <div className="flex w-full flex-col gap-1.5 sm:flex-row sm:items-center md:w-auto">
+                                <span className="text-xs font-semibold text-slate-600 sm:w-auto">Sección:</span>
                                 <Select
                                     value={seccionElectoral}
                                     onChange={handleSeccionChange}
                                     placeholder="Todas las secciones"
                                     allowClear
                                     showSearch
-                                    style={{ width: 170 }}
+                                    className="w-full md:w-[170px]"
                                     options={secciones}
                                 />
                             </div>
@@ -734,23 +908,24 @@ export default function CaceriaIndex({
                                             current: 1,
                                         });
                                     }}
-                                    className="font-medium text-red-500"
+                                    className="p-0 text-left font-medium text-red-500 md:px-2"
                                 >
                                     Limpiar Filtros
                                 </Button>
                             )}
 
-                            <div className="ml-auto text-xs text-slate-400">
+                            <div className="w-full text-xs text-slate-400 md:ml-auto md:w-auto">
                                 Mostrando <b>{votersData.length}</b> de <b>{pagination.total}</b> registros
                             </div>
                         </div>
                     </div>
                 </Card>
 
-                {/* Tabla de Votantes / Personas */}
-                <Card className="overflow-hidden rounded-2xl border-slate-200 p-0 shadow-sm">
+                {/* Contenedor de Registros: Tarjetas en Móvil, Tabla en Desktop */}
+                <div className="overflow-hidden">
                     <Table
-                        columns={columns}
+                        columns={finalColumns}
+                        showHeader={!isMobile}
                         dataSource={votersData}
                         rowKey={(record) => `${record.source_type}-${record.id}`}
                         loading={loading}
@@ -758,7 +933,7 @@ export default function CaceriaIndex({
                             current: pagination.current,
                             pageSize: pagination.pageSize,
                             total: pagination.total,
-                            showSizeChanger: true,
+                            showSizeChanger: !isMobile,
                             pageSizeOptions: ['15', '25', '50', '100'],
                             showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} votantes`,
                             onChange: (page, pageSize) => {
@@ -776,9 +951,9 @@ export default function CaceriaIndex({
                                 />
                             ),
                         }}
-                        scroll={{ x: 850 }}
+                        scroll={isMobile ? undefined : { x: 850 }}
                     />
-                </Card>
+                </div>
             </div>
         </MainLayout>
     );
