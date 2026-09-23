@@ -21,7 +21,8 @@ use App\Enums\UserRole;
     'state_id', 'municipality_id', 'parent_id', 'presidente_id',
     'sexo', 'calle', 'numero_exterior', 'numero_interior',
     'colonia', 'codigo_postal', 'demarcacion_id', 'demarcacion_asignada_id', 'seccion_electoral', 'clave_electoral', 'telefono',
-    'curp', 'apodo', 'foto', 'ine_frente', 'ine_reverso', 'estado', 'notas'
+    'curp', 'apodo', 'foto', 'ine_frente', 'ine_reverso', 'estado', 'notas',
+    'ha_votado', 'voto_at', 'marcado_por_id'
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -41,6 +42,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'estado' => 'boolean',
             'role' => UserRole::class,
+            'ha_votado' => 'boolean',
+            'voto_at' => 'datetime',
         ];
     }
 
@@ -210,6 +213,14 @@ class User extends Authenticatable
     public function presidente()
     {
         return $this->belongsTo(User::class, 'presidente_id');
+    }
+
+    /**
+     * Usuario que marcó el voto en la cacería.
+     */
+    public function marcadoPor()
+    {
+        return $this->belongsTo(User::class, 'marcado_por_id');
     }
 
     /**

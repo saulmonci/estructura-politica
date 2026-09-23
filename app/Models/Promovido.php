@@ -114,7 +114,18 @@ class Promovido extends Model
         'ine_reverso',
         'promotor_id',
         'presidente_id',
+        'ha_votado',
+        'voto_at',
+        'marcado_por_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'ha_votado' => 'boolean',
+            'voto_at' => 'datetime',
+        ];
+    }
 
     /**
      * Accessor para compatibilidad: devuelve nombre + apellidos juntos.
@@ -188,5 +199,13 @@ class Promovido extends Model
     public function apoyos()
     {
         return $this->hasMany(Apoyo::class);
+    }
+
+    /**
+     * Usuario que marcó el voto en la cacería.
+     */
+    public function marcadoPor()
+    {
+        return $this->belongsTo(User::class, 'marcado_por_id');
     }
 }

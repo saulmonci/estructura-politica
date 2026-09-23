@@ -7,8 +7,8 @@ use App\Http\Controllers\OperadorController;
 use App\Http\Controllers\PromotorController;
 use App\Http\Controllers\PromovidoController;
 use App\Http\Controllers\DemarcacionController;
-
 use App\Http\Controllers\PresidenteController;
+use App\Http\Controllers\CaceriaController;
 
 Route::get('/', [WebController::class, 'showLogin'])->name('login');
 Route::post('/login', [WebController::class, 'login']);
@@ -103,6 +103,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Mapa Territorial
     Route::get('/mapa', [WebController::class, 'mapa'])->name('mapa');
+
+    // Módulo de Cacería Electoral / Día D (Check de Votantes)
+    Route::get('/caceria', [CaceriaController::class, 'index'])->name('caceria.index');
+    Route::post('/caceria/toggle-voto', [CaceriaController::class, 'toggleVoto'])->name('caceria.toggle-voto');
+    Route::get('/caceria/export', [CaceriaController::class, 'export'])->name('caceria.export');
 
     // Bitácora / Logs de Actividad (Solo Presidente)
     Route::get('/logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');

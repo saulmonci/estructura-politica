@@ -16,6 +16,7 @@ import {
     HistoryOutlined,
     UserOutlined,
     CrownOutlined,
+    CheckSquareOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Avatar, Badge, ConfigProvider, Input } from 'antd';
 import esES from 'antd/locale/es_ES';
@@ -170,6 +171,11 @@ export default function MainLayout({ children }) {
                                         path: '/promovidos',
                                         name: 'Promovidos',
                                         icon: <UsergroupAddOutlined />,
+                                    },
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                        path: '/caceria',
+                                        name: 'Cacería (Día D)',
+                                        icon: <CheckSquareOutlined />,
                                     },
                                     ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
                                         user.role
