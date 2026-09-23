@@ -17,6 +17,8 @@ import {
     Segmented,
     Empty,
     Grid,
+    Pagination,
+    Spin,
 } from 'antd';
 import {
     CheckCircleFilled,
@@ -31,7 +33,6 @@ import {
     FireOutlined,
     CheckSquareOutlined,
     AuditOutlined,
-    UserOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
@@ -233,7 +234,7 @@ export default function CaceriaIndex({
         };
         const conf = ROLES_MAP[role] || { text: role, color: 'default' };
         return (
-            <Tag color={conf.color} className="font-medium">
+            <Tag color={conf.color} className="m-0 font-medium">
                 {conf.text}
             </Tag>
         );
@@ -252,7 +253,7 @@ export default function CaceriaIndex({
         return `https://wa.me/${phone}?text=${text}`;
     };
 
-    // Renderizado de tarjeta para vista móvil
+    // Renderizado de tarjeta para vista móvil (100% responsive, sin recortes)
     const renderMobileCard = (record) => {
         const isUpdating = updatingId === `${record.source_type}-${record.id}`;
         const waUrl = getWhatsAppUrl(record);
@@ -260,18 +261,18 @@ export default function CaceriaIndex({
         return (
             <Card
                 key={`${record.source_type}-${record.id}`}
-                className={`mb-3.5 overflow-hidden rounded-2xl border shadow-sm transition-all ${
+                className={`w-full overflow-hidden rounded-2xl border shadow-sm transition-all ${
                     record.ha_votado ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-white'
                 }`}
-                styles={{ body: { padding: '14px' } }}
+                styles={{ body: { padding: '14px 12px' } }}
             >
                 {/* Cabecera de la tarjeta: Nombre, Rol y Badge de Voto */}
-                <div className="mb-2.5 flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="mb-2.5 flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
                     <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-sm leading-snug font-bold text-slate-900">
-                                {record.nombre_completo}
-                            </span>
+                        <div className="text-sm leading-snug font-bold break-words text-slate-900">
+                            {record.nombre_completo}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
                             {renderRoleTag(record.role)}
                             {record.source_type === 'user' && (
                                 <Tag color="volcano" className="m-0 px-1 py-0 text-[10px] font-bold uppercase">
@@ -288,11 +289,11 @@ export default function CaceriaIndex({
 
                     <div className="shrink-0">
                         {record.ha_votado ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
                                 <CheckCircleFilled className="text-emerald-600" /> Votó
                             </span>
                         ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800">
                                 <FireOutlined className="text-amber-600" /> Pendiente
                             </span>
                         )}
@@ -300,8 +301,8 @@ export default function CaceriaIndex({
                 </div>
 
                 {/* Detalles: Casilla, Ubicación, Identificación */}
-                <div className="mb-3.5 space-y-2 text-xs text-slate-600">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="mb-3 space-y-2 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center gap-1.5">
                         <Tag color="cyan" className="m-0 font-mono text-xs font-semibold">
                             Sección: {record.seccion_electoral || 'S/S'}
                         </Tag>
@@ -314,9 +315,9 @@ export default function CaceriaIndex({
                     </div>
 
                     {(record.colonia || record.calle) && (
-                        <div className="flex items-start gap-1.5 text-slate-500">
+                        <div className="flex items-start gap-1.5 break-words text-slate-500">
                             <EnvironmentOutlined className="mt-0.5 shrink-0 text-slate-400" />
-                            <span className="truncate">
+                            <span>
                                 {[record.calle, record.colonia ? `Col. ${record.colonia}` : null]
                                     .filter(Boolean)
                                     .join(', ')}
@@ -325,7 +326,7 @@ export default function CaceriaIndex({
                     )}
 
                     {(record.curp || record.clave_elector) && (
-                        <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] text-slate-400">
+                        <div className="flex flex-col gap-0.5 font-mono text-[11px] text-slate-400">
                             {record.curp && <span>CURP: {record.curp}</span>}
                             {record.clave_elector && <span>Clave: {record.clave_elector}</span>}
                         </div>
@@ -333,18 +334,18 @@ export default function CaceriaIndex({
 
                     {/* Contacto directo si tiene teléfono */}
                     {record.telefono && (
-                        <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5">
-                            <span className="flex items-center gap-1 font-mono text-xs font-semibold text-slate-700">
+                        <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-2">
+                            <div className="flex items-center gap-1.5 font-mono text-xs font-semibold text-slate-700">
                                 <PhoneOutlined className="text-slate-400" />
-                                {record.telefono}
-                            </span>
-                            <div className="flex items-center gap-2">
+                                <span>{record.telefono}</span>
+                            </div>
+                            <div className="grid w-full grid-cols-2 gap-2">
                                 {waUrl && (
                                     <a
                                         href={waUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                                        className="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-100"
                                     >
                                         <WhatsAppOutlined className="text-sm text-emerald-600" />
                                         WhatsApp
@@ -352,7 +353,7 @@ export default function CaceriaIndex({
                                 )}
                                 <a
                                     href={`tel:${record.telefono}`}
-                                    className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                                    className="flex items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100"
                                 >
                                     <PhoneOutlined />
                                     Llamar
@@ -559,32 +560,21 @@ export default function CaceriaIndex({
         },
     ];
 
-    // Columnas adaptativas para móviles
-    const mobileColumns = [
-        {
-            title: '',
-            key: 'mobile_card',
-            render: (_, record) => renderMobileCard(record),
-        },
-    ];
-
-    const finalColumns = isMobile ? mobileColumns : desktopColumns;
-
     return (
         <MainLayout>
             <Head title="Cacería Electoral (Día D) - Control de Voto" />
 
-            <div className="mx-auto max-w-[1600px] space-y-4 p-3 md:space-y-5 md:p-6">
+            <div className="mx-auto w-full max-w-[1600px] space-y-3.5 overflow-x-auto p-2.5 sm:p-4 md:space-y-5 md:p-6">
                 {/* Cabecera Principal */}
-                <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 p-4 text-white shadow-lg md:flex-row md:items-center md:justify-between md:gap-4 md:p-5">
+                <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 p-3.5 text-white shadow-lg sm:p-4 md:flex-row md:items-center md:justify-between md:gap-4 md:p-5">
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-0.5 text-[11px] font-black text-white uppercase shadow-sm">
+                            <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-black text-white uppercase shadow-sm">
                                 <FireOutlined /> DÍA D EN VIVO
                             </span>
                             <span className="text-xs text-slate-400">Jornada Electoral</span>
                         </div>
-                        <h1 className="mt-1 mb-0 text-xl font-black tracking-tight text-white md:text-3xl">
+                        <h1 className="mt-1 mb-0 text-lg font-black tracking-tight text-white sm:text-xl md:text-3xl">
                             Cacería y Movilización
                         </h1>
                         <p className="mt-0.5 mb-0 text-xs text-slate-300 md:text-sm">
@@ -631,7 +621,7 @@ export default function CaceriaIndex({
                 </div>
 
                 {/* Tarjetas KPI de Avance en Tiempo Real */}
-                <Row gutter={[12, 12]}>
+                <Row gutter={[10, 10]}>
                     {/* Tarjeta 1: Gran Total Padrón */}
                     <Col xs={24} sm={12} lg={6}>
                         <Card className="h-full rounded-2xl border-slate-200 shadow-sm transition-shadow hover:shadow">
@@ -751,7 +741,7 @@ export default function CaceriaIndex({
 
                 {/* Desglose de roles de estructura */}
                 {stats?.desglose_roles && (
-                    <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                         {Object.entries(stats.desglose_roles).map(([roleKey, item]) => {
                             const pct = item.total > 0 ? Math.round((item.votaron / item.total) * 100) : 0;
                             return (
@@ -782,7 +772,7 @@ export default function CaceriaIndex({
                 )}
 
                 {/* Controles de Filtro & Búsqueda (100% Adaptables a Pantallas Móviles) */}
-                <Card className="rounded-2xl border-slate-200 shadow-sm" styles={{ body: { padding: '14px' } }}>
+                <Card className="rounded-2xl border-slate-200 shadow-sm" styles={{ body: { padding: '14px 12px' } }}>
                     <div className="flex flex-col gap-3">
                         {/* Fila 1: Estatus de Voto (Full Width en móvil con Segmented block) */}
                         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
@@ -921,27 +911,31 @@ export default function CaceriaIndex({
                     </div>
                 </Card>
 
-                {/* Contenedor de Registros: Tarjetas en Móvil, Tabla en Desktop */}
-                <div className="overflow-hidden">
-                    <Table
-                        columns={finalColumns}
-                        showHeader={!isMobile}
-                        dataSource={votersData}
-                        rowKey={(record) => `${record.source_type}-${record.id}`}
-                        loading={loading}
-                        pagination={{
-                            current: pagination.current,
-                            pageSize: pagination.pageSize,
-                            total: pagination.total,
-                            showSizeChanger: !isMobile,
-                            pageSizeOptions: ['15', '25', '50', '100'],
-                            showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} votantes`,
-                            onChange: (page, pageSize) => {
-                                fetchData({ current: page, pageSize });
-                            },
-                        }}
-                        locale={{
-                            emptyText: (
+                {/* Contenedor de Registros: Tarjetas Nativas en Móvil, Tabla en Desktop */}
+                {isMobile ? (
+                    <div className="w-full space-y-3">
+                        {loading ? (
+                            <div className="flex justify-center py-12">
+                                <Spin size="large" />
+                            </div>
+                        ) : votersData.length > 0 ? (
+                            <>
+                                {votersData.map((record) => renderMobileCard(record))}
+                                <div className="flex justify-center rounded-2xl border border-slate-200 bg-white py-3.5 shadow-sm">
+                                    <Pagination
+                                        current={pagination.current}
+                                        pageSize={pagination.pageSize}
+                                        total={pagination.total}
+                                        simple
+                                        showTotal={(total, range) => `${range[0]}-${range[1]} de ${total}`}
+                                        onChange={(page, pageSize) => {
+                                            fetchData({ current: page, pageSize });
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
                                 <Empty
                                     description={
                                         estatus === 'pendientes'
@@ -949,11 +943,31 @@ export default function CaceriaIndex({
                                             : 'No se encontraron personas con los criterios especificados.'
                                     }
                                 />
-                            ),
-                        }}
-                        scroll={isMobile ? undefined : { x: 850 }}
-                    />
-                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <Card className="overflow-hidden rounded-2xl border-slate-200 p-0 shadow-sm">
+                        <Table
+                            columns={desktopColumns}
+                            dataSource={votersData}
+                            rowKey={(record) => `${record.source_type}-${record.id}`}
+                            loading={loading}
+                            pagination={{
+                                current: pagination.current,
+                                pageSize: pagination.pageSize,
+                                total: pagination.total,
+                                showSizeChanger: true,
+                                pageSizeOptions: ['15', '25', '50', '100'],
+                                showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} votantes`,
+                                onChange: (page, pageSize) => {
+                                    fetchData({ current: page, pageSize });
+                                },
+                            }}
+                            scroll={{ x: 850 }}
+                        />
+                    </Card>
+                )}
             </div>
         </MainLayout>
     );
