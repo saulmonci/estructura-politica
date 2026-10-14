@@ -73,6 +73,31 @@ Los componentes están disponibles en:
 
 ---
 
+### API de `AppSelect`
+
+| Prop | Tipo | Por defecto | Descripción |
+|---|---|---|---|
+| `endpoint` | `string \| (depVal, params) => string` | — | URL del catálogo (ej. `/catalogos/estados`, `/catalogos/municipios`). |
+| `dependsOn` | `string` | — | Nombre del campo en el formulario del que depende este select (ej. `state_id`). |
+| `dependencyParam` | `string` | `dependsOn` | Nombre del parámetro query a enviar (por defecto usa el nombre de `dependsOn`). |
+| `dependencyValue` | `any` | — | Valor directo de dependencia (si se usa fuera de un formulario). |
+| `resetOnDependencyChange` | `boolean` | `true` | Limpia automáticamente el valor de este select cuando la dependencia cambia. |
+| `labelField` | `string` | auto | Campo para la etiqueta (busca `nombre`, `name`, `numero`, `label`, etc.). |
+| `valueField` | `string` | auto | Campo para el valor (busca `id`, `value`, `key`). |
+| `transform` | `(item) => ({ label, value })` | — | Función opcional para formatear cada opción personalizada. |
+| `allOption` | `boolean \| string \| object` | `false` | Agrega opción "Todos" (ej. en filtros de tablas). |
+| `cache` | `boolean` | `true` | Habilita caché en memoria para evitar llamadas de red redundantes. |
+| `autoFetch` | `boolean` | `true` | Ejecuta la consulta automáticamente al montar o cambiar dependencia. |
+| `showSearch` | `boolean` | `true` | Búsqueda local insensible a mayúsculas/minúsculas. |
+| `allowClear` | `boolean` | `true` | Botón para limpiar selección. |
+
+#### Métodos expuestos vía `ref`:
+- `selectRef.current.reload()`: Vuelve a consultar los datos desde el servidor (omite caché).
+- `selectRef.current.setOptions(options)`: Sobrescribe las opciones manualmente.
+- `selectRef.current.getOptions()`: Devuelve las opciones actuales.
+
+---
+
 ## 3. Recetas de Código
 
 ### Receta 1: Modal + Formulario CRUD con Render Props
@@ -261,10 +286,162 @@ export function ImageUploadSection({ name = 'foto' }) {
 
 ---
 
+### Receta 4: Selects Dependientes en Cascada con `AppSelect`
+
+```jsx
+import React from 'react';
+import { Row, Col } from 'antd';
+import { AppForm, AppSelect } from '@/Components/Common';
+
+export function GeolocationFormFields() {
+    return (
+        <Row gutter={16}>
+            {/* 1. Estado: se carga automáticamente desde el endpoint */}
+            <Col xs={24} md={12}>
+                <AppForm.Item
+                    name="state_id"
+                    label="Estado"
+                    rules={[{ required: true, message: 'Selecciona un estado' }]}
+                >
+                    <AppSelect
+                        endpoint="/catalogos/estados"
+                        placeholder="Seleccionar Estado"
+                    />
+                </AppForm.Item>
+            </Col>
+
+            {/* 2. Municipio: depende de state_id. Se deshabilita si state_id está vacío,
+                   envía ?state_id={valor} y se resetea si el usuario cambia el estado */}
+            <Col xs={24} md={12}>
+                <AppForm.Item
+                    name="municipality_id"
+                    label="Municipio"
+                    rules={[{ required: true, message: 'Selecciona un municipio' }]}
+                >
+                    <AppSelect
+                        endpoint="/catalogos/municipios"
+                        dependsOn="state_id"
+                        placeholder="Seleccionar Municipio"
+                        placeholderWhenDisabled="Selecciona primero un estado"
+                    />
+                </AppForm.Item>
+            </Col>
+
+            {/* 3. Secciones: depende de demarcacion_id con URL interpolada */}
+            <Col xs={24}>
+                <AppForm.Item name="seccion_electoral_id" label="Sección Electoral">
+                    <AppSelect
+                        endpoint="/catalogos/demarcaciones/{demarcacion_id}/secciones"
+                        dependsOn="demarcacion_id"
+                        placeholder="Seleccionar Sección"
+                    />
+                </AppForm.Item>
+            </Col>
+        </Row>
+    );
+}
+```
+
+---
+
+### Receta 5: Tabla CRUD con Acciones Automáticas en `TableCrud`
+
+```jsx
+import React, { useRef } from 'react';
+import { Button } from 'antd';
+import { GiftOutlined } from '@ant-design/icons';
+import TableCrud from '@/Components/TableCrud';
+
+export default function ModuloIndex() {
+    const actionRef = useRef();
+
+    // Las columnas definen únicamente datos del dominio (sin columna manual de acciones)
+    const columns = [
+        { title: 'FOLIO', dataIndex: 'id', width: 90 },
+        { title: 'NOMBRE', dataIndex: 'name', sorter: true },
+        { title: 'ESTADO', dataIndex: 'estado' },
+    ];
+
+    return (
+        <TableCrud
+            actionRef={actionRef}
+            columns={columns}
+            endpoint="/api/recurso"
+            rowKey="id"
+            search={true}
+            // Props de acciones automáticas:
+            onEdit={(record) => handleEdit(record.id)}
+            onDelete={(record) => handleDelete(record.id)}
+            onRestore={(record) => handleRestore(record.id)}
+            onImpersonate={handleImpersonate}
+            extraActions={(record) => [
+                <Button
+                    key="apoyos"
+                    type="text"
+                    icon={<GiftOutlined className="text-green-600" />}
+                    title="Kardex de Apoyos"
+                    onClick={() => handleOpenApoyos(record)}
+                />,
+            ]}
+            // En móvil, recibe actions pre-renderizado para ubicarlo donde sea
+            mobileCardRender={(record, actions) => (
+                <div className="p-4 border rounded">
+                    <div>{record.name}</div>
+                    <div className="mt-2 flex justify-end border-t pt-2">{actions}</div>
+                </div>
+            )}
+        />
+    );
+}
+```
+
+---
+
+### Receta 5: Exportación a Excel/CSV con `<TableCrud.ExportButton>` y `actionRef`
+
+```jsx
+import React, { useRef } from 'react';
+import TableCrud from '@/Components/TableCrud';
+
+export default function ModuloIndex() {
+    const actionRef = useRef();
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <h1>Catálogo</h1>
+                {/* Botón declarativo: valida roles, extrae filtros activos y descarga el CSV */}
+                <TableCrud.ExportButton
+                    actionRef={actionRef}
+                    allowedRoles={['presidente', 'admin', 'superuser']}
+                />
+            </div>
+
+            <TableCrud
+                actionRef={actionRef}
+                columns={columns}
+                endpoint="/api/recurso"
+                search={true}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+            />
+        </div>
+    );
+}
+```
+
+---
+
 ## 4. Checklist para Refactorizar o Crear Componentes
 
 1. [ ] ¿El componente modal implementa `forwardRef` y expone `open` / `close` mediante `useImperativeHandle`?
 2. [ ] ¿La página padre eliminó los estados `const [isModalOpen, setIsModalOpen]` y `const [editingItem, setEditingItem]`?
 3. [ ] ¿Se utiliza el patrón **Render Props** en `<AppModal>` o `<AppForm>` para compartir datos con el cuerpo?
-4. [ ] ¿Los campos anidados acceden al formulario mediante `useAppFormContext()` si están profundamente anidados?
-5. [ ] ¿Los errores de Laravel 422 se capturan y mapean al formulario con scroll automático?
+4. [ ] ¿Los dropdowns usan `<AppSelect>` eliminando `useState`, `loading` y `fetch...` manuales?
+5. [ ] ¿Los selects dependientes en cascada usan `dependsOn="..."` para auto-deshabilitarse y auto-limpiarse?
+6. [ ] ¿La tabla usa las props automáticas de acciones de `<TableCrud>` (`onEdit`, `onDelete`, `onRestore`, `onImpersonate`, `extraActions`) en lugar de definir la columna `ACCIONES` a mano?
+7. [ ] ¿Se utiliza `<TableCrud.ExportButton>` o `actionRef.current?.export()` en lugar de duplicar estados `currentParams` y funciones `handleExport`?
+8. [ ] ¿Los campos anidados acceden al formulario mediante `useAppFormContext()` si están profundamente anidados?
+9. [ ] ¿Los errores de Laravel 422 se capturan y mapean al formulario con scroll automático?
+
+

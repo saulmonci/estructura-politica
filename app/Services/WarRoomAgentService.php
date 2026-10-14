@@ -21,10 +21,34 @@ class WarRoomAgentService
     {
         $this->reportService = $reportService;
         try {
-            $this->geminiApiKey = config('services.gemini.api_key', env('GEMINI_API_KEY'));
+            $this->geminiApiKey = config('services.gemini.api_key') ?? config('services.gemini.key') ?? env('GEMINI_API_KEY');
         } catch (\Throwable $e) {
             $this->geminiApiKey = env('GEMINI_API_KEY');
         }
+    }
+
+    public function getGeminiApiKey(): ?string
+    {
+        $key = config('services.gemini.key');
+        if (! empty($key)) {
+            return $key;
+        }
+
+        $key = config('services.gemini.api_key');
+        if (! empty($key)) {
+            return $key;
+        }
+
+        if (! empty($this->geminiApiKey)) {
+            return $this->geminiApiKey;
+        }
+
+        $env = env('GEMINI_API_KEY');
+        if (! empty($env)) {
+            return $env;
+        }
+
+        return null;
     }
 
     /**
@@ -196,7 +220,7 @@ class WarRoomAgentService
             }
 
             // 2. Si no es comando exacto y hay API Key de Gemini, usar Agente IA
-            if (! empty($this->geminiApiKey)) {
+            if (! empty($this->getGeminiApiKey())) {
                 $aiResponse = $this->askGeminiAgent($cleanText, $user, $presidenteId);
                 if ($aiResponse !== null) {
                     $this->reply($aiResponse, $groupId ?: $senderPhone);
@@ -341,7 +365,8 @@ class WarRoomAgentService
                 ],
             ];
 
-            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$this->geminiApiKey}";
+            $apiKey = $this->getGeminiApiKey();
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
 
             $payload = [
                 'system_instruction' => [

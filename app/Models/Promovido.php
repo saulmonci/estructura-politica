@@ -140,17 +140,17 @@ class Promovido extends Model
 
     public function getFotoUrlAttribute()
     {
-        return $this->foto ? asset('storage/' . $this->foto) : null;
+        return ($this->foto && $this->foto !== '-') ? asset('storage/' . $this->foto) : null;
     }
 
     public function getIneFrenteUrlAttribute()
     {
-        return $this->ine_frente ? asset('storage/' . $this->ine_frente) : null;
+        return ($this->ine_frente && $this->ine_frente !== '-') ? asset('storage/' . $this->ine_frente) : null;
     }
 
     public function getIneReversoUrlAttribute()
     {
-        return $this->ine_reverso ? asset('storage/' . $this->ine_reverso) : null;
+        return ($this->ine_reverso && $this->ine_reverso !== '-') ? asset('storage/' . $this->ine_reverso) : null;
     }
 
     /**

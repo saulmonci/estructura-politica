@@ -96,8 +96,8 @@ class WarRoomPerformanceTest extends TestCase
         DB::disableQueryLog();
 
         $this->assertCount(10, $summary);
-        // Debe ser constante O(1): 1 consulta para demarcaciones + 1 consulta agregada para promovidos
-        $this->assertLessThanOrEqual(2, count($queries), 'El número de consultas de getDemarcacionesSummary debe ser constante (<= 2)');
+        // Debe ser constante O(1): 1 consulta para demarcaciones + 1 agregada para promovidos + 1 para conteo de estructura
+        $this->assertLessThanOrEqual(3, count($queries), 'El número de consultas de getDemarcacionesSummary debe ser constante (<= 3)');
     }
 
     public function test_check_inactivity_alerts_executes_in_constant_queries(): void

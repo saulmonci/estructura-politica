@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
+import { Card, Button, Avatar, Badge, Modal, Image, Switch } from 'antd';
 import {
     PlusOutlined,
     UserOutlined,
@@ -12,54 +12,27 @@ import {
     DeleteOutlined,
     MailOutlined,
     GiftOutlined,
-    DownloadOutlined,
     ReloadOutlined,
-    SwapOutlined,
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
 import axios from 'axios';
 
-export default function RepresentantesIndex({ representantes, availablePresidentes }) {
+export default function RepresentantesIndex({ availablePresidentes }) {
     const { auth } = usePage().props;
     const modalRef = React.useRef();
-    const [isApoyosOpen, setIsApoyosOpen] = useState(false);
-    const [selectedRepresentante, setSelectedRepresentante] = useState(null);
+    const apoyosDrawerRef = React.useRef();
     const actionRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
     const [showTrashed, setShowTrashed] = useState(false);
-    const [currentParams, setCurrentParams] = useState({});
-
-    const handleExport = () => {
-        const queryParams = new URLSearchParams();
-
-        // Agregar params actuales
-        Object.entries(currentParams).forEach(([key, value]) => {
-            if (value !== undefined && value !== null && value !== '' && key !== 'page' && key !== 'per_page') {
-                if (Array.isArray(value)) {
-                    value.forEach((v) => queryParams.append(`${key}[]`, v));
-                } else {
-                    queryParams.append(key, value);
-                }
-            }
-        });
-
-        // Agregar estado de eliminados
-        if (showTrashed) {
-            queryParams.append('trashed', '1');
-        }
-
-        window.location.href = `/representantes/export?${queryParams.toString()}`;
-    };
 
     const handleCreate = () => {
         modalRef.current?.open();
     };
 
     const handleOpenApoyos = (record) => {
-        setSelectedRepresentante(record);
-        setIsApoyosOpen(true);
+        apoyosDrawerRef.current?.open(record);
     };
 
     const handleImpersonate = (record) => {
@@ -137,10 +110,10 @@ export default function RepresentantesIndex({ representantes, availablePresident
             width: 70,
             align: 'center',
             search: false,
-            render: (fotoUrl) =>
-                fotoUrl ? (
+            render: (_, record) =>
+                record?.foto_url && record.foto_url !== '-' ? (
                     <Image
-                        src={fotoUrl}
+                        src={record.foto_url}
                         width={44}
                         height={44}
                         className="rounded-md border border-blue-200 object-cover"
@@ -263,59 +236,6 @@ export default function RepresentantesIndex({ representantes, availablePresident
                 return <Badge status={isActive ? 'success' : 'error'} text={isActive ? 'Activo' : 'Inactivo'} />;
             },
         },
-        {
-            title: 'ACCIONES',
-            key: 'acciones',
-            width: 120,
-            align: 'center',
-            search: false,
-            render: (_, record) => {
-                if (record.deleted_at) {
-                    return (
-                        <Space size="middle">
-                            <Button
-                                type="text"
-                                className="text-green-600"
-                                icon={<ReloadOutlined />}
-                                onClick={() => handleRestore(record.id)}
-                                title="Restaurar"
-                            />
-                        </Space>
-                    );
-                }
-                return (
-                    <Space size="middle">
-                        <Button
-                            type="text"
-                            icon={<GiftOutlined className="text-green-600" />}
-                            title="Kardex de Apoyos"
-                            onClick={() => handleOpenApoyos(record)}
-                        />
-                        <Button
-                            type="text"
-                            icon={<EditOutlined className="text-blue-600" />}
-                            onClick={() => handleEdit(record.id)}
-                            title="Editar"
-                        />
-                        {auth?.can_impersonate && record.id !== auth.user?.id && (
-                            <Button
-                                type="text"
-                                icon={<SwapOutlined className="text-amber-600" />}
-                                onClick={() => handleImpersonate(record)}
-                                title="Impersonar usuario"
-                            />
-                        )}
-                        <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record.id)}
-                            title="Eliminar"
-                        />
-                    </Space>
-                );
-            },
-        },
     ];
 
     const renderMobileCard = (record) => {
@@ -333,7 +253,7 @@ export default function RepresentantesIndex({ representantes, availablePresident
             >
                 <div className="mb-4 flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        {record.foto_url ? (
+                        {record.foto_url && record.foto_url !== '-' ? (
                             <Image
                                 src={record.foto_url}
                                 width={48}
@@ -462,7 +382,7 @@ export default function RepresentantesIndex({ representantes, availablePresident
             {contextHolder}
             <Head title="Representantes de Demarcación" />
 
-            <Card bordered={false} className="mobile-full-width-card shadow-sm">
+            <Card variant="borderless" className="mobile-full-width-card shadow-sm">
                 <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                         <h2 className="m-0 text-xl font-bold">Representantes de Demarcación</h2>
@@ -475,16 +395,11 @@ export default function RepresentantesIndex({ representantes, availablePresident
                                 <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
                             </div>
                         )}
-                        {['presidente', 'admin', 'superuser'].includes(auth?.user?.role) && (
-                            <Button
-                                type="default"
-                                icon={<DownloadOutlined />}
-                                onClick={handleExport}
-                                className="w-full border-gray-300 sm:w-auto"
-                            >
-                                Descargar Excel
-                            </Button>
-                        )}
+                        <TableCrud.ExportButton
+                            actionRef={actionRef}
+                            endpoint="/representantes"
+                            allowedRoles={['presidente', 'admin', 'superuser']}
+                        />
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
@@ -502,9 +417,21 @@ export default function RepresentantesIndex({ representantes, availablePresident
                     endpoint="/representantes" // Cambiado a modo asíncrono puro
                     rowKey="id"
                     search={true}
+                    onEdit={(record) => handleEdit(record.id)}
+                    onDelete={(record) => handleDelete(record.id)}
+                    onRestore={(record) => handleRestore(record.id)}
+                    onImpersonate={handleImpersonate}
+                    extraActions={(record) => [
+                        <Button
+                            key="apoyos"
+                            type="text"
+                            icon={<GiftOutlined className="text-green-600" />}
+                            title="Kardex de Apoyos"
+                            onClick={() => handleOpenApoyos(record)}
+                        />,
+                    ]}
                     mobileCardRender={renderMobileCard}
                     params={{ trashed: showTrashed ? '1' : '0' }}
-                    onParamsChange={setCurrentParams}
                 />
             </Card>
 
@@ -519,12 +446,7 @@ export default function RepresentantesIndex({ representantes, availablePresident
                 }}
             />
 
-            <ApoyosDrawer
-                visible={isApoyosOpen}
-                onClose={() => setIsApoyosOpen(false)}
-                entity={selectedRepresentante}
-                apiBasePath={selectedRepresentante ? `/representantes/${selectedRepresentante.id}` : null}
-            />
+            <ApoyosDrawer ref={apoyosDrawerRef} apiBasePath="/representantes" />
         </MainLayout>
     );
 }

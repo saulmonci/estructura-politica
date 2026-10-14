@@ -481,7 +481,7 @@ export default function MapaPage({
                 {/* Panel lateral: Estadísticas y lista de Demarcaciones */}
                 <Col xs={24} lg={8} className="flex flex-col gap-4">
                     {/* Estadísticas Generales */}
-                    <Card bordered={false} className="shadow-sm">
+                    <Card variant="borderless" className="shadow-sm">
                         <Statistic
                             title={
                                 <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
@@ -525,7 +525,7 @@ export default function MapaPage({
                             <span className="text-xs font-bold tracking-wide uppercase">Semáforo de Cumplimiento</span>
                         }
                         size="small"
-                        bordered={false}
+                        variant="borderless"
                         className="shadow-sm"
                     >
                         <div className="flex flex-col gap-2.5">
@@ -571,7 +571,7 @@ export default function MapaPage({
                             </span>
                         }
                         size="small"
-                        bordered={false}
+                        variant="borderless"
                         className="max-h-[380px] flex-1 overflow-y-auto shadow-sm"
                     >
                         <div className="mb-3">
@@ -637,7 +637,7 @@ export default function MapaPage({
                 {/* Contenedor del Mapa */}
                 <Col xs={24} lg={16}>
                     <Card
-                        bordered={false}
+                        variant="borderless"
                         className="w-full overflow-hidden p-0 shadow-sm"
                         styles={{ body: { padding: 0 } }}
                     >

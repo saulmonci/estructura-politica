@@ -316,10 +316,10 @@ const PersonaFormModal = forwardRef(
                 onOpenChange={setOpen}
                 width={1000}
                 modalProps={{
-                    destroyOnClose: true,
+                    destroyOnHidden: true,
                     maskClosable: true,
                     keyboard: true,
-                    bodyStyle: { padding: 0 },
+                    styles: { body: { padding: 0 } },
                     closeIcon: null,
                 }}
                 submitter={{

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
 import { Head } from '@inertiajs/react';
-import { Card, Tag, Button, Modal, Descriptions, Table, Space, Segmented, message, Tooltip, Alert } from 'antd';
+import { Card, Tag, Button, Descriptions, Table, Space, Segmented, message, Alert } from 'antd';
 import {
     EyeOutlined,
     HistoryOutlined,
@@ -10,13 +10,12 @@ import {
     BugOutlined,
     CopyOutlined,
     CheckCircleOutlined,
-    CloseCircleOutlined,
     AppstoreOutlined,
     FileTextOutlined,
-    GlobalOutlined,
     CodeOutlined,
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
+import AppModal from '@/Components/AppModal';
 
 // Friendly labels for model attributes in Spanish
 const FIELD_LABELS = {
@@ -91,15 +90,13 @@ const formatValue = (key, val) => {
 
 export default function ActivityLogsIndex() {
     const [category, setCategory] = useState('all');
-    const [selectedLog, setSelectedLog] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [copied, setCopied] = useState(false);
-    const actionRef = React.useRef();
+    const actionRef = useRef();
+    const detailModalRef = useRef();
 
     const handleViewDetail = (record) => {
-        setSelectedLog(record);
         setCopied(false);
-        setIsModalOpen(true);
+        detailModalRef.current?.open(record);
     };
 
     const handleCopyTrace = (traceText) => {
@@ -639,7 +636,7 @@ export default function ActivityLogsIndex() {
         <MainLayout>
             <Head title="Bitácora de Logs y Errores" />
 
-            <Card bordered={false} className="shadow-sm">
+            <Card variant="borderless" className="shadow-sm">
                 <div className="mb-6 flex flex-col items-start justify-between gap-4 border-b border-gray-100 pb-4 md:flex-row md:items-center">
                     <div>
                         <h2 className="m-0 flex items-center gap-2 text-xl font-bold">
@@ -704,89 +701,85 @@ export default function ActivityLogsIndex() {
                 />
             </Card>
 
-            <Modal
-                title={
+            <AppModal
+                ref={detailModalRef}
+                title={(log) => (
                     <Space>
-                        {selectedLog?.action === 'error' ? (
-                            <BugOutlined className="text-rose-600" />
-                        ) : (
-                            <HistoryOutlined />
-                        )}
-                        <span className={selectedLog?.action === 'error' ? 'font-bold text-rose-900' : ''}>
-                            {selectedLog?.action === 'error'
-                                ? `Inspección de Error #${selectedLog?.id}`
-                                : `Detalles del Movimiento #${selectedLog?.id}`}
+                        {log?.action === 'error' ? <BugOutlined className="text-rose-600" /> : <HistoryOutlined />}
+                        <span className={log?.action === 'error' ? 'font-bold text-rose-900' : ''}>
+                            {log?.action === 'error'
+                                ? `Inspección de Error #${log?.id}`
+                                : `Detalles del Movimiento #${log?.id}`}
                         </span>
                     </Space>
-                }
-                open={isModalOpen}
-                onCancel={() => setIsModalOpen(false)}
-                footer={[
-                    <Button key="close" type="primary" onClick={() => setIsModalOpen(false)}>
-                        Cerrar
-                    </Button>,
-                ]}
+                )}
+                footer={({ close }) => (
+                    <div className="flex justify-end border-t border-gray-100 p-2">
+                        <Button key="close" type="primary" onClick={close}>
+                            Cerrar
+                        </Button>
+                    </div>
+                )}
                 width={850}
-                destroyOnClose
+                destroyOnHidden
             >
-                {selectedLog &&
-                    (selectedLog.action === 'error' ? (
-                        renderErrorInspector(selectedLog)
+                {({ data: log }) =>
+                    log &&
+                    (log.action === 'error' ? (
+                        renderErrorInspector(log)
                     ) : (
                         <div className="space-y-6 pt-3">
                             <Descriptions bordered size="small" column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
                                 <Descriptions.Item label="Usuario Ejecutor" span={2}>
                                     <span className="font-semibold text-gray-800">
-                                        {selectedLog.user_identifier || 'Sistema / Anónimo'}
+                                        {log.user_identifier || 'Sistema / Anónimo'}
                                     </span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Acción">
                                     <Tag
                                         color={
-                                            selectedLog.action === 'created'
+                                            log.action === 'created'
                                                 ? 'green'
-                                                : selectedLog.action === 'deleted'
+                                                : log.action === 'deleted'
                                                   ? 'red'
-                                                  : selectedLog.action === 'impersonate_start'
+                                                  : log.action === 'impersonate_start'
                                                     ? 'purple'
-                                                    : selectedLog.action === 'impersonate_stop'
+                                                    : log.action === 'impersonate_stop'
                                                       ? 'orange'
                                                       : 'blue'
                                         }
                                         className="text-[10px] font-bold uppercase"
                                     >
-                                        {selectedLog.action === 'created'
+                                        {log.action === 'created'
                                             ? 'Creación'
-                                            : selectedLog.action === 'deleted'
+                                            : log.action === 'deleted'
                                               ? 'Eliminación'
-                                              : selectedLog.action === 'impersonate_start'
+                                              : log.action === 'impersonate_start'
                                                 ? 'Inició Suplantación'
-                                                : selectedLog.action === 'impersonate_stop'
+                                                : log.action === 'impersonate_stop'
                                                   ? 'Detuvo Suplantación'
-                                                  : selectedLog.action === 'updated'
+                                                  : log.action === 'updated'
                                                     ? 'Actualización'
-                                                    : selectedLog.action}
+                                                    : log.action}
                                     </Tag>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Módulo">
-                                    {MODULE_NAMES[selectedLog.model_friendly_name] || selectedLog.model_friendly_name}
+                                    {MODULE_NAMES[log.model_friendly_name] || log.model_friendly_name}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Registro Relacionado">
-                                    <span className="font-semibold text-gray-800">
-                                        {selectedLog.model_representation}
-                                    </span>
+                                    <span className="font-semibold text-gray-800">{log.model_representation}</span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="ID de Fila">
-                                    <span className="font-mono text-xs">{selectedLog.model_id}</span>
+                                    <span className="font-mono text-xs">{log.model_id}</span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Fecha y Hora">
-                                    {new Date(selectedLog.created_at).toLocaleString('es-MX')}
+                                    {new Date(log.created_at).toLocaleString('es-MX')}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Dirección IP">
-                                    <span className="font-mono text-xs">{selectedLog.ip_address || 'N/A'}</span>
+                                    <span className="font-mono text-xs">{log.ip_address || 'N/A'}</span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Navegador (User Agent)" span={2}>
-                                    <span className="text-xs text-gray-500">{selectedLog.user_agent || 'N/A'}</span>
+                                    <span className="text-xs text-gray-500">{log.user_agent || 'N/A'}</span>
                                 </Descriptions.Item>
                             </Descriptions>
 
@@ -795,46 +788,46 @@ export default function ActivityLogsIndex() {
                                     Detalle de Atributos y Cambios
                                 </h3>
 
-                                {selectedLog.action === 'created' && (
+                                {log.action === 'created' && (
                                     <div>
                                         <p className="mb-2 text-xs text-gray-500">
                                             Valores iniciales asignados al crear el registro:
                                         </p>
-                                        {renderSimpleDataList(selectedLog.changed_data)}
+                                        {renderSimpleDataList(log.changed_data)}
                                     </div>
                                 )}
 
-                                {selectedLog.action === 'deleted' && (
+                                {log.action === 'deleted' && (
                                     <div>
                                         <p className="mb-2 text-xs text-gray-500">
                                             Valores originales que tenía el registro al ser eliminado:
                                         </p>
-                                        {renderSimpleDataList(selectedLog.original_data)}
+                                        {renderSimpleDataList(log.original_data)}
                                     </div>
                                 )}
 
-                                {selectedLog.action === 'updated' && (
+                                {log.action === 'updated' && (
                                     <div>
                                         <p className="mb-2 text-xs text-gray-500">
                                             Campos específicos que cambiaron en la base de datos:
                                         </p>
-                                        {renderDiffTable(selectedLog.original_data, selectedLog.changed_data)}
+                                        {renderDiffTable(log.original_data, log.changed_data)}
                                     </div>
                                 )}
 
-                                {(selectedLog.action === 'impersonate_start' ||
-                                    selectedLog.action === 'impersonate_stop') && (
+                                {(log.action === 'impersonate_start' || log.action === 'impersonate_stop') && (
                                     <div>
                                         <p className="mb-2 text-xs text-gray-500">
                                             Detalles de la sesión de suplantación:
                                         </p>
-                                        {renderSimpleDataList(selectedLog.changed_data || {})}
+                                        {renderSimpleDataList(log.changed_data || {})}
                                     </div>
                                 )}
                             </div>
                         </div>
-                    ))}
-            </Modal>
+                    ))
+                }
+            </AppModal>
         </MainLayout>
     );
 }

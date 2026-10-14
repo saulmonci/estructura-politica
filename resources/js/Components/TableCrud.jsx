@@ -1,11 +1,211 @@
 import React from 'react';
 import { ProTable } from '@ant-design/pro-components';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
-import { Grid } from 'antd';
+import { Grid, Button, Space } from 'antd';
+import { EditOutlined, DeleteOutlined, ReloadOutlined, SwapOutlined, DownloadOutlined } from '@ant-design/icons';
 
 const { useBreakpoint } = Grid;
+
+/**
+ * Disparador universal de exportación a CSV con serialización limpia de parámetros
+ */
+export function triggerTableExport(endpoint, params = {}) {
+    if (!endpoint) {
+        console.warn('triggerTableExport: No se especificó un endpoint para exportar.');
+        return;
+    }
+
+    const queryParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '' && key !== 'page' && key !== 'per_page') {
+            if (Array.isArray(value)) {
+                value.forEach((v) => queryParams.append(`${key}[]`, v));
+            } else {
+                queryParams.append(key, value);
+            }
+        }
+    });
+
+    const cleanEndpoint = endpoint.endsWith('/export') ? endpoint : `${endpoint.replace(/\/$/, '')}/export`;
+    const queryString = queryParams.toString();
+    const targetUrl = queryString ? `${cleanEndpoint}?${queryString}` : cleanEndpoint;
+    window.location.href = targetUrl;
+}
+
+/**
+ * Botón reutilizable de exportación con control de roles y enlace a actionRef
+ */
+export function ExportButton({
+    actionRef,
+    endpoint,
+    params,
+    allowedRoles,
+    label = 'Descargar Excel',
+    icon = <DownloadOutlined />,
+    className = 'w-full border-gray-300 sm:w-auto',
+    type = 'default',
+    onClick,
+    children,
+    ...buttonProps
+}) {
+    let auth;
+    try {
+        const page = usePage();
+        auth = page?.props?.auth;
+    } catch {
+        // Fuera de contexto Inertia
+    }
+    const userRole = auth?.user?.role;
+
+    // Si se especifican roles permitidos y el usuario actual no los tiene, ocultar el botón
+    if (allowedRoles && Array.isArray(allowedRoles) && userRole) {
+        if (!allowedRoles.includes(userRole)) {
+            return null;
+        }
+    }
+
+    const handleClick = (e) => {
+        if (onClick) {
+            onClick(e);
+            return;
+        }
+        if (actionRef?.current && typeof actionRef.current.export === 'function') {
+            actionRef.current.export(params);
+        } else if (endpoint) {
+            triggerTableExport(endpoint, params);
+        } else {
+            const fallbackEndpoint = window.location.pathname.replace(/\/$/, '');
+            triggerTableExport(fallbackEndpoint, params);
+        }
+    };
+
+    return (
+        <Button type={type} icon={icon} className={className} onClick={handleClick} {...buttonProps}>
+            {children || label}
+        </Button>
+    );
+}
+
+/**
+ * Renderizador reusable de acciones para tablas y tarjetas móviles
+ */
+export function RecordActions({
+    record,
+    onEdit,
+    onDelete,
+    onRestore,
+    onImpersonate,
+    extraActions,
+    renderActions,
+    auth: propAuth,
+    size = 'middle',
+    editTitle = 'Editar',
+    deleteTitle = 'Eliminar',
+    restoreTitle = 'Restaurar',
+    impersonateTitle = 'Impersonar usuario',
+    editIconClass = 'text-blue-600 hover:text-blue-700',
+    className,
+}) {
+    let auth = propAuth;
+    if (!auth) {
+        try {
+            const page = usePage();
+            auth = page?.props?.auth;
+        } catch {
+            // Fuera de contexto Inertia
+        }
+    }
+
+    if (renderActions) {
+        return renderActions(record, {
+            onEdit,
+            onDelete,
+            onRestore,
+            onImpersonate,
+            extraActions,
+        });
+    }
+
+    const isDeleted = Boolean(record?.deleted_at);
+
+    if (isDeleted) {
+        if (!onRestore) return null;
+        return (
+            <Space size={size} className={className}>
+                <Button
+                    type="text"
+                    className="text-green-600 hover:text-green-700"
+                    icon={<ReloadOutlined />}
+                    onClick={() => onRestore(record)}
+                    title={restoreTitle}
+                />
+            </Space>
+        );
+    }
+
+    const actions = [];
+
+    // Acciones extra previas (ej. Kardex de apoyos o Secciones)
+    if (extraActions) {
+        const extra = typeof extraActions === 'function' ? extraActions(record) : extraActions;
+        if (Array.isArray(extra)) {
+            actions.push(...extra.filter(Boolean));
+        } else if (extra) {
+            actions.push(extra);
+        }
+    }
+
+    if (onEdit) {
+        actions.push(
+            <Button
+                key="edit"
+                type="text"
+                className={editIconClass}
+                icon={<EditOutlined />}
+                onClick={() => onEdit(record)}
+                title={editTitle}
+            />
+        );
+    }
+
+    const canImpersonate = Boolean(auth?.can_impersonate && record?.id && record?.id !== auth?.user?.id);
+    if (onImpersonate && canImpersonate) {
+        actions.push(
+            <Button
+                key="impersonate"
+                type="text"
+                className="text-amber-600 hover:text-amber-700"
+                icon={<SwapOutlined />}
+                onClick={() => onImpersonate(record)}
+                title={impersonateTitle}
+            />
+        );
+    }
+
+    if (onDelete) {
+        actions.push(
+            <Button
+                key="delete"
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => onDelete(record)}
+                title={deleteTitle}
+            />
+        );
+    }
+
+    if (actions.length === 0) return null;
+
+    return (
+        <Space size={size} className={className}>
+            {actions}
+        </Space>
+    );
+}
 
 export default function TableCrud({
     data, // Objeto de paginación de Laravel o un array simple (modo Inertia)
@@ -17,14 +217,81 @@ export default function TableCrud({
     headerTitle,
     toolBarRender,
     url = null, // URL para peticiones Inertia
-    formRef: externalFormRef, // Referencia opcional para el formulario
+    exportUrl, // Endpoint alternativo de exportación (por defecto `${endpoint}/export`)
+    formRef: externalFormRef,
+    // Props de gestión automática de columna de acciones
+    actions = true,
+    onEdit,
+    onDelete,
+    onRestore,
+    onImpersonate,
+    extraActions,
+    renderActions,
+    actionsColumnProps,
+    editTitle = 'Editar',
+    deleteTitle = 'Eliminar',
+    restoreTitle = 'Restaurar',
+    impersonateTitle = 'Impersonar usuario',
+    editIconClass = 'text-blue-600 hover:text-blue-700',
+    actionRef: externalActionRef,
     ...props
 }) {
+    let auth = props.auth;
+    try {
+        const page = usePage();
+        if (page?.props?.auth) {
+            auth = page.props.auth;
+        }
+    } catch {
+        // Fuera de contexto Inertia
+    }
     const { mobileCardRender, ...restProps } = props;
     const isAsync = !!endpoint;
     const internalFormRef = React.useRef();
     const formRef = externalFormRef || internalFormRef;
     const screens = useBreakpoint();
+    const lastParamsRef = React.useRef({});
+    const internalActionRef = React.useRef();
+
+    // Función de exportación automática con los filtros activos
+    const handleExport = React.useCallback(
+        (customParams = {}) => {
+            const finalExportUrl = exportUrl || (endpoint ? `${endpoint.replace(/\/$/, '')}/export` : null);
+            const combinedParams = {
+                ...lastParamsRef.current,
+                ...(props.params || {}),
+                ...customParams,
+            };
+            triggerTableExport(finalExportUrl, combinedParams);
+        },
+        [exportUrl, endpoint, props.params]
+    );
+
+    // Sincronizar métodos imperativos con el actionRef externo de forma síncrona y continua
+    const syncActionRef = React.useCallback(() => {
+        if (externalActionRef && typeof externalActionRef === 'object') {
+            if (!externalActionRef.current) {
+                externalActionRef.current = {};
+            }
+            externalActionRef.current.export = handleExport;
+            externalActionRef.current.getParams = () => ({
+                ...lastParamsRef.current,
+                ...(props.params || {}),
+            });
+            externalActionRef.current.reload = (...args) => internalActionRef.current?.reload?.(...args);
+            externalActionRef.current.reloadAndRest = (...args) => internalActionRef.current?.reloadAndRest?.(...args);
+            externalActionRef.current.reset = (...args) => internalActionRef.current?.reset?.(...args);
+            externalActionRef.current.clearSelected = (...args) => internalActionRef.current?.clearSelected?.(...args);
+        }
+    }, [externalActionRef, handleExport, props.params]);
+
+    // Ejecutar síncronamente en cada render
+    syncActionRef();
+
+    // Y reforzar en useEffect
+    React.useEffect(() => {
+        syncActionRef();
+    });
 
     // Debounce de 500ms para enviar el formulario automáticamente
     const debouncedSubmit = React.useRef(
@@ -52,6 +319,8 @@ export default function TableCrud({
             ...filter,
             ...sortParams,
         };
+
+        lastParamsRef.current = requestParams;
 
         if (props.onParamsChange) {
             props.onParamsChange(requestParams);
@@ -138,15 +407,65 @@ export default function TableCrud({
         router.get(url || window.location.pathname, {}, { preserveState: true, preserveScroll: true, replace: true });
     };
 
-    // Lógica para renderizado condicional en móviles
-    let finalColumns = columns;
+    // 1. Resolver columna de acciones automática
+    const hasManualActionsColumn =
+        Array.isArray(columns) &&
+        columns.some(
+            (col) =>
+                col?.key === 'actions' ||
+                col?.key === 'acciones' ||
+                col?.dataIndex === 'actions' ||
+                col?.dataIndex === 'acciones'
+        );
+
+    const hasActionHandlers = Boolean(
+        onEdit || onDelete || onRestore || onImpersonate || extraActions || renderActions
+    );
+
+    const shouldInjectActions = actions !== false && !hasManualActionsColumn && hasActionHandlers;
+
+    const renderActionsForRecord = (record, size = 'middle') =>
+        RecordActions({
+            record,
+            onEdit,
+            onDelete,
+            onRestore,
+            onImpersonate,
+            extraActions,
+            renderActions,
+            auth,
+            size,
+            editTitle,
+            deleteTitle,
+            restoreTitle,
+            impersonateTitle,
+            editIconClass,
+        });
+
+    let effectiveColumns = [...(columns || [])];
+
+    if (shouldInjectActions) {
+        effectiveColumns.push({
+            title: 'ACCIONES',
+            key: 'acciones',
+            width: actionsColumnProps?.width || (extraActions ? 150 : 120),
+            align: 'center',
+            search: false,
+            hideInSearch: true,
+            render: (_, record) => renderActionsForRecord(record, 'middle'),
+            ...actionsColumnProps,
+        });
+    }
+
+    // 2. Lógica para renderizado condicional en móviles
+    let finalColumns = effectiveColumns;
     let showHeader = true;
 
     // Si la pantalla es pequeña (menor a md) y existe la propiedad, cambiamos la vista
     if (mobileCardRender && screens.md === false) {
         // En lugar de eliminar las columnas (lo cual rompe el buscador),
         // las mantenemos pero las ocultamos de la tabla
-        finalColumns = columns.map((col) => ({
+        finalColumns = effectiveColumns.map((col) => ({
             ...col,
             hideInTable: true,
         }));
@@ -156,7 +475,10 @@ export default function TableCrud({
             title: '',
             dataIndex: 'mobile_card_renderer',
             hideInSearch: true,
-            render: (_, record) => mobileCardRender(record),
+            render: (_, record) => {
+                const actionsNode = renderActionsForRecord(record, 'middle');
+                return mobileCardRender(record, actionsNode);
+            },
         });
 
         showHeader = false;
@@ -164,6 +486,7 @@ export default function TableCrud({
 
     // Props comunes para ambos modos
     const baseProps = {
+        actionRef: internalActionRef,
         columns: finalColumns,
         showHeader,
         rowKey,
@@ -377,3 +700,7 @@ export default function TableCrud({
         </div>
     );
 }
+
+TableCrud.Actions = RecordActions;
+TableCrud.ExportButton = ExportButton;
+TableCrud.export = triggerTableExport;

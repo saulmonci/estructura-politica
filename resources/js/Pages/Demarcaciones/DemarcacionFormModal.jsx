@@ -1,232 +1,194 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { ModalForm, ProFormText, ProFormDigit } from '@ant-design/pro-components';
-import { Row, Col, message, Button, Divider, Form, Alert } from 'antd';
-import { EnvironmentOutlined, SaveOutlined, CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import React, { useState, forwardRef, useImperativeHandle, useRef } from 'react';
+import { Row, Col, Input, InputNumber, Button, Divider, message } from 'antd';
+import { EnvironmentOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
+import { AppModal, AppForm } from '@/Components/Common';
 
 const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresidenteId = null }, ref) => {
-    const [open, setOpen] = useState(false);
-    const [editId, setEditingId] = useState(null);
+    const modalRef = useRef();
+    const formRef = useRef();
+
+    const [editId, setEditId] = useState(null);
     const [fetchUrl, setFetchUrl] = useState(null);
     const [activePresidenteId, setActivePresidenteId] = useState(propPresidenteId);
 
-    useEffect(() => {
-        setActivePresidenteId(propPresidenteId);
-    }, [propPresidenteId]);
-
     useImperativeHandle(ref, () => ({
         open(id = null, url = null, targetPresId = null) {
-            setEditingId(id);
+            setEditId(id);
             setFetchUrl(url);
-            if (targetPresId !== undefined && targetPresId !== null) {
-                setActivePresidenteId(targetPresId);
-            } else {
-                setActivePresidenteId(propPresidenteId);
-            }
-            setOpen(true);
-        },
-        close() {
-            setOpen(false);
-        },
-    }));
+            const targetPres = targetPresId !== undefined && targetPresId !== null ? targetPresId : propPresidenteId;
+            setActivePresidenteId(targetPres);
 
-    const [form] = Form.useForm();
+            modalRef.current?.open(null);
 
-    useEffect(() => {
-        if (open) {
-            form.resetFields();
-            form.setFieldsValue({
-                id: undefined,
-                nombre: '',
-                meta: undefined,
-            });
-
-            if (editId) {
-                const url = fetchUrl || `/demarcaciones/${editId}`;
+            // Cargar datos si es edición
+            if (id) {
+                const endpoint = url || `/demarcaciones/${id}`;
                 axios
-                    .get(url, {
-                        params: activePresidenteId ? { presidente_id: activePresidenteId } : {},
+                    .get(endpoint, {
+                        params: targetPres ? { presidente_id: targetPres } : {},
                     })
-                    .then((response) => {
-                        form.setFieldsValue({
-                            id: response.data.id,
-                            nombre: response.data.nombre,
-                            meta: response.data.meta,
+                    .then((res) => {
+                        formRef.current?.setValues({
+                            id: res.data.id,
+                            nombre: res.data.nombre,
+                            meta: res.data.meta,
                         });
                     })
                     .catch(() => {
                         message.error('No se pudo cargar la información de la demarcación');
                     });
+            } else {
+                formRef.current?.reset();
             }
-        }
-    }, [open, editId, fetchUrl, activePresidenteId]);
+        },
+        close() {
+            modalRef.current?.close();
+        },
+    }));
 
     return (
-        <ModalForm
-            form={form}
-            title={null}
-            open={open}
-            onOpenChange={setOpen}
+        <AppModal
+            ref={modalRef}
+            title={editId ? 'EDICIÓN DE Demarcación Territorial' : 'REGISTRO DE Demarcación Territorial'}
+            subtitle={
+                activePresidenteId
+                    ? 'Configurando meta para el candidato seleccionado'
+                    : 'Estructura Electoral Municipal'
+            }
+            headerBanner
+            headerIcon={<EnvironmentOutlined />}
             width={700}
-            modalProps={{
-                destroyOnClose: true,
-                maskClosable: true,
-                keyboard: true,
-                bodyStyle: { padding: 0 },
-                closeIcon: null,
-            }}
-            submitter={{
-                render: (props) => {
-                    return (
-                        <div className="flex justify-end gap-3 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4">
-                            <Button
-                                key="cancel"
-                                onClick={() => setOpen(false)}
-                                icon={<CloseOutlined />}
-                                className="border-gray-300 text-gray-700"
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                key="submit"
-                                type="primary"
-                                onClick={() => props.form?.submit?.()}
-                                icon={<SaveOutlined />}
-                                className="bg-[#0f172a]"
-                            >
-                                Guardar demarcación
-                            </Button>
-                        </div>
-                    );
-                },
-            }}
-            onFinish={async (values) => {
-                const basePath = '/demarcaciones';
-                const endpoint = fetchUrl || (editId ? `${basePath}/${editId}` : basePath);
-                const payload = {
-                    ...values,
-                    ...(activePresidenteId ? { presidente_id: activePresidenteId } : {}),
-                };
-
-                if (editId) {
-                    payload._method = 'put';
-                    router.post(endpoint, payload, {
-                        onSuccess: () => {
-                            message.success('Demarcación actualizada exitosamente');
-                            if (onSuccess) onSuccess(payload);
-                            setOpen(false);
-                        },
-                        onError: (errors) => {
-                            if (errors) {
-                                const fieldErrors = Object.keys(errors).map((key) => ({
-                                    name: key,
-                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                                }));
-                                form.setFields(fieldErrors);
-                            }
-                            message.error('Por favor revisa los campos en rojo');
-                        },
-                    });
-                } else {
-                    router.post(endpoint, payload, {
-                        onSuccess: () => {
-                            message.success('Demarcación creada exitosamente');
-                            if (onSuccess) onSuccess(payload);
-                            setOpen(false);
-                        },
-                        onError: (errors) => {
-                            if (errors) {
-                                const fieldErrors = Object.keys(errors).map((key) => ({
-                                    name: key,
-                                    errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]],
-                                }));
-                                form.setFields(fieldErrors);
-                            }
-                            message.error('Por favor revisa los campos en rojo');
-                        },
-                    });
-                }
-                return false;
-            }}
+            destroyOnHidden
         >
-            {/* Custom Header */}
-            <div className="flex items-center justify-between rounded-t-lg bg-[#0f172a] p-6 text-white">
-                <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-white/20 p-3">
-                        <EnvironmentOutlined className="text-3xl text-white" />
-                    </div>
-                    <div>
-                        <h2 className="m-0 text-xl font-bold tracking-wide uppercase">
-                            {editId ? 'EDICIÓN DE' : 'REGISTRO DE'} Demarcación Territorial
-                        </h2>
-                        <p className="m-0 text-sm text-gray-300">
-                            {activePresidenteId
-                                ? 'Configurando meta para el candidato seleccionado'
-                                : 'Estructura Electoral Municipal'}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {({ close }) => (
+                <AppForm
+                    ref={formRef}
+                    initialValues={{ id: undefined, nombre: '', meta: undefined }}
+                    onSubmit={async (values, { setErrors, setLoading }) => {
+                        const basePath = '/demarcaciones';
+                        const endpoint = fetchUrl || (editId ? `${basePath}/${editId}` : basePath);
+                        const payload = {
+                            ...values,
+                            ...(activePresidenteId ? { presidente_id: activePresidenteId } : {}),
+                        };
 
-            <div className="p-6">
-                <div className="mb-4 flex items-center gap-2">
-                    <div className="rounded bg-[#0f172a] p-1 text-white">
-                        <EnvironmentOutlined />
-                    </div>
-                    <h3 className="m-0 text-sm font-bold tracking-wide text-[#0f172a]">DATOS DE LA DEMARCACIÓN</h3>
-                </div>
-                <Divider className="my-2 border-gray-200" />
+                        if (editId) {
+                            payload._method = 'put';
+                        }
 
-                <div className="mt-4">
-                    <Row gutter={16}>
-                        <Col xs={24} md={8}>
-                            <ProFormDigit
-                                name="id"
-                                label="Número de Demarcación"
-                                placeholder="Ej: 10"
-                                disabled={!!editId}
-                                rules={[
-                                    { required: true, message: 'Requerido' },
-                                    { type: 'number', min: 1, message: 'Debe ser mayor o igual a 1' },
-                                ]}
-                                fieldProps={{
-                                    precision: 0,
-                                }}
-                            />
-                        </Col>
-                        <Col xs={24} md={16}>
-                            <ProFormText
-                                name="nombre"
-                                label="Nombre de la Demarcación"
-                                placeholder="Ej: Demarcación 10 - San Vicente"
-                                rules={[{ required: true, message: 'Requerido' }]}
-                            />
-                        </Col>
-                    </Row>
+                        return new Promise((resolve) => {
+                            router.post(endpoint, payload, {
+                                onSuccess: () => {
+                                    message.success(
+                                        editId
+                                            ? 'Demarcación actualizada exitosamente'
+                                            : 'Demarcación creada exitosamente'
+                                    );
+                                    if (onSuccess) onSuccess(payload);
+                                    close();
+                                    resolve();
+                                },
+                                onError: (errors) => {
+                                    setErrors(errors);
+                                    resolve();
+                                },
+                                onFinish: () => {
+                                    setLoading(false);
+                                },
+                            });
+                        });
+                    }}
+                >
+                    {({ loading }) => (
+                        <div className="p-2">
+                            <div className="mb-4 flex items-center gap-2">
+                                <div className="rounded bg-[#0f172a] p-1 text-white">
+                                    <EnvironmentOutlined />
+                                </div>
+                                <h3 className="m-0 text-sm font-bold tracking-wide text-[#0f172a]">
+                                    DATOS DE LA DEMARCACIÓN
+                                </h3>
+                            </div>
+                            <Divider className="my-2 border-gray-200" />
 
-                    <Row gutter={16}>
-                        <Col span={24}>
-                            <ProFormDigit
-                                name="meta"
-                                label={
-                                    activePresidenteId ? 'Meta de Votantes para el Candidato' : 'Meta de Votantes Base'
-                                }
-                                placeholder="Número total de simpatizantes como objetivo"
-                                rules={[
-                                    { required: true, message: 'Requerido' },
-                                    { type: 'number', min: 0, message: 'Debe ser mayor o igual a 0' },
-                                ]}
-                                fieldProps={{
-                                    precision: 0,
-                                }}
-                            />
-                        </Col>
-                    </Row>
-                </div>
-            </div>
-        </ModalForm>
+                            <div className="mt-4">
+                                <Row gutter={16}>
+                                    <Col xs={24} md={8}>
+                                        <AppForm.Item
+                                            name="id"
+                                            label="Número de Demarcación"
+                                            rules={[
+                                                { required: true, message: 'Requerido' },
+                                                { type: 'number', min: 1, message: 'Debe ser mayor o igual a 1' },
+                                            ]}
+                                        >
+                                            <InputNumber
+                                                placeholder="Ej: 10"
+                                                disabled={Boolean(editId)}
+                                                precision={0}
+                                                className="w-full"
+                                            />
+                                        </AppForm.Item>
+                                    </Col>
+                                    <Col xs={24} md={16}>
+                                        <AppForm.Item
+                                            name="nombre"
+                                            label="Nombre de la Demarcación"
+                                            rules={[{ required: true, message: 'Requerido' }]}
+                                        >
+                                            <Input placeholder="Ej: Demarcación 10 - San Vicente" />
+                                        </AppForm.Item>
+                                    </Col>
+                                </Row>
+
+                                <Row gutter={16}>
+                                    <Col span={24}>
+                                        <AppForm.Item
+                                            name="meta"
+                                            label={
+                                                activePresidenteId
+                                                    ? 'Meta de Votantes para el Candidato'
+                                                    : 'Meta de Votantes Base'
+                                            }
+                                            rules={[
+                                                { required: true, message: 'Requerido' },
+                                                { type: 'number', min: 0, message: 'Debe ser mayor o igual a 0' },
+                                            ]}
+                                        >
+                                            <InputNumber
+                                                placeholder="Número total de simpatizantes como objetivo"
+                                                precision={0}
+                                                className="w-full"
+                                            />
+                                        </AppForm.Item>
+                                    </Col>
+                                </Row>
+                            </div>
+
+                            <div className="-mx-6 mt-6 -mb-2 flex justify-end gap-3 rounded-b-lg border-t border-gray-200 bg-gray-50/50 p-4">
+                                <Button onClick={close} icon={<CloseOutlined />}>
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    loading={loading}
+                                    icon={<SaveOutlined />}
+                                    className="bg-[#0f172a] hover:bg-[#1e293b]"
+                                >
+                                    Guardar demarcación
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </AppForm>
+            )}
+        </AppModal>
     );
 });
+
+DemarcacionFormModal.displayName = 'DemarcacionFormModal';
 
 export default DemarcacionFormModal;

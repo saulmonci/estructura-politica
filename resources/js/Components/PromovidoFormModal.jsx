@@ -290,10 +290,10 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
             onOpenChange={setOpen}
             width={1000}
             modalProps={{
-                destroyOnClose: true,
+                destroyOnHidden: true,
                 maskClosable: false,
                 keyboard: true,
-                bodyStyle: { padding: 0 },
+                styles: { body: { padding: 0 } },
                 closeIcon: null,
             }}
             submitter={{

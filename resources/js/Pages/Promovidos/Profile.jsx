@@ -42,11 +42,11 @@ export default function PromovidoProfile({ promovido }) {
             </div>
 
             {/* Header Card */}
-            <Card bordered={false} className="mb-6 shadow-sm">
+            <Card variant="borderless" className="mb-6 shadow-sm">
                 <Row gutter={24} align="middle">
                     <Col>
                         <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-gray-200 text-gray-400 shadow-inner">
-                            {data.foto_url ? (
+                            {data.foto_url && data.foto_url !== '-' ? (
                                 <img src={data.foto_url} alt="Perfil" className="h-full w-full object-cover" />
                             ) : (
                                 <UserOutlined style={{ fontSize: '48px' }} />
@@ -126,7 +126,7 @@ export default function PromovidoProfile({ promovido }) {
                                 <IdcardOutlined /> Información Personal
                             </span>
                         }
-                        bordered={false}
+                        variant="borderless"
                         className="mb-6 shadow-sm"
                     >
                         <div className="grid grid-cols-2 gap-y-4">
@@ -155,7 +155,7 @@ export default function PromovidoProfile({ promovido }) {
                                         <CheckCircleOutlined /> Documentos y Verificación
                                     </span>
                                 }
-                                bordered={false}
+                                variant="borderless"
                                 className="h-full shadow-sm"
                             >
                                 <div className="space-y-3">
@@ -193,7 +193,7 @@ export default function PromovidoProfile({ promovido }) {
                                         📝 Notas
                                     </span>
                                 }
-                                bordered={false}
+                                variant="borderless"
                                 className="h-full bg-yellow-50 shadow-sm"
                             >
                                 <p className="m-0 text-sm leading-relaxed text-gray-700">
@@ -213,7 +213,7 @@ export default function PromovidoProfile({ promovido }) {
                                 <EnvironmentOutlined /> Ubicación
                             </span>
                         }
-                        bordered={false}
+                        variant="borderless"
                         className="body-no-padding mb-6 shadow-sm"
                     >
                         <div className="relative h-48 w-full overflow-hidden rounded-t-lg bg-gray-200">
@@ -231,7 +231,7 @@ export default function PromovidoProfile({ promovido }) {
 
                     <Card
                         title={<span className="font-semibold text-blue-800">Mi Posición en la Estructura</span>}
-                        bordered={false}
+                        variant="borderless"
                         className="mb-6 shadow-sm"
                     >
                         <div className="relative space-y-2 before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:-translate-x-px before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent md:before:mx-auto md:before:translate-x-0">

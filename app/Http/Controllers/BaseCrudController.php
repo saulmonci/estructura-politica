@@ -219,28 +219,51 @@ abstract class BaseCrudController extends Controller
     public function export(Request $request)
     {
         $this->checkAccess($request);
-        
+
         $user = $request->user();
-        if (!$user || !in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::RD], true)) {
+        $userRole = $user?->role instanceof UserRole ? $user->role : (is_string($user?->role) ? UserRole::tryFrom($user->role) : null);
+
+        $allowedExportRoles = [
+            UserRole::SUPERUSER,
+            UserRole::ADMIN,
+            UserRole::PRESIDENTE,
+            UserRole::COORDINADOR_DISTRITO,
+            UserRole::RD,
+        ];
+
+        if (!$user || !$userRole || !in_array($userRole, $allowedExportRoles, true)) {
             abort(403, 'No autorizado para exportar datos.');
         }
 
         $query = $this->getBaseQuery($request);
 
+        // Soporte de registros eliminados (soft deletes)
+        if (($request->input('trashed') === '1' || $request->input('trashed') === 'true') && in_array($userRole, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO, UserRole::ADMIN, UserRole::SUPERUSER], true)) {
+            if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->modelClass))) {
+                $query->onlyTrashed();
+            }
+        }
+
         // Seguridad: Los RDs solo pueden exportar registros de su demarcación asignada
-        if ($user->role === UserRole::RD) {
-            if (empty($user->demarcacion_id)) {
+        if ($userRole === UserRole::RD) {
+            $rdDemarcacionId = $user->demarcacion_asignada_id ?: $user->demarcacion_id;
+            if (empty($rdDemarcacionId)) {
                 abort(403, 'El RD no tiene una demarcación asignada.');
             }
-            $query->where($query->getModel()->getTable() . '.demarcacion_id', $user->demarcacion_id);
+            $table = $query->getModel()->getTable();
+            if ($table === 'demarcaciones') {
+                $query->where('id', $rdDemarcacionId);
+            } elseif (\Illuminate\Support\Facades\Schema::hasColumn($table, 'demarcacion_id')) {
+                $query->where($table . '.demarcacion_id', $rdDemarcacionId);
+            }
         }
 
         // Aplicar filtros opcionales de búsqueda si se pasan en el request
         if ($search = $request->input('search')) {
             $this->applySearch($query, $search);
         }
-        
-        $filters = $request->except(['search', 'page', 'per_page', 'sort_field', 'sort_direction']);
+
+        $filters = $request->except(['search', 'page', 'per_page', 'sort_field', 'sort_direction', 'trashed']);
         if (!empty($filters)) {
             $this->applyFilters($query, $filters);
         }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Input, Select, Tag, Avatar, Spin, Empty, Button, Popover } from 'antd';
+import { Input, Tag, Avatar, Spin, Empty, Button, Popover } from 'antd';
 import {
     SearchOutlined,
     UserOutlined,
@@ -9,6 +9,7 @@ import {
     LoadingOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
+import { AppSelect } from '@/Components/Common';
 
 const ROLE_COLORS = {
     superuser: 'magenta',
@@ -32,8 +33,7 @@ export default function HeaderImpersonateSearch() {
     const { auth } = usePage().props;
     const canImpersonate = auth?.can_impersonate ?? false;
 
-    const [municipios, setMunicipios] = useState([]);
-    const [selectedMunicipio, setSelectedMunicipio] = useState(null);
+    const [selectedMunicipio, setSelectedMunicipio] = useState(undefined);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -41,18 +41,6 @@ export default function HeaderImpersonateSearch() {
     const [impersonatingId, setImpersonatingId] = useState(null);
 
     const containerRef = useRef(null);
-
-    // Cargar lista de municipios
-    useEffect(() => {
-        if (canImpersonate) {
-            axios
-                .get('/catalogos/municipios')
-                .then((res) => {
-                    setMunicipios(res.data || []);
-                })
-                .catch((err) => console.error('Error cargando municipios:', err));
-        }
-    }, [canImpersonate]);
 
     // Ejecutar búsqueda con debounce
     useEffect(() => {
@@ -181,20 +169,16 @@ export default function HeaderImpersonateSearch() {
     return (
         <div ref={containerRef} className="flex items-center gap-2">
             {/* Filtro de Municipio */}
-            <Select
-                showSearch
-                optionFilterProp="label"
-                filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+            <AppSelect
+                endpoint="/catalogos/municipios"
+                allOption={{ label: 'Todos los Municipios', value: '' }}
                 placeholder="Todos los Municipios"
                 allowClear
                 value={selectedMunicipio}
                 onChange={(val) => setSelectedMunicipio(val)}
                 className="hidden w-36 sm:block sm:w-44"
                 size="middle"
-                options={[
-                    { value: null, label: 'Todos los Municipios' },
-                    ...municipios.map((m) => ({ value: m.id, label: m.nombre })),
-                ]}
+                autoFetch={canImpersonate}
             />
 
             {/* Buscador de Usuario con Popover */}

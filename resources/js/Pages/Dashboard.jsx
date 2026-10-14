@@ -86,7 +86,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
         <>
             <Row gutter={[16, 16]} className="mb-6">
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="shadow-sm transition-shadow hover:shadow-md">
+                    <Card variant="borderless" className="shadow-sm transition-shadow hover:shadow-md">
                         <Statistic
                             title={
                                 <div className="font-semibold text-gray-700">
@@ -111,7 +111,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="shadow-sm transition-shadow hover:shadow-md">
+                    <Card variant="borderless" className="shadow-sm transition-shadow hover:shadow-md">
                         <Statistic
                             title={
                                 <div className="font-semibold text-gray-700">
@@ -134,7 +134,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="shadow-sm transition-shadow hover:shadow-md">
+                    <Card variant="borderless" className="shadow-sm transition-shadow hover:shadow-md">
                         <Statistic
                             title={
                                 <div className="font-semibold text-gray-700">
@@ -157,7 +157,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="bg-blue-50 shadow-sm transition-shadow hover:shadow-md">
+                    <Card variant="borderless" className="bg-blue-50 shadow-sm transition-shadow hover:shadow-md">
                         <Statistic
                             title={
                                 <div className="font-semibold text-gray-700">
@@ -183,7 +183,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                 <Col xs={24} lg={12}>
                     <Card
                         title={<span className="font-semibold">Resumen de la Estructura</span>}
-                        bordered={false}
+                        variant="borderless"
                         className="h-full shadow-sm"
                     >
                         <div className="flex flex-row flex-wrap items-center justify-center gap-2 px-2 py-6 xl:flex-nowrap">
@@ -230,7 +230,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
                 <Col xs={24} lg={12}>
                     <Card
                         title={<span className="font-semibold">Crecimiento general</span>}
-                        bordered={false}
+                        variant="borderless"
                         className="h-full shadow-sm"
                     >
                         <div className="h-64">
@@ -276,7 +276,7 @@ export default function Dashboard({ stats, growthData, distribution, rds, report
     );
 
     const reportesContent = (
-        <Card bordered={false} className="rounded-xl shadow-sm">
+        <Card variant="borderless" className="rounded-xl shadow-sm">
             <div className="mb-4 flex items-center gap-2 text-[#0f172a]">
                 <BarChartOutlined className="text-xl text-blue-600" />
                 <h2 className="m-0 text-lg font-bold">Reportes por Demarcación</h2>

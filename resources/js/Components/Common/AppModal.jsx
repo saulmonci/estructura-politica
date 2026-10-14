@@ -41,6 +41,7 @@ const AppModal = forwardRef(
             headerIcon = null,
             width = 650,
             destroyOnClose = true,
+            destroyOnHidden,
             maskClosable = false,
             centered = true,
             afterClose,
@@ -180,7 +181,7 @@ const AppModal = forwardRef(
                     title={modalTitle}
                     footer={renderFooter()}
                     width={width}
-                    destroyOnClose={destroyOnClose}
+                    destroyOnHidden={destroyOnHidden ?? destroyOnClose}
                     maskClosable={maskClosable}
                     centered={centered}
                     afterClose={() => {

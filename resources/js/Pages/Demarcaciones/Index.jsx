@@ -20,9 +20,8 @@ export default function DemarcacionesIndex() {
     const { auth, presidentes = [], currentPresidenteId = null, isGlobalAdmin = false } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
+    const seccionesDrawerRef = React.useRef();
     const [modal, contextHolder] = Modal.useModal();
-    const [selectedDemarcacion, setSelectedDemarcacion] = useState(null);
-    const [isSeccionesOpen, setIsSeccionesOpen] = useState(false);
     const [selectedPresidenteId, setSelectedPresidenteId] = useState(currentPresidenteId);
 
     const handleCreate = () => {
@@ -34,8 +33,7 @@ export default function DemarcacionesIndex() {
     };
 
     const handleOpenSecciones = (record) => {
-        setSelectedDemarcacion(record);
-        setIsSeccionesOpen(true);
+        seccionesDrawerRef.current?.open(record, selectedPresidenteId);
     };
 
     const handlePresidenteChange = (val) => {
@@ -81,29 +79,6 @@ export default function DemarcacionesIndex() {
                         </Tag>
                     )}
                 </div>
-            ),
-        },
-        {
-            title: 'ACCIONES',
-            key: 'acciones',
-            width: 120,
-            align: 'center',
-            search: false,
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button
-                        type="text"
-                        icon={<UnorderedListOutlined className="text-green-600" />}
-                        onClick={() => handleOpenSecciones(record)}
-                        title="Secciones"
-                    />
-                    <Button
-                        type="text"
-                        icon={<EditOutlined className="text-blue-600" />}
-                        onClick={() => handleEdit(record.id)}
-                        title="Editar Demarcación"
-                    />
-                </Space>
             ),
         },
     ];
@@ -167,7 +142,7 @@ export default function DemarcacionesIndex() {
             {contextHolder}
             <Head title="Administrar Demarcaciones" />
 
-            <Card bordered={false} className="mobile-full-width-card shadow-sm">
+            <Card variant="borderless" className="mobile-full-width-card shadow-sm">
                 <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
                         <h2 className="m-0 flex items-center gap-2 text-xl font-bold">
@@ -178,14 +153,7 @@ export default function DemarcacionesIndex() {
                         </p>
                     </div>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                        <Button
-                            type="default"
-                            icon={<DownloadOutlined />}
-                            onClick={() => (window.location.href = '/demarcaciones/export')}
-                            className="w-full border-gray-300 sm:w-auto"
-                        >
-                            Descargar Excel
-                        </Button>
+                        <TableCrud.ExportButton actionRef={actionRef} endpoint="/demarcaciones" />
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
@@ -210,7 +178,7 @@ export default function DemarcacionesIndex() {
                             value={selectedPresidenteId}
                             onChange={handlePresidenteChange}
                             options={[
-                                { label: '🌐 Meta Base General (Por Defecto)', value: null },
+                                { label: '🌐 Meta Base General (Por Defecto)', value: '' },
                                 ...presidentes.map((p) => ({
                                     label: `👤 ${p.name || p.nombre} (${p.municipality?.nombre || 'Municipio'})`,
                                     value: p.id,
@@ -227,6 +195,17 @@ export default function DemarcacionesIndex() {
                     endpoint={endpoint}
                     rowKey="id"
                     search={true}
+                    onEdit={(record) => handleEdit(record.id)}
+                    editTitle="Editar Demarcación"
+                    extraActions={(record) => [
+                        <Button
+                            key="secciones"
+                            type="text"
+                            icon={<UnorderedListOutlined className="text-green-600" />}
+                            onClick={() => handleOpenSecciones(record)}
+                            title="Secciones"
+                        />,
+                    ]}
                     mobileCardRender={renderMobileCard}
                 />
             </Card>
@@ -241,12 +220,7 @@ export default function DemarcacionesIndex() {
                 }}
             />
 
-            <SeccionesDrawer
-                visible={isSeccionesOpen}
-                onClose={() => setIsSeccionesOpen(false)}
-                demarcacion={selectedDemarcacion}
-                presidenteId={selectedPresidenteId}
-            />
+            <SeccionesDrawer ref={seccionesDrawerRef} />
         </MainLayout>
     );
 }
