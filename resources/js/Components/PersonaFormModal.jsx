@@ -20,7 +20,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
-import IneScanner from './IneScanner';
+import IneScanner, { showIneVencidaModal } from './IneScanner';
 import imageCompression from 'browser-image-compression';
 import { generatePersonaFormData } from '@/Utils/dummyDataGenerator';
 
@@ -264,6 +264,35 @@ const PersonaFormModal = forwardRef(
 
         const handleBeforeUploadIneFrente = async (file) => {
             const compressedFile = await compressImage(file);
+
+            // Validar vigencia de la credencial con el backend
+            try {
+                message.loading({ content: 'Verificando vigencia de la credencial...', key: 'checkIne' });
+                const formData = new FormData();
+                formData.append('ine_image', compressedFile);
+
+                const resp = await axios.post('/extract-ine', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                message.destroy('checkIne');
+
+                const respData = resp.data?.data;
+                const anio = respData?.anio_emision || respData?.emision;
+                if (anio && parseInt(anio, 10) < 2017) {
+                    showIneVencidaModal(anio);
+                    setFileListIneFrente([]);
+                    return Upload.LIST_IGNORE;
+                }
+            } catch (error) {
+                message.destroy('checkIne');
+                const errData = error.response?.data;
+                if (errData?.error_code === 'INE_VENCIDA' || errData?.message?.includes('INE VENCIDA NO VOTA')) {
+                    showIneVencidaModal(errData?.anio_emision);
+                    setFileListIneFrente([]);
+                    return Upload.LIST_IGNORE;
+                }
+            }
+
             setFileListIneFrente([{ originFileObj: compressedFile }]);
             return Upload.LIST_IGNORE;
         };
@@ -452,7 +481,17 @@ const PersonaFormModal = forwardRef(
                     <Row gutter={48}>
                         <Col xs={24} lg={15}>
                             <IneScanner
+                                onIneRejected={() => {
+                                    setFileListIneFrente([]);
+                                }}
                                 onDataExtracted={async (data, compressedFile) => {
+                                    const anio = data.anio_emision || data.emision;
+                                    if (anio && parseInt(anio, 10) < 2017) {
+                                        showIneVencidaModal(anio);
+                                        setFileListIneFrente([]);
+                                        return;
+                                    }
+
                                     // 1. Normalizar sexo
                                     let sexo = data.sexo;
                                     if (sexo) {
