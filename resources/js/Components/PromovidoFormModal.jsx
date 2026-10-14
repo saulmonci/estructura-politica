@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ModalForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
-import { Row, Col, message, Alert, Button, Divider, Upload, Form, Image } from 'antd';
+import { Row, Col, message, Alert, Button, Divider, Upload, Form, Image, Checkbox } from 'antd';
 import {
     UserOutlined,
     EnvironmentOutlined,
@@ -140,6 +140,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                 numero: '',
                 demarcacion_id: undefined,
                 seccion_electoral: undefined,
+                consentimiento_datos: false,
             });
 
             const fetchDemarcaciones = async () => {
@@ -191,6 +192,7 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                         seccion_electoral: data.seccion_electoral
                                             ? String(data.seccion_electoral)
                                             : undefined,
+                                        consentimiento_datos: true,
                                     });
                                 })
                                 .catch(() => {
@@ -202,7 +204,10 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                         } else {
                             setSelectedDemarcacion(null);
                             setSecciones([]);
-                            form.setFieldsValue(data);
+                            form.setFieldsValue({
+                                ...data,
+                                consentimiento_datos: true,
+                            });
                         }
                     })
                     .catch(() => {
@@ -732,13 +737,34 @@ const PromovidoFormModal = forwardRef(({ onSuccess, availablePromotores = [] }, 
                                 </Col>
                             </Row>
 
-                            <Alert
-                                message={<span className="font-bold">Privacidad</span>}
-                                description="Los datos del promovido están protegidos y solo deben utilizarse para la estructura política y contacto."
-                                type="info"
-                                showIcon
-                                className="mt-4 border-blue-200 bg-blue-50"
-                            />
+                            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 shadow-sm">
+                                <Form.Item
+                                    name="consentimiento_datos"
+                                    valuePropName="checked"
+                                    rules={[
+                                        {
+                                            validator: (_, value) =>
+                                                value
+                                                    ? Promise.resolve()
+                                                    : Promise.reject(
+                                                          new Error(
+                                                              'Es obligatorio contar con el consentimiento de la persona conforme a la LFPDPPP para registrar sus datos.'
+                                                          )
+                                                      ),
+                                        },
+                                    ]}
+                                    className="mb-0"
+                                >
+                                    <Checkbox className="text-xs leading-snug font-semibold text-slate-800 sm:text-sm">
+                                        ✅ Cuento con el consentimiento de esta persona para registrar sus datos,
+                                        conforme a la LFPDPPP
+                                    </Checkbox>
+                                </Form.Item>
+                                <p className="mt-1.5 mb-0 pl-6 text-[11px] text-slate-500">
+                                    Los datos del ciudadano están protegidos por la Ley Federal de Protección de Datos
+                                    Personales en Posesión de los Particulares (LFPDPPP).
+                                </p>
+                            </div>
                         </div>
                     </Col>
 

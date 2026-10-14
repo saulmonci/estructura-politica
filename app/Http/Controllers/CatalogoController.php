@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\State;
-use App\Models\Municipality;
-use App\Models\Demarcacion;
-use App\Models\SeccionElectoral;
-use Illuminate\Http\Request;
 use App\Enums\UserRole;
+use App\Models\Demarcacion;
+use App\Models\Municipality;
+use App\Models\SeccionElectoral;
+use App\Models\State;
+use Illuminate\Http\Request;
 
 class CatalogoController extends Controller
 {
@@ -17,6 +17,7 @@ class CatalogoController extends Controller
     public function getEstados()
     {
         $estados = State::orderBy('nombre')->get(['id', 'nombre']);
+
         return response()->json($estados);
     }
 
@@ -32,6 +33,7 @@ class CatalogoController extends Controller
         }
 
         $municipios = $query->orderBy('nombre')->get(['id', 'nombre', 'state_id']);
+
         return response()->json($municipios);
     }
 
@@ -42,10 +44,10 @@ class CatalogoController extends Controller
         $user = $request->user();
 
         // Aplicar filtro territorial del usuario
-        if ($user && !in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
+        if ($user && ! in_array($user->role, [UserRole::SUPERUSER, UserRole::ADMIN], true)) {
             if ($user->scope_level === 'estatal' && $user->state_id) {
                 // Filtrar demarcaciones por el estado del usuario
-                $query->whereHas('municipality', function($q) use ($user) {
+                $query->whereHas('municipality', function ($q) use ($user) {
                     $q->where('state_id', $user->state_id);
                 });
             } elseif ($user->scope_level === 'municipal' && $user->municipality_id) {
@@ -56,10 +58,10 @@ class CatalogoController extends Controller
                 $query->where('id', $user->demarcacion_id);
             }
         }
-        
+
         // Si el admin estatal está solicitando, también lo filtramos por default
         if ($user && $user->role === UserRole::ADMIN && $user->scope_level === 'estatal' && $user->state_id) {
-            $query->whereHas('municipality', function($q) use ($user) {
+            $query->whereHas('municipality', function ($q) use ($user) {
                 $q->where('state_id', $user->state_id);
             });
         }
@@ -72,6 +74,7 @@ class CatalogoController extends Controller
         }
 
         $demarcaciones = $query->orderBy('nombre')->get(['id', 'nombre', 'municipality_id']);
+
         return response()->json($demarcaciones);
     }
 
@@ -82,7 +85,8 @@ class CatalogoController extends Controller
     {
         $secciones = SeccionElectoral::where('demarcacion_id', $demarcacionId)
             ->orderBy('numero')
-            ->get(['id', 'numero']);
+            ->get(['id', 'numero', 'ubicacion_casilla']);
+
         return response()->json($secciones);
     }
 }

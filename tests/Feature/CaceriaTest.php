@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Demarcacion;
 use App\Models\Municipality;
 use App\Models\Promovido;
+use App\Models\SeccionElectoral;
 use App\Models\State;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -248,6 +249,89 @@ class CaceriaTest extends TestCase
         $response = $this->actingAs($this->presidente)->get('/caceria/export');
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
-        $this->assertStringContainsString('attachment; filename="caceria_dia_d_', $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('attachment; filename="dia_de_la_eleccion_', $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_caceria_voter_query_includes_casilla_ubicacion(): void
+    {
+        $promotor = User::factory()->create([
+            'role' => UserRole::PROMOTOR,
+            'presidente_id' => $this->presidente->id,
+        ]);
+
+        SeccionElectoral::create([
+            'numero' => '999',
+            'demarcacion_id' => $this->demarcacion->id,
+            'meta' => 100,
+            'ubicacion_casilla' => 'Escuela Primaria Federal Lic. Benito Juarez',
+        ]);
+
+        Promovido::create([
+            'nombre' => 'Ciudadano',
+            'apellidos' => 'Prueba',
+            'seccion_electoral' => '999',
+            'colonia' => 'Centro',
+            'demarcacion_id' => $this->demarcacion->id,
+            'promotor_id' => $promotor->id,
+            'presidente_id' => $this->presidente->id,
+        ]);
+
+        $response = $this->actingAs($this->presidente)
+            ->getJson('/caceria');
+
+        $response->assertStatus(200);
+        $voters = $response->json('data');
+        $found = collect($voters)->firstWhere('nombre_completo', 'Ciudadano Prueba');
+        $this->assertNotNull($found);
+        $this->assertEquals('Escuela Primaria Federal Lic. Benito Juarez', $found['casilla_ubicacion']);
+    }
+
+    public function test_seccion_can_store_and_update_ubicacion_casilla(): void
+    {
+        $admin = User::factory()->create([
+            'role' => UserRole::ADMIN,
+        ]);
+
+        // 1. Admin puede guardar la ubicación
+        $response = $this->actingAs($admin)->postJson("/demarcaciones/{$this->demarcacion->id}/secciones", [
+            'numero' => '888',
+            'meta' => 50,
+            'ubicacion_casilla' => 'Kinder Rosaura Zapata',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('secciones_electorales', [
+            'numero' => '888',
+            'ubicacion_casilla' => 'Kinder Rosaura Zapata',
+        ]);
+
+        $seccion = SeccionElectoral::where('numero', '888')->first();
+        $this->assertNotNull($seccion);
+
+        // 2. Presidente NO puede modificar la ubicación de la casilla
+        $presResponse = $this->actingAs($this->presidente)->putJson("/secciones/{$seccion->id}", [
+            'numero' => '888',
+            'meta' => 55,
+            'ubicacion_casilla' => 'Intento De Modificacion Por Presidente',
+        ]);
+
+        $presResponse->assertStatus(200);
+        $this->assertDatabaseHas('secciones_electorales', [
+            'id' => $seccion->id,
+            'ubicacion_casilla' => 'Kinder Rosaura Zapata',
+        ]);
+
+        // 3. Admin sí puede actualizar la ubicación
+        $updateResponse = $this->actingAs($admin)->putJson("/secciones/{$seccion->id}", [
+            'numero' => '888',
+            'meta' => 60,
+            'ubicacion_casilla' => 'Secundaria Tecnica 12',
+        ]);
+
+        $updateResponse->assertStatus(200);
+        $this->assertDatabaseHas('secciones_electorales', [
+            'id' => $seccion->id,
+            'ubicacion_casilla' => 'Secundaria Tecnica 12',
+        ]);
     }
 }

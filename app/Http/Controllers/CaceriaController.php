@@ -28,7 +28,7 @@ class CaceriaController extends Controller
                 UserRole::ADMIN,
             ], true),
             403,
-            'No tienes autorización para acceder al módulo de Cacería Electoral.'
+            'No tienes autorización para acceder al módulo de Día de la Elección.'
         );
     }
 
@@ -221,6 +221,10 @@ class CaceriaController extends Controller
         // Consulta de estructura (users)
         $usersQuery = DB::table('users')
             ->leftJoin('demarcaciones', DB::raw('COALESCE(users.demarcacion_id, users.demarcacion_asignada_id)'), '=', 'demarcaciones.id')
+            ->leftJoin('secciones_electorales', function ($join) {
+                $join->on('users.seccion_electoral', '=', 'secciones_electorales.numero')
+                    ->whereNull('secciones_electorales.deleted_at');
+            })
             ->leftJoin('users as marcado_por', 'users.marcado_por_id', '=', 'marcado_por.id')
             ->leftJoin('users as supervisor', 'users.parent_id', '=', 'supervisor.id')
             ->select([
@@ -234,6 +238,7 @@ class CaceriaController extends Controller
                 DB::raw('COALESCE(users.demarcacion_id, users.demarcacion_asignada_id) as demarcacion_id'),
                 'demarcaciones.nombre as demarcacion_nombre',
                 'users.seccion_electoral',
+                'secciones_electorales.ubicacion_casilla as casilla_ubicacion',
                 'users.colonia',
                 'users.calle',
                 'users.ha_votado',
@@ -254,6 +259,10 @@ class CaceriaController extends Controller
         // Consulta de promovidos
         $promQuery = DB::table('promovidos')
             ->leftJoin('demarcaciones', 'promovidos.demarcacion_id', '=', 'demarcaciones.id')
+            ->leftJoin('secciones_electorales', function ($join) {
+                $join->on('promovidos.seccion_electoral', '=', 'secciones_electorales.numero')
+                    ->whereNull('secciones_electorales.deleted_at');
+            })
             ->leftJoin('users as marcado_por', 'promovidos.marcado_por_id', '=', 'marcado_por.id')
             ->leftJoin('users as promotor', 'promovidos.promotor_id', '=', 'promotor.id')
             ->select([
@@ -267,6 +276,7 @@ class CaceriaController extends Controller
                 'promovidos.demarcacion_id',
                 'demarcaciones.nombre as demarcacion_nombre',
                 'promovidos.seccion_electoral',
+                'secciones_electorales.ubicacion_casilla as casilla_ubicacion',
                 'promovidos.colonia',
                 'promovidos.calle',
                 'promovidos.ha_votado',
@@ -406,7 +416,7 @@ class CaceriaController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="caceria_dia_d_'.date('Y-m-d_His').'.csv"',
+            'Content-Disposition' => 'attachment; filename="dia_de_la_eleccion_'.date('Y-m-d_His').'.csv"',
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
             'Expires' => '0',
@@ -427,6 +437,7 @@ class CaceriaController extends Controller
                 'Clave Elector',
                 'Demarcación',
                 'Sección',
+                'Ubicación Casilla',
                 'Colonia',
                 'Calle',
                 'Ha Votado',
@@ -454,6 +465,7 @@ class CaceriaController extends Controller
                     $voter->clave_elector ?: '',
                     $voter->demarcacion_nombre ?: '',
                     $voter->seccion_electoral ?: '',
+                    $voter->casilla_ubicacion ?: '',
                     $voter->colonia ?: '',
                     $voter->calle ?: '',
                     $voter->ha_votado ? 'SÍ' : 'NO',
@@ -485,32 +497,71 @@ class CaceriaController extends Controller
     }
 
     /**
-     * Obtener secciones electorales únicas para el filtro.
+     * Obtener secciones electorales con su demarcación asociada para el filtro en cascada.
      */
     protected function getSeccionesForFilter(?int $presidenteId): array
     {
+        $catalogoSecciones = DB::table('secciones_electorales')
+            ->whereNull('deleted_at')
+            ->select(['numero', 'demarcacion_id', 'ubicacion_casilla'])
+            ->get();
+
         $seccionesUsers = DB::table('users')
             ->whereNull('deleted_at')
             ->whereNotNull('seccion_electoral')
             ->where('seccion_electoral', '!=', '')
             ->when($presidenteId, fn ($q) => $q->where('presidente_id', $presidenteId))
-            ->pluck('seccion_electoral');
+            ->select([
+                'seccion_electoral as numero',
+                DB::raw('COALESCE(demarcacion_id, demarcacion_asignada_id) as demarcacion_id'),
+            ])
+            ->get();
 
         $seccionesProm = DB::table('promovidos')
             ->whereNull('deleted_at')
             ->whereNotNull('seccion_electoral')
             ->where('seccion_electoral', '!=', '')
             ->when($presidenteId, fn ($q) => $q->where('presidente_id', $presidenteId))
-            ->pluck('seccion_electoral');
+            ->select(['seccion_electoral as numero', 'demarcacion_id'])
+            ->get();
 
-        return $seccionesUsers->concat($seccionesProm)
+        $masterMap = [];
+        foreach ($catalogoSecciones as $cs) {
+            $masterMap[$cs->numero] = [
+                'demarcacion_id' => $cs->demarcacion_id ? (int) $cs->demarcacion_id : null,
+                'ubicacion_casilla' => $cs->ubicacion_casilla,
+            ];
+        }
+
+        $allNumeros = $catalogoSecciones->pluck('numero')
+            ->concat($seccionesUsers->pluck('numero'))
+            ->concat($seccionesProm->pluck('numero'))
+            ->filter(fn ($n) => ! empty($n))
             ->unique()
-            ->sort()
-            ->values()
-            ->map(fn ($s) => [
-                'value' => (string) $s,
-                'label' => 'Sección '.$s,
-            ])
-            ->toArray();
+            ->sort(SORT_NATURAL)
+            ->values();
+
+        $result = [];
+        foreach ($allNumeros as $numero) {
+            $numStr = (string) $numero;
+            $demId = $masterMap[$numStr]['demarcacion_id'] ?? null;
+            if (! $demId) {
+                $userMatch = $seccionesUsers->firstWhere('numero', $numStr);
+                $demId = $userMatch?->demarcacion_id ? (int) $userMatch->demarcacion_id : null;
+            }
+            if (! $demId) {
+                $promMatch = $seccionesProm->firstWhere('numero', $numStr);
+                $demId = $promMatch?->demarcacion_id ? (int) $promMatch->demarcacion_id : null;
+            }
+
+            $result[] = [
+                'value' => $numStr,
+                'label' => 'Sección '.$numStr,
+                'demarcacion_id' => $demId,
+                'ubicacion_casilla' => $masterMap[$numStr]['ubicacion_casilla'] ?? null,
+            ];
+        }
+
+        return $result;
     }
 }

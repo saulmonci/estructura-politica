@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Drawer, Button, Form, Input, InputNumber, message, Table, Space, Card, Divider, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { usePage } from '@inertiajs/react';
 
 const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null }) => {
+    const { auth } = usePage().props;
+    const userRole = auth?.user?.role;
+    const canEditCasilla = ['superuser', 'admin'].includes(userRole);
+
     const [secciones, setSecciones] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -86,6 +91,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
         form.setFieldsValue({
             numero: record.numero,
             meta: record.meta,
+            ubicacion_casilla: record.ubicacion_casilla || '',
         });
         setIsFormVisible(true);
     };
@@ -101,20 +107,33 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
             title: 'SECCIÓN',
             dataIndex: 'numero',
             key: 'numero',
+            width: 110,
             sorter: (a, b) => a.numero.localeCompare(b.numero),
             render: (numero) => <span className="font-bold text-gray-800">Sección {numero}</span>,
         },
         {
-            title: 'META VOTANTES',
+            title: 'UBICACIÓN CASILLA',
+            dataIndex: 'ubicacion_casilla',
+            key: 'ubicacion_casilla',
+            render: (ubicacion) =>
+                ubicacion ? (
+                    <span className="text-xs font-medium text-slate-700">{ubicacion}</span>
+                ) : (
+                    <span className="text-xs text-gray-400 italic">Sin asignar</span>
+                ),
+        },
+        {
+            title: 'META',
             dataIndex: 'meta',
             key: 'meta',
+            width: 100,
             sorter: (a, b) => a.meta - b.meta,
             render: (meta, record) => (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-blue-600">{meta}</span>
                     {record.is_custom_meta ? (
                         <Tag color="blue" className="m-0 px-1 py-0 text-[10px] leading-tight">
-                            Personalizada
+                            Pers.
                         </Tag>
                     ) : (
                         <Tag color="default" className="m-0 px-1 py-0 text-[10px] leading-tight text-gray-400">
@@ -127,7 +146,7 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
         {
             title: 'ACCIONES',
             key: 'acciones',
-            width: 80,
+            width: 70,
             align: 'center',
             render: (_, record) => (
                 <Button
@@ -196,6 +215,37 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
                             </Form.Item>
                         </div>
 
+                        {canEditCasilla ? (
+                            <Form.Item
+                                name="ubicacion_casilla"
+                                label={
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Ubicación / Sede de la Casilla</span>
+                                        <Tag color="purple" className="m-0 text-[10px] leading-tight">
+                                            Admin
+                                        </Tag>
+                                    </div>
+                                }
+                                rules={[{ max: 500, message: 'Máximo 500 caracteres.' }]}
+                                extra={
+                                    <span className="text-[11px] text-slate-400">
+                                        Dato general del INE (escuela o domicilio oficial).
+                                    </span>
+                                }
+                            >
+                                <Input placeholder="Ej. Primaria Lic. Benito Juárez / Kínder Rosaura Zapata" />
+                            </Form.Item>
+                        ) : (
+                            form.getFieldValue('ubicacion_casilla') && (
+                                <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-600">
+                                    <div className="font-semibold text-slate-800">📍 Sede de la Casilla (INE):</div>
+                                    <div className="mt-0.5 text-slate-700">
+                                        {form.getFieldValue('ubicacion_casilla')}
+                                    </div>
+                                </div>
+                            )
+                        )}
+
                         <div className="mt-2 flex justify-end gap-2">
                             <Button onClick={handleCancelForm}>Cancelar</Button>
                             <Button
@@ -237,6 +287,11 @@ const SeccionesDrawer = ({ visible, onClose, demarcacion, presidenteId = null })
                                     )}
                                 </div>
                             </div>
+                            {record.ubicacion_casilla && (
+                                <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                                    📍 <span className="font-semibold">Casilla:</span> {record.ubicacion_casilla}
+                                </div>
+                            )}
                             <div className="flex justify-end gap-2 border-t border-gray-100 pt-2">
                                 <Button
                                     type="text"

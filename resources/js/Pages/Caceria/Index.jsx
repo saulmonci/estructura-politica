@@ -33,6 +33,7 @@ import {
     FireOutlined,
     CheckSquareOutlined,
     AuditOutlined,
+    BankOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
@@ -118,7 +119,7 @@ export default function CaceriaIndex({
                     }
                 }
             } catch (error) {
-                console.error('Error al cargar datos de cacería:', error);
+                console.error('Error al cargar datos del día de la elección:', error);
                 message.error('Error al actualizar los datos.');
             } finally {
                 setLoading(false);
@@ -126,6 +127,22 @@ export default function CaceriaIndex({
         },
         [pagination.current, pagination.pageSize, search, estatus, tipo, demarcacionId, seccionElectoral, presidenteId]
     );
+
+    // Secciones disponibles filtradas según la demarcación seleccionada (en cascada)
+    const availableSecciones = useMemo(() => {
+        if (!demarcacionId) {
+            // Sin demarcación seleccionada: mostrar lista única de todas las secciones
+            const uniqueMap = new Map();
+            secciones.forEach((s) => {
+                if (!uniqueMap.has(s.value)) {
+                    uniqueMap.set(s.value, { value: s.value, label: s.label });
+                }
+            });
+            return Array.from(uniqueMap.values());
+        }
+        // Filtrar exclusivamente aquellas que correspondan a la demarcación elegida
+        return secciones.filter((s) => Number(s.demarcacion_id) === Number(demarcacionId));
+    }, [secciones, demarcacionId]);
 
     // Debounce para el input de búsqueda
     const debouncedSearch = useMemo(
@@ -154,7 +171,18 @@ export default function CaceriaIndex({
 
     const handleDemarcacionChange = (val) => {
         setDemarcacionId(val);
-        fetchData({ demarcacion_id: val, current: 1 });
+        let nextSeccion = seccionElectoral;
+        if (val) {
+            // Si la sección previamente seleccionada no pertenece a la nueva demarcación, se limpia
+            const pertenece = secciones.some(
+                (s) => s.value === seccionElectoral && Number(s.demarcacion_id) === Number(val)
+            );
+            if (!pertenece) {
+                nextSeccion = undefined;
+                setSeccionElectoral(undefined);
+            }
+        }
+        fetchData({ demarcacion_id: val, seccion_electoral: nextSeccion, current: 1 });
     };
 
     const handleSeccionChange = (val) => {
@@ -247,8 +275,9 @@ export default function CaceriaIndex({
         if (phone.length === 10) {
             phone = `52${phone}`;
         }
+        const ubicacionTexto = voter.casilla_ubicacion ? `, ubicada en ${voter.casilla_ubicacion},` : '';
         const text = encodeURIComponent(
-            `Hola ${voter.nombre_completo}, te saludamos de la campaña. Te recordamos que la casilla correspondiente a tu sección (${voter.seccion_electoral || 'electoral'}) está abierta hoy para emitir tu voto. ¡Contamos con tu valiosa participación!`
+            `Hola ${voter.nombre_completo}, te saludamos de la campaña. Te recordamos que la casilla correspondiente a tu sección (${voter.seccion_electoral || 'electoral'})${ubicacionTexto} está abierta hoy para emitir tu voto. ¡Contamos con tu valiosa participación!`
         );
         return `https://wa.me/${phone}?text=${text}`;
     };
@@ -313,6 +342,13 @@ export default function CaceriaIndex({
                             </span>
                         )}
                     </div>
+
+                    {record.casilla_ubicacion && (
+                        <div className="flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900">
+                            <BankOutlined className="mt-0.5 shrink-0 text-amber-600" />
+                            <span>Casilla: {record.casilla_ubicacion}</span>
+                        </div>
+                    )}
 
                     {(record.colonia || record.calle) && (
                         <div className="flex items-start gap-1.5 break-words text-slate-500">
@@ -502,6 +538,12 @@ export default function CaceriaIndex({
                             Sección: {record.seccion_electoral || 'S/S'}
                         </Tag>
                     </div>
+                    {record.casilla_ubicacion && (
+                        <div className="mt-0.5 flex items-start gap-1 rounded border border-amber-200 bg-amber-50/80 px-1.5 py-0.5 text-[11px] font-medium text-amber-900">
+                            <BankOutlined className="mt-0.5 shrink-0 text-amber-600" />
+                            <span className="line-clamp-2">Casilla: {record.casilla_ubicacion}</span>
+                        </div>
+                    )}
                     {record.colonia && (
                         <span className="truncate text-[11px] text-gray-500">Col. {record.colonia}</span>
                     )}
@@ -562,7 +604,7 @@ export default function CaceriaIndex({
 
     return (
         <MainLayout>
-            <Head title="Cacería Electoral (Día D) - Control de Voto" />
+            <Head title="Día De la Elección - Control de Voto" />
 
             <div className="mx-auto w-full max-w-[1600px] space-y-3.5 overflow-x-auto p-2.5 sm:p-4 md:space-y-5 md:p-6">
                 {/* Cabecera Principal */}
@@ -575,10 +617,10 @@ export default function CaceriaIndex({
                             <span className="text-xs text-slate-400">Jornada Electoral</span>
                         </div>
                         <h1 className="mt-1 mb-0 text-lg font-black tracking-tight text-white sm:text-xl md:text-3xl">
-                            Cacería y Movilización
+                            Día De la Elección
                         </h1>
                         <p className="mt-0.5 mb-0 text-xs text-slate-300 md:text-sm">
-                            Pase de lista y control en tiempo real de estructura y promovidos.
+                            Movilización, pase de lista y control de voto en tiempo real.
                         </p>
                     </div>
 
@@ -867,11 +909,17 @@ export default function CaceriaIndex({
                                 <Select
                                     value={seccionElectoral}
                                     onChange={handleSeccionChange}
-                                    placeholder="Todas las secciones"
+                                    placeholder={
+                                        demarcacionId
+                                            ? availableSecciones.length > 0
+                                                ? 'Seleccionar sección'
+                                                : 'Sin secciones en demarcación'
+                                            : 'Todas las secciones'
+                                    }
                                     allowClear
                                     showSearch
                                     className="w-full md:w-[170px]"
-                                    options={secciones}
+                                    options={availableSecciones}
                                 />
                             </div>
 

@@ -172,11 +172,6 @@ export default function MainLayout({ children }) {
                                         name: 'Promovidos',
                                         icon: <UsergroupAddOutlined />,
                                     },
-                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
-                                        path: '/caceria',
-                                        name: 'Cacería (Día D)',
-                                        icon: <CheckSquareOutlined />,
-                                    },
                                     ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
                                         user.role
                                     ) && {
@@ -190,6 +185,11 @@ export default function MainLayout({ children }) {
                                         path: '/demarcaciones',
                                         name: 'Demarcaciones',
                                         icon: <EnvironmentOutlined />,
+                                    },
+                                    ['presidente', 'admin', 'superuser'].includes(user.role) && {
+                                        path: '/caceria',
+                                        name: 'Día De la Elección',
+                                        icon: <CheckSquareOutlined />,
                                     },
                                     ['presidente', 'admin', 'superuser', 'coordinador_distrito'].includes(
                                         user.role

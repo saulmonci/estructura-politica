@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ModalForm, ProFormText, ProFormSelect, ProFormTextArea } from '@ant-design/pro-components';
-import { Row, Col, Upload, message, Alert, Button, Divider, Form, Image } from 'antd';
+import { Row, Col, Upload, message, Alert, Button, Divider, Form, Image, Checkbox } from 'antd';
 import {
     UserOutlined,
     EnvironmentOutlined,
@@ -149,6 +149,7 @@ const PersonaFormModal = forwardRef(
                     telefono: '',
                     email: '',
                     notas: '',
+                    consentimiento_datos: false,
                 });
 
                 const fetchDemarcaciones = async () => {
@@ -217,6 +218,7 @@ const PersonaFormModal = forwardRef(
                                             seccion_electoral: data.seccion_electoral
                                                 ? String(data.seccion_electoral)
                                                 : undefined,
+                                            consentimiento_datos: true,
                                         });
                                     })
                                     .catch(() => {
@@ -228,7 +230,10 @@ const PersonaFormModal = forwardRef(
                             } else {
                                 setSelectedDemarcacion(null);
                                 setSecciones([]);
-                                form.setFieldsValue(data);
+                                form.setFieldsValue({
+                                    ...data,
+                                    consentimiento_datos: true,
+                                });
                             }
                         })
                         .catch(() => {
@@ -947,13 +952,35 @@ const PersonaFormModal = forwardRef(
                                     </Row>
                                 )}
 
-                                <Alert
-                                    message={<span className="font-bold">IMPORTANTE</span>}
-                                    description="Verifica que todos los datos sean correctos antes de guardar el registro. La información será utilizada únicamente para fines de organización y estrategia política."
-                                    type="success"
-                                    showIcon
-                                    className="mt-0 border-green-200 bg-green-50"
-                                />
+                                <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 shadow-sm">
+                                    <Form.Item
+                                        name="consentimiento_datos"
+                                        valuePropName="checked"
+                                        rules={[
+                                            {
+                                                validator: (_, value) =>
+                                                    value
+                                                        ? Promise.resolve()
+                                                        : Promise.reject(
+                                                              new Error(
+                                                                  'Es obligatorio contar con el consentimiento de la persona conforme a la LFPDPPP para registrar sus datos.'
+                                                              )
+                                                          ),
+                                            },
+                                        ]}
+                                        className="mb-0"
+                                    >
+                                        <Checkbox className="text-xs leading-snug font-semibold text-slate-800 sm:text-sm">
+                                            ✅ Cuento con el consentimiento de esta persona para registrar sus datos,
+                                            conforme a la LFPDPPP
+                                        </Checkbox>
+                                    </Form.Item>
+                                    <p className="mt-1.5 mb-0 pl-6 text-[11px] text-slate-500">
+                                        Verifica que todos los datos sean correctos. La información está protegida por
+                                        la LFPDPPP y será utilizada únicamente para fines de organización y estrategia
+                                        política.
+                                    </p>
+                                </div>
                             </div>
                         </Col>
 

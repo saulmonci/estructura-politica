@@ -2,23 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Promovido;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
-use App\Enums\UserRole;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Response;
 
 class PromovidoController extends BaseCrudController
 {
     protected string $modelClass = Promovido::class;
+
     protected string $indexView = 'Promovidos/Index';
+
     protected string $dataKey = 'promovidos';
 
     protected function getBaseQuery(Request $request): Builder
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return Promovido::query()->with(['state', 'municipality', 'demarcacion']);
         }
 
@@ -36,26 +40,26 @@ class PromovidoController extends BaseCrudController
         $response = parent::index($request);
 
         // Si estamos retornando la vista de Inertia, inyectamos los Promotores disponibles
-        if ($response instanceof \Inertia\Response) {
+        if ($response instanceof Response) {
             $user = $request->user();
             $promotores = [];
-            
+
             if ($user) {
                 if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
                     $promotores = User::where('role', UserRole::PROMOTOR)->where('presidente_id', $user->getPresidenteId())->get(['id', 'name', 'apodo']);
                 } elseif ($user->role === UserRole::RD) {
                     $operadoresIds = User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->pluck('id');
                     $promotores = User::where('role', UserRole::PROMOTOR)
-                        ->where(function($q) use ($user, $operadoresIds) {
+                        ->where(function ($q) use ($user, $operadoresIds) {
                             $q->where('parent_id', $user->id)
-                              ->orWhereIn('parent_id', $operadoresIds);
+                                ->orWhereIn('parent_id', $operadoresIds);
                         })
                         ->get(['id', 'name', 'apodo']);
                 } elseif ($user->role === UserRole::OPERADOR) {
                     $promotores = User::where('role', UserRole::PROMOTOR)->where('parent_id', $user->id)->get(['id', 'name', 'apodo']);
                 }
             }
-            
+
             $response->with('availablePromotores', $promotores);
         }
 
@@ -65,12 +69,12 @@ class PromovidoController extends BaseCrudController
     protected function applySearch(Builder $query, string $search): void
     {
         $searchLower = strtolower($search);
-        $query->where(function($q) use ($searchLower, $search) {
+        $query->where(function ($q) use ($searchLower, $search) {
             $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$searchLower}%"])
-              ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
-              ->orWhereRaw("LOWER(CONCAT(nombre, ' ', apellidos)) LIKE ?", ["%{$searchLower}%"])
-              ->orWhere('telefono', 'like', "%{$search}%")
-              ->orWhere('clave_elector', 'like', "%{$search}%");
+                ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchLower}%"])
+                ->orWhereRaw("LOWER(CONCAT(nombre, ' ', apellidos)) LIKE ?", ["%{$searchLower}%"])
+                ->orWhere('telefono', 'like', "%{$search}%")
+                ->orWhere('clave_elector', 'like', "%{$search}%");
         });
     }
 
@@ -115,7 +119,7 @@ class PromovidoController extends BaseCrudController
         }
 
         if (isset($filters['created_at']) && is_array($filters['created_at']) && count($filters['created_at']) === 2) {
-            $query->whereBetween('created_at', [$filters['created_at'][0] . ' 00:00:00', $filters['created_at'][1] . ' 23:59:59']);
+            $query->whereBetween('created_at', [$filters['created_at'][0].' 00:00:00', $filters['created_at'][1].' 23:59:59']);
         }
     }
 
@@ -126,14 +130,14 @@ class PromovidoController extends BaseCrudController
             $this->getValidationRules($request),
             $this->getValidationMessages($request)
         );
-        
+
         $user = $request->user();
         if ($user && $user->role === UserRole::PROMOTOR) {
             $validated['promotor_id'] = $user->id;
         }
 
         $item = $this->modelClass::create($validated);
-        
+
         $this->afterStore($request, $item);
 
         return redirect()->back()->with('success', 'Registro creado exitosamente.');
@@ -147,7 +151,7 @@ class PromovidoController extends BaseCrudController
             $existing = Promovido::withoutGlobalScopes()->find($id);
             $presidenteId = $existing?->presidente_id;
         }
-        if (!$presidenteId) {
+        if (! $presidenteId) {
             if ($request->filled('promotor_id')) {
                 $promotor = User::withoutGlobalScopes()->find($request->input('promotor_id'));
                 $presidenteId = $promotor?->getPresidenteId();
@@ -157,63 +161,64 @@ class PromovidoController extends BaseCrudController
         }
 
         $rules = [
-            'nombre'    => ['required', 'string', 'max:100'],
+            'nombre' => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
-            'clave_elector'     => [
-                'nullable', 
-                'string', 
-                'max:18', 
-                \Illuminate\Validation\Rule::unique('promovidos', 'clave_elector')
+            'clave_elector' => [
+                'nullable',
+                'string',
+                'max:18',
+                Rule::unique('promovidos', 'clave_elector')
                     ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
                     ->whereNull('deleted_at')
-                    ->ignore($id)
+                    ->ignore($id),
             ],
-            'curp'              => [
-                'nullable', 
-                'string', 
-                'max:18', 
-                \Illuminate\Validation\Rule::unique('promovidos', 'curp')
+            'curp' => [
+                'nullable',
+                'string',
+                'max:18',
+                Rule::unique('promovidos', 'curp')
                     ->when($presidenteId, fn ($rule) => $rule->where('presidente_id', $presidenteId))
                     ->whereNull('deleted_at')
-                    ->ignore($id)
+                    ->ignore($id),
             ],
-            'telefono'          => ['nullable', 'string', 'max:10'],
-            'demarcacion_id'    => ['nullable', 'exists:demarcaciones,id'],
+            'telefono' => ['nullable', 'string', 'max:10'],
+            'demarcacion_id' => ['nullable', 'exists:demarcaciones,id'],
             'seccion_electoral' => ['nullable', 'string', 'max:10'],
-            'colonia'           => ['nullable', 'string', 'max:255'],
-            'calle'             => ['nullable', 'string', 'max:255'],
-            'numero'            => ['nullable', 'string', 'max:50'],
-            'codigo_postal'     => ['nullable', 'string', 'max:5'],
+            'colonia' => ['nullable', 'string', 'max:255'],
+            'calle' => ['nullable', 'string', 'max:255'],
+            'numero' => ['nullable', 'string', 'max:50'],
+            'codigo_postal' => ['nullable', 'string', 'max:5'],
             'foto' => ['nullable', 'image'],
             'ine_frente' => ['nullable', 'image'],
             'ine_reverso' => ['nullable', 'image'],
+            'consentimiento_datos' => ['nullable'],
         ];
 
         if ($user) {
             if (in_array($user->role, [UserRole::PRESIDENTE, UserRole::COORDINADOR_DISTRITO], true)) {
                 $rules['promotor_id'] = [
-                    'required', 
-                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('presidente_id', $user->getPresidenteId())
+                    'required',
+                    Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('presidente_id', $user->getPresidenteId()),
                 ];
             } elseif ($user->role === UserRole::RD) {
                 // RD solo puede asignar a un promotor de su red
-                $operadoresIds = \App\Models\User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->pluck('id')->toArray();
+                $operadoresIds = User::where('role', UserRole::OPERADOR)->where('parent_id', $user->id)->pluck('id')->toArray();
                 $rules['promotor_id'] = [
-                    'required', 
-                    \Illuminate\Validation\Rule::exists('users', 'id')
+                    'required',
+                    Rule::exists('users', 'id')
                         ->where('role', UserRole::PROMOTOR->value)
                         ->where(function ($query) use ($user, $operadoresIds) {
                             $query->where('parent_id', $user->id)
-                                  ->orWhereIn('parent_id', $operadoresIds);
-                        })
+                                ->orWhereIn('parent_id', $operadoresIds);
+                        }),
                 ];
             } elseif ($user->role === UserRole::OPERADOR) {
                 $rules['promotor_id'] = [
-                    'required', 
-                    \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('parent_id', $user->id)
+                    'required',
+                    Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)->where('parent_id', $user->id),
                 ];
             } elseif (in_array($user->role, [UserRole::ADMIN, UserRole::SUPERUSER], true)) {
-                $rules['promotor_id'] = ['required', \Illuminate\Validation\Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)];
+                $rules['promotor_id'] = ['required', Rule::exists('users', 'id')->where('role', UserRole::PROMOTOR->value)];
             }
         }
 
@@ -222,27 +227,27 @@ class PromovidoController extends BaseCrudController
 
     protected function handlePhotoUpload(Request $request, $item): void
     {
-        /** @var \App\Models\Promovido $item */
+        /** @var Promovido $item */
         $hasChanges = false;
-        
+
         if ($request->hasFile('foto')) {
             $path = $request->file('foto')->store('fotos', 'public');
             $item->foto = $path;
             $hasChanges = true;
         }
-        
+
         if ($request->hasFile('ine_frente')) {
             $path = $request->file('ine_frente')->store('fotos', 'public');
             $item->ine_frente = $path;
             $hasChanges = true;
         }
-        
+
         if ($request->hasFile('ine_reverso')) {
             $path = $request->file('ine_reverso')->store('fotos', 'public');
             $item->ine_reverso = $path;
             $hasChanges = true;
         }
-        
+
         if ($hasChanges) {
             $item->save();
         }
@@ -250,9 +255,9 @@ class PromovidoController extends BaseCrudController
 
     protected function afterStore(Request $request, $item): void
     {
-        /** @var \App\Models\Promovido $item */
+        /** @var Promovido $item */
         $user = $request->user();
-        
+
         if ($user && $user->role === UserRole::PROMOTOR) {
             $item->promotor_id = $user->id;
             $item->save();
@@ -268,7 +273,7 @@ class PromovidoController extends BaseCrudController
 
     protected function afterUpdate(Request $request, $item): void
     {
-        /** @var \App\Models\Promovido $item */
+        /** @var Promovido $item */
         parent::afterUpdate($request, $item);
         $this->handlePhotoUpload($request, $item);
     }
@@ -276,17 +281,18 @@ class PromovidoController extends BaseCrudController
     protected function getExportHeaders(): array
     {
         return [
-            'ID', 'Asignado a (Promotor)', 'Nombre', 'Apellidos', 'CURP', 'Clave de Elector', 
-            'Teléfono', 'Demarcación', 'Sección Electoral', 'Colonia', 'Calle', 'Número', 'Código Postal', 'Fecha de Registro'
+            'ID', 'Asignado a (Promotor)', 'Nombre', 'Apellidos', 'CURP', 'Clave de Elector',
+            'Teléfono', 'Demarcación', 'Sección Electoral', 'Colonia', 'Calle', 'Número', 'Código Postal', 'Fecha de Registro',
         ];
     }
 
     protected function getExportRow($item): array
     {
-        /** @var \App\Models\Promovido $item */
+        /** @var Promovido $item */
         $promotor = $item->promotor;
+
         return [
-            '#' . str_pad($item->id, 5, '0', STR_PAD_LEFT),
+            '#'.str_pad($item->id, 5, '0', STR_PAD_LEFT),
             $promotor ? $promotor->name : 'No asignado',
             $item->nombre,
             $item->apellidos,

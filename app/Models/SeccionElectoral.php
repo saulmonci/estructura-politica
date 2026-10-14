@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\LogsActivity;
+use Illuminate\Support\Facades\DB;
 
 class SeccionElectoral extends Model
 {
@@ -15,6 +16,7 @@ class SeccionElectoral extends Model
 
     protected $fillable = [
         'numero',
+        'ubicacion_casilla',
         'demarcacion_id',
         'geom',
         'meta',
@@ -68,7 +70,7 @@ class SeccionElectoral extends Model
     public function getMetaForPresidente(?int $presidenteId): int
     {
         if ($presidenteId) {
-            $meta = \Illuminate\Support\Facades\DB::table('seccion_electoral_presidente')
+            $meta = DB::table('seccion_electoral_presidente')
                 ->where('seccion_electoral_id', $this->id)
                 ->where('presidente_id', $presidenteId)
                 ->value('meta');
@@ -77,6 +79,7 @@ class SeccionElectoral extends Model
                 return (int) $meta;
             }
         }
+
         return (int) ($this->meta ?? 0);
     }
 }
