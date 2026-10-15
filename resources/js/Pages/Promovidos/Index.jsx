@@ -1,24 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Badge, Modal, Image, Switch } from 'antd';
+import { Head, usePage } from '@inertiajs/react';
+import { Card, Button, Avatar, Badge, Image } from 'antd';
 import {
-    PlusOutlined,
     UserOutlined,
     PhoneOutlined,
     EnvironmentOutlined,
     CalendarOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    TeamOutlined,
     IdcardOutlined,
     SafetyCertificateOutlined,
-    ReloadOutlined,
     GiftOutlined,
 } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import PromovidoFormModal from '@/Components/PromovidoFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
+import PromovidoCard from './PromovidoCard';
 import axios from 'axios';
 
 export default function PromovidosIndex({ availablePromotores }) {
@@ -26,62 +22,9 @@ export default function PromovidosIndex({ availablePromotores }) {
     const modalRef = React.useRef();
     const apoyosDrawerRef = React.useRef();
     const actionRef = React.useRef();
-    const [modal, contextHolder] = Modal.useModal();
-    const [showTrashed, setShowTrashed] = useState(false);
-
-    const handleCreate = () => {
-        modalRef.current?.open();
-    };
-
-    const handleEdit = (id) => {
-        modalRef.current?.open(id, `/promovidos/${id}`);
-    };
 
     const handleOpenApoyos = (record) => {
         apoyosDrawerRef.current?.open(record);
-    };
-
-    const handleDelete = (id) => {
-        modal.confirm({
-            title: '¿Estás seguro de eliminar este promovido?',
-            content: 'Esta acción no se puede deshacer.',
-            okText: 'Sí, eliminar',
-            okType: 'danger',
-            cancelText: 'Cancelar',
-            onOk: () => {
-                router.delete(`/promovidos/${id}`, {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        if (actionRef.current) {
-                            actionRef.current.reload();
-                        }
-                    },
-                });
-            },
-        });
-    };
-
-    const handleRestore = (id) => {
-        modal.confirm({
-            title: '¿Estás seguro de restaurar este promovido?',
-            content: 'El promovido volverá a estar activo.',
-            okText: 'Sí, restaurar',
-            cancelText: 'Cancelar',
-            onOk: () => {
-                router.post(
-                    `/promovidos/${id}/restore`,
-                    {},
-                    {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            if (actionRef.current) {
-                                actionRef.current.reload();
-                            }
-                        },
-                    }
-                );
-            },
-        });
     };
 
     const columns = [
@@ -302,193 +245,8 @@ export default function PromovidosIndex({ availablePromotores }) {
         },
     ];
 
-    const renderMobileCard = (record) => {
-        return (
-            <Card
-                styles={{ body: { padding: '16px' } }}
-                className="mb-4 w-full rounded-lg border border-gray-200 shadow-sm"
-            >
-                <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                        {record.foto_url && record.foto_url !== '-' ? (
-                            <Image
-                                src={record.foto_url}
-                                width={48}
-                                height={48}
-                                className="rounded-md object-cover"
-                                style={{ borderRadius: '6px' }}
-                            />
-                        ) : (
-                            <Avatar
-                                shape="square"
-                                size={48}
-                                icon={<UserOutlined />}
-                                className="rounded-md bg-gray-100 text-gray-600"
-                            />
-                        )}
-                        <div>
-                            <div className="text-base font-semibold text-gray-800">
-                                {record.nombre} {record.apellidos}
-                            </div>
-                            <div className="text-xs text-gray-500">Promovido (Simpatizante)</div>
-                        </div>
-                    </div>
-                    {record.deleted_at && (
-                        <Badge
-                            status="error"
-                            text="Eliminado"
-                            className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs"
-                        />
-                    )}
-                </div>
-
-                <div className="scrollable-card-content mb-4 max-h-56 space-y-2.5 overflow-y-auto pr-2 text-sm text-gray-600">
-                    <style>{`
-                        .scrollable-card-content::-webkit-scrollbar {
-                            width: 4px;
-                        }
-                        .scrollable-card-content::-webkit-scrollbar-track {
-                            background: #f1f1f1;
-                            border-radius: 4px;
-                        }
-                        .scrollable-card-content::-webkit-scrollbar-thumb {
-                            background: #cbd5e1;
-                            border-radius: 4px;
-                        }
-                    `}</style>
-                    <div className="flex items-center gap-2">
-                        <UserOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">ID:</span>
-                        <span className="flex-1 truncate font-semibold text-gray-800">
-                            #{String(record.id).padStart(5, '0')}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <IdcardOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Clave Elector:</span>
-                        <span className="flex-1 truncate text-gray-800">{record.clave_elector || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <SafetyCertificateOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">CURP:</span>
-                        <span className="flex-1 truncate font-mono text-gray-800 uppercase">
-                            {record.curp || 'N/A'}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <PhoneOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Teléfono:</span>
-                        <span className="flex-1 truncate text-gray-800">{record.telefono || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                        <EnvironmentOutlined className="mt-0.5 shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Calle:</span>
-                        <span className="flex-1 truncate text-gray-800" title={record.calle}>
-                            {record.calle || 'N/A'}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Número:</span>
-                        <span className="flex-1 truncate text-gray-800">{record.numero || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Colonia:</span>
-                        <span className="flex-1 truncate text-gray-800" title={record.colonia}>
-                            {record.colonia || 'N/A'}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">C. Postal:</span>
-                        <span className="flex-1 truncate text-gray-800">{record.codigo_postal || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Demarcación:</span>
-                        <span className="flex-1 truncate text-gray-800">{record.demarcacion?.nombre || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Sección:</span>
-                        <span className="flex-1 truncate text-gray-800">{record.seccion_electoral || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <TeamOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Promotor:</span>
-                        <span className="flex-1 truncate font-medium text-gray-800">
-                            {(() => {
-                                const p = (availablePromotores || []).find((p) => p.id === record.promotor_id);
-                                return p ? (p.apodo ? `${p.name} (${p.apodo})` : p.name) : 'No asignado';
-                            })()}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <CalendarOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Registro:</span>
-                        <span className="flex-1 truncate text-xs text-gray-800">
-                            {new Date(record.created_at).toLocaleString('es-MX')}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <CalendarOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-20 shrink-0 font-medium text-gray-400">Modificado:</span>
-                        <span className="flex-1 truncate text-xs text-gray-800">
-                            {new Date(record.updated_at).toLocaleString('es-MX')}
-                        </span>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap justify-between border-t border-gray-100 pt-3">
-                    {record.deleted_at ? (
-                        <Button
-                            type="text"
-                            className="flex w-full items-center justify-center text-green-600"
-                            icon={<ReloadOutlined />}
-                            onClick={() => handleRestore(record.id)}
-                        >
-                            Restaurar
-                        </Button>
-                    ) : (
-                        <>
-                            <Button
-                                type="text"
-                                icon={<GiftOutlined />}
-                                className="flex w-1/3 items-center justify-center text-green-600"
-                                onClick={() => handleOpenApoyos(record)}
-                            >
-                                Kardex
-                            </Button>
-                            <div className="my-1 w-px bg-gray-200"></div>
-                            <Button
-                                type="text"
-                                icon={<EditOutlined />}
-                                className="flex w-1/3 items-center justify-center text-blue-600"
-                                onClick={() => handleEdit(record.id)}
-                            >
-                                Editar
-                            </Button>
-                            <div className="my-1 w-px bg-gray-200"></div>
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                className="flex w-1/3 items-center justify-center"
-                                onClick={() => handleDelete(record.id)}
-                            >
-                                Eliminar
-                            </Button>
-                        </>
-                    )}
-                </div>
-            </Card>
-        );
-    };
-
     return (
         <MainLayout>
-            {contextHolder}
             <Head title="Promovidos" />
 
             <Card variant="borderless" className="mobile-full-width-card shadow-sm">
@@ -498,25 +256,17 @@ export default function PromovidosIndex({ availablePromotores }) {
                         <p className="mt-1 text-sm text-gray-500">Lista de personas registradas por los promotores.</p>
                     </div>
                     <div className="flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row">
-                        {['presidente', 'admin', 'superuser'].includes(auth?.user?.role) && (
-                            <div className="mr-0 flex items-center gap-2 text-sm text-gray-600 sm:mr-4">
-                                <span>Ver eliminados</span>
-                                <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
-                            </div>
-                        )}
+                        <TableCrud.TrashedSwitch actionRef={actionRef} />
                         <TableCrud.ExportButton
                             actionRef={actionRef}
                             endpoint="/promovidos"
                             allowedRoles={['presidente', 'rd', 'admin', 'superuser']}
                         />
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
+                        <TableCrud.CreateButton
+                            modalRef={modalRef}
+                            resourceName="promovido"
                             className="w-full bg-gray-800 hover:bg-gray-700 sm:w-auto"
-                            onClick={handleCreate}
-                        >
-                            Agregar Promovido
-                        </Button>
+                        />
                     </div>
                 </div>
 
@@ -524,11 +274,10 @@ export default function PromovidosIndex({ availablePromotores }) {
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/promovidos"
+                    modalRef={modalRef}
+                    resourceName="promovido"
                     rowKey="id"
                     search={true}
-                    onEdit={(record) => handleEdit(record.id)}
-                    onDelete={(record) => handleDelete(record.id)}
-                    onRestore={(record) => handleRestore(record.id)}
                     extraActions={(record) => [
                         <Button
                             key="apoyos"
@@ -538,8 +287,15 @@ export default function PromovidosIndex({ availablePromotores }) {
                             onClick={() => handleOpenApoyos(record)}
                         />,
                     ]}
-                    mobileCardRender={renderMobileCard}
-                    params={{ trashed: showTrashed ? '1' : '0' }}
+                    mobileCardRender={(record, actionsNode, handlers) => (
+                        <PromovidoCard
+                            record={record}
+                            actionsNode={actionsNode}
+                            handlers={handlers}
+                            onOpenApoyos={handleOpenApoyos}
+                            availablePromotores={availablePromotores}
+                        />
+                    )}
                 />
 
                 <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4 lg:flex-row">

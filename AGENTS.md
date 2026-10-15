@@ -91,24 +91,38 @@ Para evitar la proliferación de estados repetitivos (`isOpen`, `editingId`, `lo
      ```
    - `AppSelect` se encarga automáticamente de: observar la dependencia en el formulario, solicitar los datos correctos, vaciar su propio valor cuando la dependencia cambia, y habilitarse/deshabilitarse según corresponda.
 
-7. **Uso Obligatorio de Acciones Integradas en `TableCrud`**:
+7. **Uso Obligatorio de Acciones Integradas y Botón de Creación en `TableCrud`**:
    - **Prohibido** definir manualmente la columna `ACCIONES` (`key: 'actions'` o `'acciones'`) en el arreglo `columns` de cada página.
-   - Pasar los callbacks directamente como props a `<TableCrud>`:
+   - **Prohibido** duplicar métodos repetitivos `handleCreate`, `handleEdit`, `handleDelete`, `handleRestore` o `handleImpersonate`, así como instanciar `Modal.useModal()` con `{contextHolder}` en las páginas padre.
+   - Para el botón de creación/alta, usar `<TableCrud.CreateButton modalRef={modalRef} resourceName="..." />` (o su alias `<TableCrud.AddButton />`).
+   - Para la tabla, pasar `modalRef={modalRef}` y `resourceName="..."` directamente a `<TableCrud>`. `TableCrud` se encarga de:
+     - Abrir automáticamente el modal en modo edición (`modalRef.current?.open(record)`).
+     - Mostrar diálogos de confirmación nativos (usando `Modal.useModal()` interno sin requerir `{contextHolder}` en la página).
+     - Ejecutar peticiones de eliminación (`router.delete`), restauración (`router.post(.../restore)`) e impersonación (`router.post(/impersonate/...)`) preservando el scroll y recargando la tabla.
+     - Pasar `handlers` (`edit`, `delete`, `restore`, `impersonate`) como 3er argumento al callback `mobileCardRender(record, actionsNode, handlers)` para vincular botones en vistas móviles con cero boilerplate.
+     - Si una tabla no admite eliminación (ej. catálogos fijos), especificar `onDelete={false}`.
      ```jsx
+     <TableCrud.CreateButton modalRef={modalRef} resourceName="operador" />
+
      <TableCrud
+       actionRef={actionRef}
+       modalRef={modalRef}
+       resourceName="operador"
+       endpoint="/operadores"
        columns={columns}
-       endpoint="/recurso"
-       onEdit={(record) => handleEdit(record.id)}
-       onDelete={(record) => handleDelete(record.id)}
-       onRestore={(record) => handleRestore(record.id)}
-       onImpersonate={handleImpersonate}
+       canImpersonate={true}
        extraActions={(record) => [
          <Button key="extra" type="text" icon={<GiftOutlined />} onClick={() => handleCustom(record)} />
        ]}
-       mobileCardRender={renderMobileCard}
+       mobileCardRender={(record, actionsNode, handlers) => (
+         <Card>
+           ...
+           <Button onClick={handlers?.edit}>Editar</Button>
+           <Button onClick={handlers?.delete}>Eliminar</Button>
+         </Card>
+       )}
      />
      ```
-   - `TableCrud` se encarga de inyectar la columna con el ancho adecuado, centrado, soft delete (`deleted_at` para restaurar), comprobación de permisos de impersonación y reusabilidad en tarjetas móviles (`mobileCardRender(record, actions)`).
 
 8. **Uso Obligatorio de Exportación Centralizada en `TableCrud`**:
    - **Prohibido** implementar lógica manual de exportación (`handleExport`), estados locales `currentParams` o construcción manual de `URLSearchParams` con `window.location.href = ...` en las páginas.
@@ -119,7 +133,36 @@ Para evitar la proliferación de estados repetitivos (`isOpen`, `editingId`, `lo
      - Omite parámetros de paginación (`page`, `per_page`) y da formato adecuado a los arreglos (`key[]`).
      - Realiza la descarga directa del endpoint de streaming CSV (`/export`).
 
+9. **Uso Obligatorio de Gestión de Papelera (`TrashedSwitch`) Integrada en `TableCrud`**:
+   - **Prohibido** declarar estados `useState` locales `showTrashed`/`setShowTrashed`, comprobaciones manuales de roles para el switch o pasar manualmente `params={{ trashed: ... }}` a `<TableCrud>` en las páginas padre.
+   - Usar el subcomponente `<TableCrud.TrashedSwitch actionRef={actionRef} />` (o activar la prop `showTrashedSwitch={true}` en `<TableCrud>`).
+   - `TableCrud.TrashedSwitch` y `TableCrud` se encargan automáticamente de:
+     - Validar roles permitidos (`allowedRoles`, por defecto `['presidente', 'admin', 'superuser', 'coordinador_distrito']`).
+     - Sincronizar el estado de manera bidireccional con `actionRef` (`actionRef.current.setTrashed`, `getTrashed`, `toggleTrashed`).
+     - Incluir automáticamente el flag `trashed: '1'` en las peticiones de consulta asíncronas y paginadas.
+     - Mantener sincronizada la exportación de CSV para descargar registros eliminados si el switch está activo.
+     - Activar automáticamente la acción de restauración (`Restaurar`) para los registros que tengan `deleted_at`.
+
+10. **Uso Obligatorio de `AppUpload` para Carga de Imágenes y Archivos**:
+    - **Prohibido** crear inputs manuales `<input type="file" />`, hooks duplicados de `FileReader`, estados manuales de previsualización `previewUrl` o llamadas directas dispersas de compresión de imágenes en formularios y páginas padre.
+    - Usar `<AppUpload>` (`@/Components/Common/AppUpload` o `@/Components/AppUpload`).
+    - Es 100% compatible con `<AppForm.Item name="...">` y `<Form.Item name="...">` implementando el contrato controlado `value` y `onChange`.
+    - **Modos de Operación**:
+      - **Diferido (por defecto)**: Retiene el `File` o `Blob` localmente, genera previsualización automática con `URL.createObjectURL` (con limpieza de memoria al desmontar) y lo envía en el payload de `AppForm` a Laravel (adecuado para formularios multipart estándar).
+      - **Inmediato**: Al especificar `endpoint="/api/upload"`, sube el archivo inmediatamente vía axios multipart, muestra barra de progreso en tiempo real (0-100%) y asigna la URL/respuesta retornada.
+      - **URL Directa**: Con `allowUrlInput={true}`, permite ingresar o precargar URLs externas (S3, CDN, `/storage/...`).
+    - **Variantes visuales (`variant`)**:
+      - `'avatar'`: Fotos de perfil circulares o cuadradas con hover overlay y botones directos.
+      - `'card'`: Credenciales INE (frente/reverso) y documentos rectangulares con aspect ratio 16/9 o formato tarjeta.
+      - `'dragger'`: Zona drag & drop para carga de documentos.
+      - `'button'`: Botón compacto con badge/tag informativo del archivo.
+    - **Captura Móvil Nativa**:
+      - Botón dual de "Cámara" (`capture="environment"`) y "Galería" para dispositivos móviles.
+    - **Compresión en Cliente**:
+      - Integra `browser-image-compression` para optimizar automáticamente fotos pesadas de smartphones (1920px max, calidad 0.8) reduciendo el tiempo de carga y consumo de datos sin pérdida perceptible de calidad.
+
 ---
+
 
 ## 2. Reglas Específicas del Backend (Laravel 13)
 

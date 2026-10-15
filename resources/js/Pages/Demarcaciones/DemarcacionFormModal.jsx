@@ -14,7 +14,8 @@ const DemarcacionFormModal = forwardRef(({ onSuccess, presidenteId: propPresiden
     const [activePresidenteId, setActivePresidenteId] = useState(propPresidenteId);
 
     useImperativeHandle(ref, () => ({
-        open(id = null, url = null, targetPresId = null) {
+        open(idOrRecord = null, url = null, targetPresId = null) {
+            const id = idOrRecord && typeof idOrRecord === 'object' ? idOrRecord.id : idOrRecord;
             setEditId(id);
             setFetchUrl(url);
             const targetPres = targetPresId !== undefined && targetPresId !== null ? targetPresId : propPresidenteId;

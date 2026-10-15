@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Avatar, Space, Badge, Modal, Image, Switch } from 'antd';
+import { Head, usePage } from '@inertiajs/react';
+import { Card, Button, Avatar, Space, Badge, Image } from 'antd';
 import {
     PlusOutlined,
     UserOutlined,
@@ -21,6 +21,7 @@ import {
 import TableCrud from '@/Components/TableCrud';
 import PersonaFormModal from '@/Components/PersonaFormModal';
 import ApoyosDrawer from '@/Components/ApoyosDrawer';
+import OperadorCard from './OperadorCard';
 import axios from 'axios';
 
 export default function OperadoresIndex({ availableRds }) {
@@ -28,74 +29,9 @@ export default function OperadoresIndex({ availableRds }) {
     const modalRef = React.useRef();
     const apoyosDrawerRef = React.useRef();
     const actionRef = React.useRef();
-    const [modal, contextHolder] = Modal.useModal();
-    const [showTrashed, setShowTrashed] = useState(false);
-
-    const handleCreate = () => {
-        modalRef.current?.open();
-    };
 
     const handleOpenApoyos = (record) => {
         apoyosDrawerRef.current?.open(record);
-    };
-
-    const handleImpersonate = (record) => {
-        modal.confirm({
-            title: '¿Impersonar operador?',
-            content: `¿Deseas ingresar al sistema navegando en representación de ${record.name || record.nombre}?`,
-            okText: 'Sí, impersonar',
-            cancelText: 'Cancelar',
-            onOk: () => {
-                router.post(`/impersonate/${record.id}`);
-            },
-        });
-    };
-
-    const handleEdit = (id) => {
-        modalRef.current?.open(id, `/operadores/${id}`);
-    };
-
-    const handleDelete = (id) => {
-        modal.confirm({
-            title: '¿Estás seguro de eliminar este operador?',
-            content: 'Esta acción no se puede deshacer.',
-            okText: 'Sí, eliminar',
-            okType: 'danger',
-            cancelText: 'Cancelar',
-            onOk: () => {
-                router.delete(`/operadores/${id}`, {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        if (actionRef.current) {
-                            actionRef.current.reload();
-                        }
-                    },
-                });
-            },
-        });
-    };
-
-    const handleRestore = (id) => {
-        modal.confirm({
-            title: '¿Estás seguro de restaurar este operador?',
-            content: 'El operador volverá a estar activo.',
-            okText: 'Sí, restaurar',
-            cancelText: 'Cancelar',
-            onOk: () => {
-                router.post(
-                    `/operadores/${id}/restore`,
-                    {},
-                    {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            if (actionRef.current) {
-                                actionRef.current.reload();
-                            }
-                        },
-                    }
-                );
-            },
-        });
     };
 
     const columns = [
@@ -261,151 +197,8 @@ export default function OperadoresIndex({ availableRds }) {
         },
     ];
 
-    const renderMobileCard = (record) => {
-        const isActive =
-            record.estado === undefined ||
-            record.estado === 1 ||
-            record.estado === '1' ||
-            record.estado === true ||
-            record.estado === 'true';
-
-        return (
-            <Card
-                styles={{ body: { padding: '16px' } }}
-                className="mb-4 w-full rounded-lg border border-gray-200 shadow-sm"
-            >
-                <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                        {record.foto_url && record.foto_url !== '-' ? (
-                            <Image
-                                src={record.foto_url}
-                                width={48}
-                                height={48}
-                                className="rounded-md object-cover"
-                                style={{ borderRadius: '6px' }}
-                            />
-                        ) : (
-                            <Avatar
-                                shape="square"
-                                size={48}
-                                icon={<UserOutlined />}
-                                className="rounded-md bg-purple-100 text-purple-600"
-                            />
-                        )}
-                        <div>
-                            <div className="text-base font-semibold text-gray-800">{record.name}</div>
-                            <div className="text-xs text-gray-500">
-                                {record.apodo ? `"${record.apodo}"` : 'Operador Político'}
-                            </div>
-                        </div>
-                    </div>
-                    {record.deleted_at ? (
-                        <Badge
-                            status="error"
-                            text="Eliminado"
-                            className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs"
-                        />
-                    ) : (
-                        <Badge
-                            status={isActive ? 'success' : 'error'}
-                            text={isActive ? 'Activo' : 'Inactivo'}
-                            className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs"
-                        />
-                    )}
-                </div>
-
-                <div className="mb-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                        <UserOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-14 shrink-0 text-gray-400">ID:</span>
-                        <span className="flex-1 truncate font-medium text-gray-800">
-                            OP-{String(record.id).padStart(4, '0')}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <PhoneOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-14 shrink-0 text-gray-400">Tel:</span>
-                        <span className="flex-1 truncate">{record.telefono || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <MailOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-14 shrink-0 text-gray-400">Email:</span>
-                        <span className="flex-1 truncate text-xs sm:text-sm" title={record.email}>
-                            {record.email || 'N/A'}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <EnvironmentOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-18 shrink-0 text-gray-400">Ubicación:</span>
-                        <span className="flex-1 truncate">
-                            {record.colonia || 'Sin colonia'}
-                            {record.codigo_postal ? ` (CP: ${record.codigo_postal})` : ''}
-                            {record.demarcacion ? ` (Dem: ${record.demarcacion.nombre})` : ''}
-                            {record.seccion_electoral ? ` (Sec: ${record.seccion_electoral})` : ''}
-                        </span>
-                    </div>
-                    {['presidente', 'admin', 'superadmin'].includes(auth?.user?.role) && (
-                        <div className="flex items-center gap-2">
-                            <TeamOutlined className="shrink-0 text-gray-400" />
-                            <span className="w-18 shrink-0 text-gray-400">RD:</span>
-                            <span className="flex-1 truncate font-medium text-blue-700">
-                                {record.leader
-                                    ? `${record.leader.name} ${record.leader.apodo ? `(${record.leader.apodo})` : ''}`
-                                    : 'Sin asignar'}
-                            </span>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex justify-between border-t border-gray-100 pt-3">
-                    {record.deleted_at ? (
-                        <Button
-                            type="text"
-                            className="flex w-full items-center justify-center text-green-600"
-                            icon={<ReloadOutlined />}
-                            onClick={() => handleRestore(record.id)}
-                        >
-                            Restaurar
-                        </Button>
-                    ) : (
-                        <>
-                            <Button
-                                type="text"
-                                icon={<GiftOutlined />}
-                                className="flex w-1/3 items-center justify-center text-green-600"
-                                onClick={() => handleOpenApoyos(record)}
-                            >
-                                Kardex
-                            </Button>
-                            <div className="my-1 w-px bg-gray-200"></div>
-                            <Button
-                                type="text"
-                                icon={<EditOutlined />}
-                                className="flex w-1/3 items-center justify-center text-purple-600"
-                                onClick={() => handleEdit(record.id)}
-                            >
-                                Editar
-                            </Button>
-                            <div className="my-1 w-px bg-gray-200"></div>
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                className="flex w-1/3 items-center justify-center"
-                                onClick={() => handleDelete(record.id)}
-                            >
-                                Eliminar
-                            </Button>
-                        </>
-                    )}
-                </div>
-            </Card>
-        );
-    };
-
     return (
         <MainLayout>
-            {contextHolder}
             <Head title="Operadores Políticos" />
 
             <Card variant="borderless" className="mobile-full-width-card shadow-sm">
@@ -415,25 +208,17 @@ export default function OperadoresIndex({ availableRds }) {
                         <p className="mt-1 text-sm text-gray-500">Lista de operadores políticos asignados a tu red.</p>
                     </div>
                     <div className="flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row">
-                        {['presidente', 'admin', 'superuser'].includes(auth?.user?.role) && (
-                            <div className="mr-0 flex items-center gap-2 text-sm text-gray-600 sm:mr-4">
-                                <span>Ver eliminados</span>
-                                <Switch size="small" checked={showTrashed} onChange={setShowTrashed} />
-                            </div>
-                        )}
+                        <TableCrud.TrashedSwitch actionRef={actionRef} />
                         <TableCrud.ExportButton
                             actionRef={actionRef}
                             endpoint="/operadores"
                             allowedRoles={['presidente', 'rd', 'admin', 'superuser']}
                         />
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
+                        <TableCrud.CreateButton
+                            modalRef={modalRef}
+                            resourceName="operador"
                             className="w-full bg-purple-700 hover:bg-purple-600 sm:w-auto"
-                            onClick={handleCreate}
-                        >
-                            Agregar Operador
-                        </Button>
+                        />
                     </div>
                 </div>
 
@@ -441,12 +226,11 @@ export default function OperadoresIndex({ availableRds }) {
                     actionRef={actionRef}
                     columns={columns}
                     endpoint="/operadores"
+                    modalRef={modalRef}
+                    resourceName="operador"
+                    canImpersonate
                     rowKey="id"
                     search={true}
-                    onEdit={(record) => handleEdit(record.id)}
-                    onDelete={(record) => handleDelete(record.id)}
-                    onRestore={(record) => handleRestore(record.id)}
-                    onImpersonate={handleImpersonate}
                     editIconClass="text-purple-600 hover:text-purple-700"
                     extraActions={(record) => [
                         <Button
@@ -457,8 +241,14 @@ export default function OperadoresIndex({ availableRds }) {
                             onClick={() => handleOpenApoyos(record)}
                         />,
                     ]}
-                    mobileCardRender={renderMobileCard}
-                    params={{ trashed: showTrashed ? '1' : '0' }}
+                    mobileCardRender={(record, actionsNode, handlers) => (
+                        <OperadorCard
+                            record={record}
+                            actionsNode={actionsNode}
+                            handlers={handlers}
+                            onOpenApoyos={handleOpenApoyos}
+                        />
+                    )}
                 />
 
                 <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4 lg:flex-row">

@@ -98,6 +98,37 @@ Los componentes están disponibles en:
 
 ---
 
+### API de `AppUpload`
+
+Componente autónomo para carga de imágenes, credenciales y archivos generales. Compatible con `AppForm.Item` y `Form.Item`.
+
+| Prop | Tipo | Por defecto | Descripción |
+|---|---|---|---|
+| `variant` | `'avatar' \| 'card' \| 'dragger' \| 'button'` | `'avatar'` | Aspecto visual del uploader. |
+| `endpoint` | `string` | `null` | Si se define, sube inmediatamente vía HTTP multipart con progreso (0-100%). De lo contrario opera en modo **diferido** para payloads de formularios. |
+| `allowUrlInput` | `boolean` | `false` | Permite alternar a ingreso de URL remota directa. |
+| `maxSizeMB` | `number` | `5` | Límite máximo en Megabytes antes de compresión o rechazo. |
+| `compress` | `boolean` | `true` | Comprime imágenes en el navegador mediante `browser-image-compression`. |
+| `compressOptions` | `object` | `{ maxSizeMB: 1, maxWidthOrHeight: 1920 }` | Opciones de compresión personalizadas. |
+| `aspectRatio` | `string \| number` | `'16/9'` | Relación de aspecto (aplica en variante `'card'`). Soporta `'credit-card'`, `'16/9'`, `'4/3'`, etc. |
+| `shape` | `'circle' \| 'square'` | `'circle'` | Forma (aplica en variante `'avatar'`). |
+| `size` | `number` | `110` | Diámetro o ancho en px para avatar. |
+| `showCamera` | `boolean` | `true` | Muestra botón para invocar la cámara trasera en dispositivos móviles (`capture="environment"`). |
+| `showPreview` | `boolean` | `true` | Habilita lightbox o visualizador de imagen ampliada. |
+| `value` | `File \| Blob \| string \| null` | — | Valor controlado (manejado automáticamente por `AppForm.Item`). |
+| `onChange` | `(value) => void` | — | Emite el nuevo valor (File/Blob en modo diferido, o string/URL en modo endpoint o URL directa). |
+
+#### Métodos expuestos vía `ref`:
+- `uploadRef.current.openGallery()`: Abre el selector de archivos del sistema.
+- `uploadRef.current.openCamera()`: Dispara directamente el disparador de cámara móvil.
+- `uploadRef.current.openUrlInput()`: Muestra el campo para pegar URL externa.
+- `uploadRef.current.clear()`: Limpia el archivo o URL cargada.
+- `uploadRef.current.getFile()`: Retorna el `File` actual si está en modo diferido.
+- `uploadRef.current.getUrl()`: Retorna la URL actual.
+- `uploadRef.current.upload(customEndpoint)`: Ejecuta la subida forzada inmediata a un endpoint.
+
+---
+
 ## 3. Recetas de Código
 
 ### Receta 1: Modal + Formulario CRUD con Render Props

@@ -1,36 +1,19 @@
 import React, { useState } from 'react';
 import MainLayout from '@/Layouts/MainLayout';
-import { Head, router, usePage } from '@inertiajs/react';
-import { Card, Button, Space, Badge, Modal, Select, Tag } from 'antd';
-import {
-    PlusOutlined,
-    EnvironmentOutlined,
-    EditOutlined,
-    DownloadOutlined,
-    GlobalOutlined,
-    CompassOutlined,
-    UnorderedListOutlined,
-    UserOutlined,
-} from '@ant-design/icons';
+import { Head, usePage } from '@inertiajs/react';
+import { Card, Button, Select, Tag } from 'antd';
+import { EnvironmentOutlined, UnorderedListOutlined, UserOutlined } from '@ant-design/icons';
 import TableCrud from '@/Components/TableCrud';
 import DemarcacionFormModal from './DemarcacionFormModal';
 import SeccionesDrawer from '@/Components/SeccionesDrawer';
+import DemarcacionCard from './DemarcacionCard';
 
 export default function DemarcacionesIndex() {
-    const { auth, presidentes = [], currentPresidenteId = null, isGlobalAdmin = false } = usePage().props;
+    const { presidentes = [], currentPresidenteId = null, isGlobalAdmin = false } = usePage().props;
     const modalRef = React.useRef();
     const actionRef = React.useRef();
     const seccionesDrawerRef = React.useRef();
-    const [modal, contextHolder] = Modal.useModal();
     const [selectedPresidenteId, setSelectedPresidenteId] = useState(currentPresidenteId);
-
-    const handleCreate = () => {
-        modalRef.current?.open(null, null, selectedPresidenteId);
-    };
-
-    const handleEdit = (id) => {
-        modalRef.current?.open(id, `/demarcaciones/${id}`, selectedPresidenteId);
-    };
 
     const handleOpenSecciones = (record) => {
         seccionesDrawerRef.current?.open(record, selectedPresidenteId);
@@ -83,63 +66,10 @@ export default function DemarcacionesIndex() {
         },
     ];
 
-    const renderMobileCard = (record) => {
-        return (
-            <Card
-                styles={{ body: { padding: '16px' } }}
-                className="mb-4 w-full rounded-lg border border-gray-200 shadow-sm"
-            >
-                <div className="mb-3 flex items-start justify-between">
-                    <div>
-                        <div className="text-base font-bold text-gray-800">{record.nombre}</div>
-                        <div className="mt-0.5 text-xs font-bold text-blue-600">Demarcación: {record.id}</div>
-                    </div>
-                    {record.is_custom_meta ? (
-                        <Tag color="blue" className="text-xs">
-                            Personalizada
-                        </Tag>
-                    ) : (
-                        <Tag color="default" className="text-xs text-gray-400">
-                            Base
-                        </Tag>
-                    )}
-                </div>
-
-                <div className="mb-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                        <CompassOutlined className="shrink-0 text-gray-400" />
-                        <span className="w-24 shrink-0 text-gray-400">Meta Votantes:</span>
-                        <span className="font-semibold text-gray-800">{record.meta}</span>
-                    </div>
-                </div>
-
-                <div className="flex flex-col gap-2 border-t border-gray-100 pt-3">
-                    <Button
-                        type="primary"
-                        icon={<UnorderedListOutlined />}
-                        className="flex w-full items-center justify-center bg-[#0f172a] hover:bg-slate-800"
-                        onClick={() => handleOpenSecciones(record)}
-                    >
-                        Ver Secciones
-                    </Button>
-                    <Button
-                        type="default"
-                        icon={<EditOutlined />}
-                        className="flex w-full items-center justify-center border-blue-200 text-blue-600 hover:border-blue-400"
-                        onClick={() => handleEdit(record.id)}
-                    >
-                        Editar
-                    </Button>
-                </div>
-            </Card>
-        );
-    };
-
     const endpoint = `/demarcaciones${selectedPresidenteId ? `?presidente_id=${selectedPresidenteId}` : ''}`;
 
     return (
         <MainLayout>
-            {contextHolder}
             <Head title="Administrar Demarcaciones" />
 
             <Card variant="borderless" className="mobile-full-width-card shadow-sm">
@@ -154,14 +84,12 @@ export default function DemarcacionesIndex() {
                     </div>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                         <TableCrud.ExportButton actionRef={actionRef} endpoint="/demarcaciones" />
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
+                        <TableCrud.CreateButton
+                            modalRef={modalRef}
+                            resourceName="demarcación"
+                            label="Agregar Demarcación"
                             className="w-full bg-[#0f172a] hover:bg-slate-800 sm:w-auto"
-                            onClick={handleCreate}
-                        >
-                            Agregar Demarcación
-                        </Button>
+                        />
                     </div>
                 </div>
 
@@ -191,12 +119,13 @@ export default function DemarcacionesIndex() {
                 <TableCrud
                     key={selectedPresidenteId || 'global'}
                     actionRef={actionRef}
+                    modalRef={modalRef}
+                    resourceName="demarcación"
                     columns={columns}
                     endpoint={endpoint}
                     rowKey="id"
                     search={true}
-                    onEdit={(record) => handleEdit(record.id)}
-                    editTitle="Editar Demarcación"
+                    onDelete={false}
                     extraActions={(record) => [
                         <Button
                             key="secciones"
@@ -206,7 +135,14 @@ export default function DemarcacionesIndex() {
                             title="Secciones"
                         />,
                     ]}
-                    mobileCardRender={renderMobileCard}
+                    mobileCardRender={(record, actionsNode, handlers) => (
+                        <DemarcacionCard
+                            record={record}
+                            actionsNode={actionsNode}
+                            handlers={handlers}
+                            onOpenSecciones={handleOpenSecciones}
+                        />
+                    )}
                 />
             </Card>
 

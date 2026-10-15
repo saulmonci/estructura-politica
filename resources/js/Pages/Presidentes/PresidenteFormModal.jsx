@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
-import { Row, Col, Input, Select, Switch, Upload, Button, Divider, message } from 'antd';
+import { Row, Col, Input, Select, Switch, Button, Divider, message } from 'antd';
 import {
     CrownOutlined,
     UserOutlined,
@@ -7,13 +7,12 @@ import {
     LockOutlined,
     PhoneOutlined,
     IdcardOutlined,
-    CameraOutlined,
     ThunderboltOutlined,
     CloseOutlined,
     SaveOutlined,
 } from '@ant-design/icons';
 import { router, usePage } from '@inertiajs/react';
-import { AppModal, AppForm, AppSelect } from '@/Components/Common';
+import { AppModal, AppForm, AppSelect, AppUpload } from '@/Components/Common';
 import { generatePresidenteFormData } from '@/Utils/dummyDataGenerator';
 
 const PresidenteFormModal = forwardRef(({ onSuccess }, ref) => {
@@ -22,16 +21,12 @@ const PresidenteFormModal = forwardRef(({ onSuccess }, ref) => {
     const formRef = useRef();
 
     const [editingRecord, setEditingRecord] = useState(null);
-    const [fileListFoto, setFileListFoto] = useState([]);
-    const [fileListIneFrente, setFileListIneFrente] = useState([]);
-    const [fileListIneReverso, setFileListIneReverso] = useState([]);
 
     useImperativeHandle(ref, () => ({
-        open(record = null) {
+        open(recordOrId = null, url = null) {
+            const record =
+                recordOrId && typeof recordOrId === 'object' ? recordOrId : recordOrId ? { id: recordOrId } : null;
             setEditingRecord(record);
-            setFileListFoto([]);
-            setFileListIneFrente([]);
-            setFileListIneReverso([]);
             modalRef.current?.open(record);
         },
         close() {
@@ -92,6 +87,9 @@ const PresidenteFormModal = forwardRef(({ onSuccess }, ref) => {
                           codigo_postal: data.codigo_postal,
                           apodo: data.apodo,
                           notas: data.notas,
+                          foto: data.foto_url || data.foto || null,
+                          ine_frente: data.ine_frente_url || data.ine_frente || null,
+                          ine_reverso: data.ine_reverso_url || data.ine_reverso || null,
                           estado: data.estado ?? true,
                       }
                     : {
@@ -108,14 +106,22 @@ const PresidenteFormModal = forwardRef(({ onSuccess }, ref) => {
                                 estado: values.estado ? 1 : 0,
                             };
 
-                            if (fileListFoto.length > 0 && fileListFoto[0].originFileObj) {
-                                payload.foto = fileListFoto[0].originFileObj;
+                            if (values.foto instanceof File || values.foto instanceof Blob) {
+                                payload.foto = values.foto;
+                            } else {
+                                delete payload.foto;
                             }
-                            if (fileListIneFrente.length > 0 && fileListIneFrente[0].originFileObj) {
-                                payload.ine_frente = fileListIneFrente[0].originFileObj;
+
+                            if (values.ine_frente instanceof File || values.ine_frente instanceof Blob) {
+                                payload.ine_frente = values.ine_frente;
+                            } else {
+                                delete payload.ine_frente;
                             }
-                            if (fileListIneReverso.length > 0 && fileListIneReverso[0].originFileObj) {
-                                payload.ine_reverso = fileListIneReverso[0].originFileObj;
+
+                            if (values.ine_reverso instanceof File || values.ine_reverso instanceof Blob) {
+                                payload.ine_reverso = values.ine_reverso;
+                            } else {
+                                delete payload.ine_reverso;
                             }
 
                             return new Promise((resolve) => {
@@ -284,58 +290,39 @@ const PresidenteFormModal = forwardRef(({ onSuccess }, ref) => {
                                 </Divider>
 
                                 <Row gutter={16}>
-                                    <Col span={8}>
-                                        <AppForm.Item label="Foto Perfil">
-                                            <Upload
-                                                listType="picture-card"
-                                                maxCount={1}
-                                                fileList={fileListFoto}
-                                                beforeUpload={() => false}
-                                                onChange={({ fileList }) => setFileListFoto(fileList)}
-                                            >
-                                                {fileListFoto.length === 0 && (
-                                                    <div>
-                                                        <CameraOutlined />
-                                                        <div style={{ marginTop: 8 }}>Subir Foto</div>
-                                                    </div>
-                                                )}
-                                            </Upload>
+                                    <Col xs={24} sm={8}>
+                                        <AppForm.Item name="foto" label="Foto Perfil">
+                                            <AppUpload
+                                                variant="avatar"
+                                                shape="circle"
+                                                size={100}
+                                                title="Foto Perfil"
+                                                compress={true}
+                                                showCamera={true}
+                                                allowUrlInput={true}
+                                            />
                                         </AppForm.Item>
                                     </Col>
-                                    <Col span={8}>
-                                        <AppForm.Item label="INE Frente">
-                                            <Upload
-                                                listType="picture-card"
-                                                maxCount={1}
-                                                fileList={fileListIneFrente}
-                                                beforeUpload={() => false}
-                                                onChange={({ fileList }) => setFileListIneFrente(fileList)}
-                                            >
-                                                {fileListIneFrente.length === 0 && (
-                                                    <div>
-                                                        <IdcardOutlined />
-                                                        <div style={{ marginTop: 8 }}>INE Frente</div>
-                                                    </div>
-                                                )}
-                                            </Upload>
+                                    <Col xs={24} sm={8}>
+                                        <AppForm.Item name="ine_frente" label="INE Frente">
+                                            <AppUpload
+                                                variant="card"
+                                                aspectRatio="credit-card"
+                                                title="INE FRENTE"
+                                                compress={true}
+                                                showCamera={true}
+                                            />
                                         </AppForm.Item>
                                     </Col>
-                                    <Col span={8}>
-                                        <AppForm.Item label="INE Reverso">
-                                            <Upload
-                                                listType="picture-card"
-                                                maxCount={1}
-                                                fileList={fileListIneReverso}
-                                                beforeUpload={() => false}
-                                                onChange={({ fileList }) => setFileListIneReverso(fileList)}
-                                            >
-                                                {fileListIneReverso.length === 0 && (
-                                                    <div>
-                                                        <IdcardOutlined />
-                                                        <div style={{ marginTop: 8 }}>INE Reverso</div>
-                                                    </div>
-                                                )}
-                                            </Upload>
+                                    <Col xs={24} sm={8}>
+                                        <AppForm.Item name="ine_reverso" label="INE Reverso">
+                                            <AppUpload
+                                                variant="card"
+                                                aspectRatio="credit-card"
+                                                title="INE REVERSO"
+                                                compress={true}
+                                                showCamera={true}
+                                            />
                                         </AppForm.Item>
                                     </Col>
                                 </Row>

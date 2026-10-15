@@ -1,30 +1,26 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ModalForm, ProFormText, ProFormSelect, ProFormTextArea } from '@ant-design/pro-components';
-import { Row, Col, Upload, message, Alert, Button, Divider, Form, Image, Checkbox } from 'antd';
+import { Row, Col, message, Alert, Button, Divider, Form, Image, Checkbox } from 'antd';
 import {
     UserOutlined,
     EnvironmentOutlined,
     IdcardOutlined,
     PhoneOutlined,
-    CameraOutlined,
-    PictureOutlined,
     SafetyCertificateOutlined,
     TeamOutlined,
-    InboxOutlined,
     SaveOutlined,
     CloseOutlined,
     BankOutlined,
     LockOutlined,
     MailOutlined,
     ThunderboltOutlined,
+    CameraOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { router, usePage } from '@inertiajs/react';
 import IneScanner, { showIneVencidaModal } from './IneScanner';
-import imageCompression from 'browser-image-compression';
+import { AppUpload } from '@/Components/Common';
 import { generatePersonaFormData } from '@/Utils/dummyDataGenerator';
-
-const { Dragger } = Upload;
 
 const PersonaFormModal = forwardRef(
     ({ onSuccess, entityType = 'RD', availableRds = [], availablePresidentes = [] }, ref) => {
@@ -32,21 +28,10 @@ const PersonaFormModal = forwardRef(
         const [open, setOpen] = useState(false);
         const [editId, setEditingId] = useState(null);
         const [fetchUrl, setFetchUrl] = useState(null);
-        const [fileList, setFileList] = useState([]);
-        const [existingFoto, setExistingFoto] = useState(null);
-        const [fileListIneFrente, setFileListIneFrente] = useState([]);
-        const [existingIneFrente, setExistingIneFrente] = useState(null);
-        const [fileListIneReverso, setFileListIneReverso] = useState([]);
-        const [existingIneReverso, setExistingIneReverso] = useState(null);
 
         useImperativeHandle(ref, () => ({
-            open(id = null, url = null) {
-                setFileList([]);
-                setExistingFoto(null);
-                setFileListIneFrente([]);
-                setExistingIneFrente(null);
-                setFileListIneReverso([]);
-                setExistingIneReverso(null);
+            open(idOrRecord = null, url = null) {
+                const id = idOrRecord && typeof idOrRecord === 'object' ? idOrRecord.id : idOrRecord;
                 setEditingId(id);
                 setFetchUrl(url);
                 setOpen(true);
@@ -117,12 +102,6 @@ const PersonaFormModal = forwardRef(
 
         useEffect(() => {
             if (open) {
-                setFileList([]);
-                setExistingFoto(null);
-                setFileListIneFrente([]);
-                setExistingIneFrente(null);
-                setFileListIneReverso([]);
-                setExistingIneReverso(null);
                 setSelectedDemarcacion(null);
                 setSecciones([]);
 
@@ -180,20 +159,14 @@ const PersonaFormModal = forwardRef(
                         .get(url)
                         .then((response) => {
                             const data = response.data;
-                            if (data.foto_url) {
-                                setExistingFoto(data.foto_url);
-                            } else {
-                                setExistingFoto(null);
+                            if (data.foto_url || data.foto) {
+                                data.foto = data.foto_url || data.foto;
                             }
-                            if (data.ine_frente_url) {
-                                setExistingIneFrente(data.ine_frente_url);
-                            } else {
-                                setExistingIneFrente(null);
+                            if (data.ine_frente_url || data.ine_frente) {
+                                data.ine_frente = data.ine_frente_url || data.ine_frente;
                             }
-                            if (data.ine_reverso_url) {
-                                setExistingIneReverso(data.ine_reverso_url);
-                            } else {
-                                setExistingIneReverso(null);
+                            if (data.ine_reverso_url || data.ine_reverso) {
+                                data.ine_reverso = data.ine_reverso_url || data.ine_reverso;
                             }
 
                             if (data.estado !== undefined && data.estado !== null) {
@@ -243,38 +216,11 @@ const PersonaFormModal = forwardRef(
             }
         }, [open, editId, fetchUrl]);
 
-        const compressImage = async (file) => {
-            const options = {
-                maxSizeMB: 3.8, // Ligeramente debajo de 4MB para estar seguros
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-            };
-            try {
-                message.loading({ content: 'Procesando y comprimiendo imagen...', key: 'compress' });
-                const compressedFile = await imageCompression(file, options);
-                message.success({ content: 'Imagen procesada', key: 'compress' });
-                return compressedFile;
-            } catch (error) {
-                console.error(error);
-                message.error({ content: 'Error procesando imagen', key: 'compress' });
-                return file;
-            }
-        };
-
-        const handleBeforeUploadFoto = async (file) => {
-            const compressedFile = await compressImage(file);
-            setFileList([{ originFileObj: compressedFile }]);
-            return Upload.LIST_IGNORE;
-        };
-
-        const handleBeforeUploadIneFrente = async (file) => {
-            const compressedFile = await compressImage(file);
-
-            // Validar vigencia de la credencial con el backend
+        const validateIneVigencia = async (file) => {
             try {
                 message.loading({ content: 'Verificando vigencia de la credencial...', key: 'checkIne' });
                 const formData = new FormData();
-                formData.append('ine_image', compressedFile);
+                formData.append('ine_image', file);
 
                 const resp = await axios.post('/extract-ine', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' },
@@ -285,27 +231,18 @@ const PersonaFormModal = forwardRef(
                 const anio = respData?.anio_emision || respData?.emision;
                 if (anio && parseInt(anio, 10) < 2017) {
                     showIneVencidaModal(anio);
-                    setFileListIneFrente([]);
-                    return Upload.LIST_IGNORE;
+                    return false;
                 }
+                return true;
             } catch (error) {
                 message.destroy('checkIne');
                 const errData = error.response?.data;
                 if (errData?.error_code === 'INE_VENCIDA' || errData?.message?.includes('INE VENCIDA NO VOTA')) {
                     showIneVencidaModal(errData?.anio_emision);
-                    setFileListIneFrente([]);
-                    return Upload.LIST_IGNORE;
+                    return false;
                 }
+                return true;
             }
-
-            setFileListIneFrente([{ originFileObj: compressedFile }]);
-            return Upload.LIST_IGNORE;
-        };
-
-        const handleBeforeUploadIneReverso = async (file) => {
-            const compressedFile = await compressImage(file);
-            setFileListIneReverso([{ originFileObj: compressedFile }]);
-            return Upload.LIST_IGNORE;
         };
 
         return (
@@ -385,16 +322,22 @@ const PersonaFormModal = forwardRef(
                                 : '/representantes';
                     const endpoint = fetchUrl || (editId ? `${basePath}/${editId}` : basePath);
 
-                    if (fileList.length > 0 && fileList[0].originFileObj) {
-                        values.foto = fileList[0].originFileObj;
+                    if (values.foto instanceof File || values.foto instanceof Blob) {
+                        values.foto = values.foto;
+                    } else {
+                        delete values.foto;
                     }
 
-                    if (fileListIneFrente.length > 0 && fileListIneFrente[0].originFileObj) {
-                        values.ine_frente = fileListIneFrente[0].originFileObj;
+                    if (values.ine_frente instanceof File || values.ine_frente instanceof Blob) {
+                        values.ine_frente = values.ine_frente;
+                    } else {
+                        delete values.ine_frente;
                     }
 
-                    if (fileListIneReverso.length > 0 && fileListIneReverso[0].originFileObj) {
-                        values.ine_reverso = fileListIneReverso[0].originFileObj;
+                    if (values.ine_reverso instanceof File || values.ine_reverso instanceof Blob) {
+                        values.ine_reverso = values.ine_reverso;
+                    } else {
+                        delete values.ine_reverso;
                     }
 
                     if (values.estado !== undefined && values.estado !== null) {
@@ -487,13 +430,13 @@ const PersonaFormModal = forwardRef(
                         <Col xs={24} lg={15}>
                             <IneScanner
                                 onIneRejected={() => {
-                                    setFileListIneFrente([]);
+                                    form.setFieldsValue({ ine_frente: null });
                                 }}
                                 onDataExtracted={async (data, compressedFile) => {
                                     const anio = data.anio_emision || data.emision;
                                     if (anio && parseInt(anio, 10) < 2017) {
                                         showIneVencidaModal(anio);
-                                        setFileListIneFrente([]);
+                                        form.setFieldsValue({ ine_frente: null });
                                         return;
                                     }
 
@@ -526,8 +469,8 @@ const PersonaFormModal = forwardRef(
                                     };
 
                                     // 4. Si viene imagen comprimida y no hay foto de frente asignada, asignarla
-                                    if (compressedFile && fileListIneFrente.length === 0) {
-                                        setFileListIneFrente([{ originFileObj: compressedFile }]);
+                                    if (compressedFile && !form.getFieldValue('ine_frente')) {
+                                        fieldsToSet.ine_frente = compressedFile;
                                     }
 
                                     // 5. Manejar Demarcación y Sección
@@ -1007,271 +950,40 @@ const PersonaFormModal = forwardRef(
                                     className="mb-6 border-blue-100 bg-blue-50"
                                 />
 
-                                <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-                                    <span className="mb-2 font-bold text-gray-500">FOTO DE PERFIL</span>
-                                    {fileList.length > 0 ? (
-                                        <div className="flex w-full flex-col items-center justify-center">
-                                            <Image
-                                                src={URL.createObjectURL(fileList[0].originFileObj)}
-                                                alt="avatar"
-                                                width={96}
-                                                height={96}
-                                                style={{ objectFit: 'cover' }}
-                                                className="mb-3 rounded-lg border-4 border-white shadow-md"
-                                            />
-                                            <Button danger size="small" onClick={() => setFileList([])}>
-                                                Eliminar foto
-                                            </Button>
-                                        </div>
-                                    ) : existingFoto ? (
-                                        <div className="flex w-full flex-col items-center justify-center">
-                                            <Image
-                                                src={existingFoto}
-                                                alt="avatar"
-                                                width={96}
-                                                height={96}
-                                                style={{ objectFit: 'cover' }}
-                                                className="mb-3 rounded-lg border-4 border-white shadow-md"
-                                            />
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadFoto}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                    capture="environment"
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        size="small"
-                                                        className="bg-[#0f172a]"
-                                                        icon={<CameraOutlined />}
-                                                    >
-                                                        Cámara
-                                                    </Button>
-                                                </Upload>
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadFoto}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                >
-                                                    <Button size="small" icon={<PictureOutlined />}>
-                                                        Galería
-                                                    </Button>
-                                                </Upload>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="relative mb-4 flex h-24 w-24 items-center justify-center rounded-lg bg-gray-200 shadow-inner">
-                                                <UserOutlined className="text-6xl text-gray-400" />
-                                            </div>
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadFoto}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                    capture="environment"
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        size="small"
-                                                        className="bg-[#0f172a]"
-                                                        icon={<CameraOutlined />}
-                                                    >
-                                                        Cámara
-                                                    </Button>
-                                                </Upload>
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadFoto}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                >
-                                                    <Button size="small" icon={<PictureOutlined />}>
-                                                        Galería
-                                                    </Button>
-                                                </Upload>
-                                            </div>
-                                            <p className="mt-2 mb-0 text-xs text-gray-400">Max: 4MB</p>
-                                        </>
-                                    )}
-                                </div>
+                                <div className="flex flex-col gap-4">
+                                    <Form.Item name="foto" noStyle>
+                                        <AppUpload
+                                            variant="avatar"
+                                            shape="square"
+                                            size={100}
+                                            title="FOTO DE PERFIL"
+                                            helperText="Fotografía actual para identificación en campo"
+                                            compress={true}
+                                            showCamera={true}
+                                            allowUrlInput={true}
+                                        />
+                                    </Form.Item>
 
-                                <div className="mt-4 flex min-h-[260px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-                                    <span className="mb-2 font-bold text-gray-500">INE FRENTE</span>
-                                    {fileListIneFrente.length > 0 ? (
-                                        <div className="flex w-full flex-col items-center justify-center">
-                                            <Image
-                                                src={URL.createObjectURL(fileListIneFrente[0].originFileObj)}
-                                                alt="ine frente"
-                                                width={128}
-                                                height={80}
-                                                style={{ objectFit: 'cover' }}
-                                                className="mb-3 rounded-lg border-4 border-white shadow-md"
-                                            />
-                                            <Button danger size="small" onClick={() => setFileListIneFrente([])}>
-                                                Eliminar foto
-                                            </Button>
-                                        </div>
-                                    ) : existingIneFrente ? (
-                                        <div className="flex w-full flex-col items-center justify-center">
-                                            <Image
-                                                src={existingIneFrente}
-                                                alt="ine frente"
-                                                width={128}
-                                                height={80}
-                                                style={{ objectFit: 'cover' }}
-                                                className="mb-3 rounded-lg border-4 border-white shadow-md"
-                                            />
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneFrente}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                    capture="environment"
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        size="small"
-                                                        className="bg-[#0f172a]"
-                                                        icon={<CameraOutlined />}
-                                                    >
-                                                        Cámara
-                                                    </Button>
-                                                </Upload>
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneFrente}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                >
-                                                    <Button size="small" icon={<PictureOutlined />}>
-                                                        Galería
-                                                    </Button>
-                                                </Upload>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="relative mb-4 flex h-20 w-32 items-center justify-center rounded-lg bg-gray-200 shadow-inner">
-                                                <IdcardOutlined className="text-4xl text-gray-400" />
-                                            </div>
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneFrente}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                    capture="environment"
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        size="small"
-                                                        className="bg-[#0f172a]"
-                                                        icon={<CameraOutlined />}
-                                                    >
-                                                        Cámara
-                                                    </Button>
-                                                </Upload>
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneFrente}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                >
-                                                    <Button size="small" icon={<PictureOutlined />}>
-                                                        Galería
-                                                    </Button>
-                                                </Upload>
-                                            </div>
-                                            <p className="mt-2 mb-0 text-xs text-gray-400">Max: 4MB</p>
-                                        </>
-                                    )}
-                                </div>
+                                    <Form.Item name="ine_frente" noStyle>
+                                        <AppUpload
+                                            variant="card"
+                                            aspectRatio="credit-card"
+                                            title="INE FRENTE"
+                                            compress={true}
+                                            showCamera={true}
+                                            validateFile={validateIneVigencia}
+                                        />
+                                    </Form.Item>
 
-                                <div className="mt-4 flex min-h-[260px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-                                    <span className="mb-2 font-bold text-gray-500">INE REVERSO</span>
-                                    {fileListIneReverso.length > 0 ? (
-                                        <div className="flex w-full flex-col items-center justify-center">
-                                            <Image
-                                                src={URL.createObjectURL(fileListIneReverso[0].originFileObj)}
-                                                alt="ine reverso"
-                                                width={128}
-                                                height={80}
-                                                style={{ objectFit: 'cover' }}
-                                                className="mb-3 rounded-lg border-4 border-white shadow-md"
-                                            />
-                                            <Button danger size="small" onClick={() => setFileListIneReverso([])}>
-                                                Eliminar foto
-                                            </Button>
-                                        </div>
-                                    ) : existingIneReverso ? (
-                                        <div className="flex w-full flex-col items-center justify-center">
-                                            <Image
-                                                src={existingIneReverso}
-                                                alt="ine reverso"
-                                                width={128}
-                                                height={80}
-                                                style={{ objectFit: 'cover' }}
-                                                className="mb-3 rounded-lg border-4 border-white shadow-md"
-                                            />
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneReverso}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                    capture="environment"
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        size="small"
-                                                        className="bg-[#0f172a]"
-                                                        icon={<CameraOutlined />}
-                                                    >
-                                                        Cámara
-                                                    </Button>
-                                                </Upload>
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneReverso}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                >
-                                                    <Button size="small" icon={<PictureOutlined />}>
-                                                        Galería
-                                                    </Button>
-                                                </Upload>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="relative mb-4 flex h-20 w-32 items-center justify-center rounded-lg bg-gray-200 shadow-inner">
-                                                <IdcardOutlined className="text-4xl text-gray-400" />
-                                            </div>
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneReverso}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                    capture="environment"
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        size="small"
-                                                        className="bg-[#0f172a]"
-                                                        icon={<CameraOutlined />}
-                                                    >
-                                                        Cámara
-                                                    </Button>
-                                                </Upload>
-                                                <Upload
-                                                    beforeUpload={handleBeforeUploadIneReverso}
-                                                    showUploadList={false}
-                                                    accept="image/*"
-                                                >
-                                                    <Button size="small" icon={<PictureOutlined />}>
-                                                        Galería
-                                                    </Button>
-                                                </Upload>
-                                            </div>
-                                            <p className="mt-2 mb-0 text-xs text-gray-400">Max: 4MB</p>
-                                        </>
-                                    )}
+                                    <Form.Item name="ine_reverso" noStyle>
+                                        <AppUpload
+                                            variant="card"
+                                            aspectRatio="credit-card"
+                                            title="INE REVERSO"
+                                            compress={true}
+                                            showCamera={true}
+                                        />
+                                    </Form.Item>
                                 </div>
                             </div>
                         </Col>

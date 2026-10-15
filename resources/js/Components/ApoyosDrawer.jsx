@@ -7,7 +7,6 @@ import {
     DatePicker,
     Select,
     InputNumber,
-    Upload,
     message,
     Table,
     Popconfirm,
@@ -26,6 +25,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { AppUpload } from '@/Components/Common';
 
 const { Option } = Select;
 
@@ -73,7 +73,6 @@ const ApoyosDrawer = forwardRef(
         const [isFormVisible, setIsFormVisible] = useState(false);
         const [form] = Form.useForm();
         const [editingId, setEditingId] = useState(null);
-        const [currentEvidenciaUrl, setCurrentEvidenciaUrl] = useState(null);
         const [isMobile, setIsMobile] = useState(false);
         const [previewImage, setPreviewImage] = useState(null);
 
@@ -123,8 +122,8 @@ const ApoyosDrawer = forwardRef(
                 if (values.descripcion) formData.append('descripcion', values.descripcion);
                 if (values.cantidad_monetaria) formData.append('cantidad_monetaria', values.cantidad_monetaria);
 
-                if (values.evidencia && values.evidencia.fileList.length > 0) {
-                    formData.append('evidencia_file', values.evidencia.fileList[0].originFileObj);
+                if (values.evidencia instanceof File || values.evidencia instanceof Blob) {
+                    formData.append('evidencia_file', values.evidencia);
                 }
 
                 if (editingId) {
@@ -163,14 +162,13 @@ const ApoyosDrawer = forwardRef(
 
         const handleEdit = (record) => {
             setEditingId(record.id);
-            setCurrentEvidenciaUrl(record.evidencia_url || null);
             form.setFieldsValue({
                 fecha: dayjs(record.fecha),
                 tipo_apoyo: record.tipo_apoyo,
                 descripcion: record.descripcion,
                 estado: record.estado,
                 cantidad_monetaria: record.cantidad_monetaria,
-                // No pre-llenamos el campo file — se muestra la URL debajo
+                evidencia: record.evidencia_url || record.evidencia || null,
             });
             setIsFormVisible(true);
         };
@@ -178,7 +176,6 @@ const ApoyosDrawer = forwardRef(
         const handleCancelForm = () => {
             setIsFormVisible(false);
             setEditingId(null);
-            setCurrentEvidenciaUrl(null);
             form.resetFields();
         };
 
@@ -279,7 +276,6 @@ const ApoyosDrawer = forwardRef(
                         icon={<PlusOutlined />}
                         onClick={() => {
                             setEditingId(null);
-                            setCurrentEvidenciaUrl(null);
                             form.resetFields();
                             setIsFormVisible(true);
                         }}
@@ -427,51 +423,15 @@ const ApoyosDrawer = forwardRef(
                         </Form.Item>
 
                         <Form.Item name="evidencia" label="Evidencia (Foto/Documento)">
-                            {/* Si estamos editando y hay evidencia guardada, la mostramos */}
-                            {editingId && currentEvidenciaUrl && (
-                                <div className="mb-2 flex items-center gap-2 rounded border border-gray-200 bg-gray-50 p-2">
-                                    {isImageUrl(currentEvidenciaUrl) ? (
-                                        <div
-                                            onClick={() => setPreviewImage(currentEvidenciaUrl)}
-                                            className="cursor-pointer transition-opacity hover:opacity-80"
-                                            title="Ver imagen grande"
-                                        >
-                                            <img
-                                                src={currentEvidenciaUrl}
-                                                alt="evidencia actual"
-                                                className="h-14 w-14 rounded border object-cover"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <a
-                                            href={currentEvidenciaUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-1 text-blue-600"
-                                        >
-                                            <PaperClipOutlined /> Ver archivo actual
-                                        </a>
-                                    )}
-                                    <span className="ml-1 text-xs text-gray-500">
-                                        Sube un nuevo archivo para reemplazarla.
-                                    </span>
-                                </div>
-                            )}
-                            <Upload
-                                beforeUpload={(file) => {
-                                    const maxSizeMB = 10;
-                                    if (file.size / 1024 / 1024 > maxSizeMB) {
-                                        message.error(
-                                            `❌ El archivo es demasiado pesado. El tamaño máximo permitido es ${maxSizeMB} MB. Tu archivo pesa ${(file.size / 1024 / 1024).toFixed(1)} MB.`
-                                        );
-                                        return Upload.LIST_IGNORE;
-                                    }
-                                    return false;
-                                }}
-                                maxCount={1}
-                            >
-                                <Button icon={<UploadOutlined />}>Seleccionar Archivo</Button>
-                            </Upload>
+                            <AppUpload
+                                variant="card"
+                                aspectRatio="16/9"
+                                title="EVIDENCIA O COMPROBANTE"
+                                accept="image/*,application/pdf"
+                                maxSizeMB={10}
+                                showCamera={true}
+                                allowUrlInput={true}
+                            />
                         </Form.Item>
 
                         <Space>
